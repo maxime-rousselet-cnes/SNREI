@@ -87,19 +87,17 @@ class Integration(Description):
             )
 
             # Then gets lambda and mu splines.
-            if i_layer <= real_description.below_CMB_layers or ((not use_anelasticity) and (not use_attenuation)):
-                # Just copies lambda_0 and mu_0.
-                description_layer.splines.update(
-                    {
-                        "mu_real": description_layer.splines["mu_0"],
-                        "lambda_real": description_layer.splines["lambda_0"],
-                        "mu_imag": Spline((array([0.0]), array([0.0]), 0)),
-                        "lambda_imag": Spline((array([0.0]), array([0.0]), 0)),
-                    }
-                )
+            description_layer.splines.update(
+                {  # Just copies lambda_0 and mu_0.
+                    "mu_real": description_layer.splines["mu_0"],
+                    "lambda_real": description_layer.splines["lambda_0"],
+                    "mu_imag": Spline((array([0.0]), array([0.0]), 0)),
+                    "lambda_imag": Spline((array([0.0]), array([0.0]), 0)),
+                }
+            )
 
             # Computes complex mu and lambda.
-            else:
+            if i_layer >= real_description.below_CMB_layers:
                 if i_layer >= real_description.below_CMB_layers:
                     # Anelasticity.
                     if use_anelasticity:
@@ -176,18 +174,20 @@ class Integration(Description):
                 method=hyper_parameters.method,
                 t_eval=hyper_parameters.t_eval,
                 args=(
-                    n,
-                    self.description_layers[n_layer],
-                    self.piG,
-                )
-                if system == fluid_system
-                else (
-                    n,
-                    self.description_layers[n_layer],
-                    self.piG,
-                    self.omega,
-                    hyper_parameters.dynamic_term,
-                    hyper_parameters.first_order_cross_terms,
+                    (
+                        n,
+                        self.description_layers[n_layer],
+                        self.piG,
+                    )
+                    if system == fluid_system
+                    else (
+                        n,
+                        self.description_layers[n_layer],
+                        self.piG,
+                        self.omega,
+                        hyper_parameters.dynamic_term,
+                        hyper_parameters.first_order_cross_terms,
+                    )
                 ),
                 rtol=hyper_parameters.rtol,
                 atol=hyper_parameters.atol,

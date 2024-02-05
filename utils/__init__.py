@@ -1,3 +1,4 @@
+from .abstract_computing import interpolate_all
 from .classes import (
     BoundaryCondition,
     Direction,
@@ -14,10 +15,16 @@ from .Love_numbers import (
     elastic_Love_numbers_computing,
     generate_log_omega_initial_values,
 )
-from .paths import descriptions_path, parameters_path, results_path
+from .paths import (
+    descriptions_path,
+    parameters_path,
+    real_descriptions_path,
+    results_path,
+)
 from .plots import frequencies_to_periods
 
 [
+    interpolate_all,
     BoundaryCondition,
     Direction,
     Integration,
@@ -34,6 +41,7 @@ from .plots import frequencies_to_periods
     generate_log_omega_initial_values,
     descriptions_path,
     parameters_path,
+    real_descriptions_path,
     results_path,
     frequencies_to_periods,
 ]

@@ -1,4 +1,13 @@
+Verif k2:
+    tested elastic only. OK
+*2pi dans Integration.__init__
+
 Urgent:
+    to check k -> run current_tests, then mu_current_tests
+    plot fr and fi
+    plot mu(r)
+
+Soon:
     Ocean mask + Caron load from raw files to ocean_load: result[n, m, T] script
     FT periodic to ocean_load_Fourier: result[n, m, omega]
     get deformation_Fourier : result[n, m, omega]

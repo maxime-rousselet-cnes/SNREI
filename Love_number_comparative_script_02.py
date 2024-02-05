@@ -1,13 +1,12 @@
 from itertools import product
 
-from numpy import ndarray
-
 from utils import (
     Earth_radius,
     Love_numbers_computing,
     LoveNumbersHyperParameters,
     RealDescription,
     Result,
+    elastic_Love_numbers_computing,
     generate_degrees_list,
     generate_log_omega_initial_values,
     load_base_model,
@@ -59,7 +58,7 @@ if __name__ == "__main__":
     for use_anelasticity, use_attenuation in product([False, True], [True, False]):
         if use_anelasticity or use_attenuation:
             # Computes Love numbers.
-            run_path, elastic_Love_numbers, log_omega_values, anelastic_Love_numbers = Love_numbers_computing(
+            run_path, log_omega_values, anelastic_Love_numbers = Love_numbers_computing(
                 max_tol=Love_numbers_hyper_parameters.max_tol,
                 decimals=Love_numbers_hyper_parameters.decimals,
                 y_system_hyper_parameters=Love_numbers_hyper_parameters.y_system_hyper_parameters,
@@ -80,6 +79,11 @@ if __name__ == "__main__":
             save_base_model(obj=10.0**log_omega_values * real_description.frequency_unit, name="frequencies", path=run_path)
 
     # Elastic.
+    elastic_Love_numbers = elastic_Love_numbers_computing(
+        y_system_hyper_parameters=Love_numbers_hyper_parameters.y_system_hyper_parameters,
+        degrees=degrees,
+        real_description=real_description,
+    )
     elastic_result = Result(hyper_parameters=Love_numbers_hyper_parameters)
     elastic_result.update_values_from_array(result_array=elastic_Love_numbers, degrees=degrees)
     elastic_result.save(name="elastic_Love_numbers", path=results_for_description_path)

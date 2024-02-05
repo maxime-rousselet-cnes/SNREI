@@ -63,7 +63,7 @@ def Love_numbers_computing(
     real_description: RealDescription,
     runs_path: Path,
     id: Optional[str] = None,
-) -> tuple[Path, ndarray, ndarray, ndarray]:
+) -> tuple[Path, ndarray, ndarray]:
     """
     Performs Love numbers computing (n, omega) with given real description and hyper-parameters.
     """
@@ -109,9 +109,6 @@ def Love_numbers_computing(
     # Returns id for comparison purposes.
     return (
         run_path,
-        elastic_Love_numbers_computing(
-            y_system_hyper_parameters=y_system_hyper_parameters, degrees=degrees, real_description=real_description
-        ),
         log_omega_all_values,
         all_Love_numbers,
     )
@@ -210,7 +207,7 @@ def Love_numbers_from_models_to_result() -> str:
 
     # Computes all Love numbers.
     results_for_description_path = results_path.joinpath(real_description.id)
-    run_path, elastic_Love_numbers, log_omega_values, anelastic_Love_numbers = Love_numbers_computing(
+    run_path, log_omega_values, anelastic_Love_numbers = Love_numbers_computing(
         max_tol=Love_numbers_hyper_parameters.max_tol,
         decimals=Love_numbers_hyper_parameters.decimals,
         y_system_hyper_parameters=Love_numbers_hyper_parameters.y_system_hyper_parameters,
@@ -225,7 +222,14 @@ def Love_numbers_from_models_to_result() -> str:
     # Builds result structures and saves to (.JSON) files.
     # Elastic.
     elastic_result = Result(hyper_parameters=Love_numbers_hyper_parameters)
-    elastic_result.update_values_from_array(result_array=elastic_Love_numbers, degrees=degrees)
+    elastic_result.update_values_from_array(
+        result_array=elastic_Love_numbers_computing(
+            y_system_hyper_parameters=Love_numbers_hyper_parameters.y_system_hyper_parameters,
+            degrees=degrees,
+            real_description=real_description,
+        ),
+        degrees=degrees,
+    )
     elastic_result.save(name="elastic_Love_numbers", path=results_for_description_path)
     # Anelastic.
     anelastic_result = Result(hyper_parameters=Love_numbers_hyper_parameters)

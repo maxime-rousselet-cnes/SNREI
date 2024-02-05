@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Optional
 
+from numpy import array, ndarray
+
 from ...database import generate_id, load_base_model, save_base_model
 from ..description_layer import DescriptionLayer
 from ..model import Model
@@ -67,6 +69,11 @@ class Description:
         # Formats layers.
         for i_layer, layer in enumerate(description_dict["description_layers"]):
             self.description_layers[i_layer] = DescriptionLayer(**layer)
+        if "variable_values_per_layer" in description_dict.keys():
+            self.variable_values_per_layer: list[dict[str, ndarray]] = [
+                {variable_name: array(values) for variable_name, values in layer_values.items()}
+                for layer_values in description_dict["variable_values_per_layer"]
+            ]
 
     def save(self, path: Path) -> None:
         """

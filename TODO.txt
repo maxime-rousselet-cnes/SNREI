@@ -1,9 +1,11 @@
 Verif k2:
     tested elastic only. OK
-*2pi dans Integration.__init__
+    tested k_2 -> ok with uncertainties for A and B but not C (3375-c3d6-ddb6-2967: 4, 100 points per layer)
+
+Currently running:
+    same plot but with lot of points
 
 Urgent:
-    to check k -> run current_tests, then mu_current_tests
     plot fr and fi
     plot mu(r)
 

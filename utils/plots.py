@@ -1,4 +1,4 @@
-from numpy import array, ndarray
+from numpy import array, ndarray, pi
 
 SECONDS_PER_YEAR = 365.25 * 86400
 
@@ -9,4 +9,4 @@ def frequencies_to_periods(
     """
     Converts tab from (Hz) to (y).
     """
-    return (1.0 / SECONDS_PER_YEAR) / array(frequencies)
+    return (1.0 / (SECONDS_PER_YEAR * 2 * pi)) / array(frequencies)

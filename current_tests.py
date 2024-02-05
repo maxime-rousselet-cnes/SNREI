@@ -12,7 +12,7 @@ from utils import (
 
 use_attenuation = True
 use_anelasticity = True
-path = results_path.joinpath("f018-876f-a9e0-2f46")
+path = results_path.joinpath("3375-c3d6-ddb6-2967")
 sub_path = path.joinpath("runs").joinpath("anelasticity_" + str(use_anelasticity) + "__attenuation_" + str(use_attenuation))
 anelastic_Love_numbers = Result()
 anelastic_Love_numbers.load(name="anelastic_Love_numbers", path=sub_path)

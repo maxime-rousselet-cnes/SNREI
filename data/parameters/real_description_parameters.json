@@ -1,0 +1,10 @@
+{
+    "radius_unit": null,
+    "radius": null,
+    "real_crust": false,
+    "n_splines_base": 10,
+    "profile_precision": 100,
+    "splines_degree": 1,
+    "below_ICB_layers": null,
+    "below_CMB_layers": null
+}

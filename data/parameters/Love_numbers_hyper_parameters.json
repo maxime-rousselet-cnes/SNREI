@@ -1,0 +1,13 @@
+{
+    "omega_min": 1e-15,
+    "omega_max": 1e-3,
+    "n_omega_0": 30,
+    "max_tol": 1e-1,
+    "decimals": 2,
+    "use_anelasticity": true,
+    "use_attenuation": false,
+    "real_description_parameters": "real_description_parameters",
+    "y_system_hyper_parameters": "Y_system_hyper_parameters",
+    "degree_steps": "degree_steps",
+    "degree_thresholds": "degree_thresholds"
+}

@@ -1,0 +1,308 @@
+from typing import Optional
+
+from numpy import array, linspace, ndarray
+
+from ...formulas import mu_k_computing, omega_cut_computing
+from ...paths import (
+    anelasticity_descriptions_path,
+    attenuation_descriptions_path,
+    elasticity_descriptions_path,
+    real_descriptions_path,
+)
+from ..description_layer import DescriptionLayer
+from ..spline import Spline
+from .anelasticity_description import AnelasticityDescription
+from .attenuation_description import AttenuationDescription
+from .description import Description
+from .elasticity_description import ElasticityDescription
+
+
+class RealDescription(Description):
+    """
+    Describes the integration constants and all layer model descriptions, including anelastic parameters.
+    """
+
+    # Proper attributes.
+    CMB_x: float
+    length_ratio: float
+    frequency_unit: float
+    elasticity_unit: float
+    viscosity_unit: float
+    variable_values_per_layer: list[dict[str, ndarray]]
+
+    # Attributes also present in the elasticity description part, but may differ if elasticity part is loaded.
+    radius_unit: float
+    period_unit: float
+    density_unit: float
+    speed_unit: float
+    piG: float
+    below_ICB_layers: int
+    below_CMB_layers: int
+    profile_precision: int
+    splines_degree: int
+
+    # Different parts descriptions.
+    elasticity_description: str  # Unitless.
+    anelasticicty_description: str  # With units.
+    attenuation_description: str  # With units.
+
+    def __init__(
+        self,
+        # Parameters for elasticity description preprocessing only.
+        below_ICB_layers: Optional[int],
+        below_CMB_layers: Optional[int],
+        splines_degree: int,
+        # Base parameters.
+        radius_unit: float,
+        real_crust: bool,
+        n_splines_base: int,
+        profile_precision: int,
+        # Complete description parameters.
+        radius: float,
+        id: Optional[str] = None,
+        # Loading parameters.
+        elasticity_model_from_name: Optional[str] = None,
+        anelasticity_model_from_name: Optional[str] = None,
+        attenuation_model_from_name: Optional[str] = None,
+        elasticity_description_from_id: Optional[str] = None,
+        anelasticity_description_from_id: Optional[str] = None,
+        attenuation_description_from_id: Optional[str] = None,
+        # Whether to load the whole real description later or not.
+        load_description: bool = True,
+    ) -> None:
+        super().__init__(
+            id=id,
+            radius_unit=radius_unit,
+            real_crust=real_crust,
+            n_splines_base=n_splines_base,
+        )
+        if load_description:
+            return
+
+        # Elasticity description.
+        if elasticity_description_from_id:
+            # Loads elasticity description.
+            elasticity_description = ElasticityDescription(id=elasticity_description_from_id)
+            elasticity_description.load(path=elasticity_descriptions_path)
+        else:
+            # Builds elasticity description.
+            elasticity_description = ElasticityDescription(
+                radius_unit=radius_unit,
+                below_ICB_layers=below_ICB_layers,
+                below_CMB_layers=below_CMB_layers,
+                real_crust=real_crust,
+                n_splines_base=n_splines_base,
+                profile_precision=profile_precision,
+                splines_degree=splines_degree,
+                model_filename=elasticity_model_from_name if elasticity_model_from_name else "PREM",
+                load_description=False,
+            )
+
+        # Anelasticity description.
+        if anelasticity_description_from_id:
+            # Loads anelasticity description.
+            anelasticity_description = AnelasticityDescription(id=anelasticity_description_from_id)
+            anelasticity_description.load(path=anelasticity_descriptions_path)
+        else:
+            # Builds anelasticity description.
+            anelasticity_description = AnelasticityDescription(
+                radius_unit=radius_unit,
+                real_crust=real_crust,
+                n_splines_base=n_splines_base,
+                model_filename=anelasticity_model_from_name if anelasticity_model_from_name else "test",
+                load_description=False,
+            )
+
+        # Attenuation description.
+        if attenuation_description_from_id:
+            # Loads attenuation description.
+            attenuation_description = AttenuationDescription(id=attenuation_description_from_id)
+            attenuation_description.load(path=attenuation_descriptions_path)
+        else:
+            # Builds attenuation description.
+            attenuation_description = AttenuationDescription(
+                radius_unit=radius_unit,
+                real_crust=real_crust,
+                n_splines_base=n_splines_base,
+                model_filename=attenuation_model_from_name if attenuation_model_from_name else "Benjamin",
+                load_description=False,
+            )
+
+        # Builds ID as the concatenation of the description IDs.
+        self.id = "-".join((elasticity_description.id, anelasticity_description.id, attenuation_description.id, self.id))
+
+        # Updates fields from elasticity description.
+        self.radius_unit = elasticity_description.radius_unit
+        self.period_unit = elasticity_description.period_unit
+        self.density_unit = elasticity_description.density_unit
+        self.speed_unit = elasticity_description.speed_unit
+        self.piG = elasticity_description.piG
+        self.below_ICB_layers = elasticity_description.below_ICB_layers
+        self.below_CMB_layers = elasticity_description.below_CMB_layers
+
+        # Updates new fields.
+        self.profile_precision = profile_precision
+        self.splines_degree = splines_degree
+        self.CMB_x = elasticity_description.description_layers[self.below_CMB_layers].x_inf
+        self.length_ratio = self.radius_unit / radius
+        self.frequency_unit = 1.0 / elasticity_description.period_unit
+        self.viscosity_unit = self.density_unit * self.radius_unit**2 / self.period_unit
+        self.elasticity_unit = self.viscosity_unit / self.period_unit
+
+        # Builds common description layers.
+        self.merge_descriptions(
+            elasticity_description=elasticity_description,
+            anelasticity_description=anelasticity_description,
+            attenuation_description=attenuation_description,
+        )
+
+        # Computes explicit variable values for incoming lambda and mu complex computings.
+        self.variable_values_per_layer = self.compute_variable_values()
+
+        # Saves resulting real description in a (.JSON) file.
+        self.elasticity_description = elasticity_description.id
+        self.anelasticity_description = anelasticity_description.id
+        self.attenuation_description = attenuation_description.id
+        self.save(path=real_descriptions_path)
+
+    def merge_descriptions(
+        self,
+        elasticity_description: ElasticityDescription,
+        anelasticity_description: AnelasticityDescription,
+        attenuation_description: AttenuationDescription,
+    ):
+        """
+        Merges elasticity, anelasticity, and attenuation descriptions with unitless variables only.
+        """
+        # Initializes with Core elastic and liquid layers.
+        self.description_layers = elasticity_description.description_layers[: self.below_CMB_layers]
+        x_inf = self.CMB_x
+        i_layer_elasticity = self.below_CMB_layers
+        i_layer_anelasticity = 0
+        i_layer_attenuation = 0
+
+        # Checks all layers from CMB to surface and merges their descrptions.
+        while x_inf < 1.0:
+            # Checks which layer ends first.
+            x_sup_elasticity = elasticity_description.description_layers[i_layer_elasticity].x_sup
+            x_sup_anelasticity = anelasticity_description.description_layers[i_layer_anelasticity].x_sup
+            x_sup_attenuation = attenuation_description.description_layers[i_layer_attenuation].x_sup
+            x_sup = min(x_sup_elasticity, x_sup_anelasticity, x_sup_attenuation)
+
+            # Updates.
+            self.description_layers += [
+                self.merge_layers(
+                    x_inf=x_inf,
+                    x_sup=x_sup,
+                    elasticity_layer=elasticity_description.description_layers[i_layer_elasticity],
+                    anelasticity_layer=anelasticity_description.description_layers[i_layer_anelasticity],
+                    attenuation_layer=attenuation_description.description_layers[i_layer_attenuation],
+                )
+            ]
+            x_inf = x_sup
+            i_layer_elasticity += 1 if x_sup_elasticity == x_sup else 0
+            i_layer_anelasticity += 1 if x_sup_anelasticity == x_sup else 0
+            i_layer_attenuation += 1 if x_sup_attenuation == x_sup else 0
+
+    def merge_layers(
+        self,
+        x_inf: float,
+        x_sup: float,
+        elasticity_layer: DescriptionLayer,
+        anelasticity_layer: DescriptionLayer,
+        attenuation_layer: DescriptionLayer,
+    ) -> DescriptionLayer:
+        """
+        Merges elasticity, anelasticity, and attenuation description layers with unitless variables only.
+        """
+        # Creates corresponding minimal length layer with elasticity variables.
+        description_layer = DescriptionLayer(
+            name="-".join(
+                (
+                    elasticity_layer.name,
+                    anelasticity_layer.name,
+                    attenuation_layer.name,
+                )
+            ),
+            x_inf=x_inf,
+            x_sup=x_sup,
+            splines=elasticity_layer.splines.copy(),
+        )
+
+        # Adds anelasticity and attenuation unitless variables.
+        description_layer.splines["c"] = anelasticity_layer.splines["c"]
+        description_layer.splines["alpha"] = attenuation_layer.splines["alpha"]
+
+        # Builds anelasticity and attenuation unitless variables from variables with units.
+        for variable_name, unit, splines in [
+            ("eta_m", self.viscosity_unit, anelasticity_layer.splines),
+            ("eta_k", self.viscosity_unit, anelasticity_layer.splines),
+            ("mu_K1", self.elasticity_unit, anelasticity_layer.splines),
+            ("omega_m", self.frequency_unit, attenuation_layer.splines),
+        ]:
+            description_layer.splines[variable_name] = Spline(
+                (
+                    splines[variable_name][0],
+                    array(splines[variable_name][1]) / unit,  # Gets unitless variable.
+                    splines[variable_name][2],
+                )
+            )
+
+        return description_layer
+
+    def compute_variable_values(
+        self,
+    ) -> list[dict[str, ndarray]]:
+        """
+        Computes explicit variable values for all layers.
+        """
+        variable_values_per_layer = []
+        for i_layer, layer in enumerate(self.description_layers):
+            variable_values_per_layer += [self.compute_variable_values_per_layer(i_layer=i_layer, layer=layer)]
+        return variable_values_per_layer
+
+    def compute_variable_values_per_layer(self, i_layer: int, layer: DescriptionLayer) -> dict[str, ndarray]:
+        """
+        Computes explicit variable values for a single layer.
+        """
+        x = linspace(layer.x_inf, layer.x_sup, self.profile_precision)
+        # Variables needed for all layers.
+        variable_values = {
+            "x": x,
+            "mu_0": layer.evaluate(x=x, variable="mu_0"),
+            "lambda_0": layer.evaluate(x=x, variable="lambda_0"),
+        }
+        if i_layer >= self.below_CMB_layers:
+            # Variables needed above the Core-Mantle Boundary.
+            variable_values.update(
+                {
+                    "eta_m": layer.evaluate(x=x, variable="eta_m"),
+                    "mu_k": mu_k_computing(
+                        mu_K1=layer.evaluate(x=x, variable="mu_K1"),
+                        c=layer.evaluate(x=x, variable="c"),
+                        mu_0=layer.evaluate(x=x, variable="mu_0"),
+                    ),
+                    "eta_k": layer.evaluate(x=x, variable="eta_k"),
+                    "Qmu": layer.evaluate(x=x, variable="Qmu"),
+                    "alpha": layer.evaluate(x=x, variable="alpha"),
+                    "omega_m": layer.evaluate(x=x, variable="omega_m"),
+                }
+            )
+            # New explicit variables (needed) for lambda and mu complex computings.
+            variable_values.update(
+                {
+                    "omega_cut_m": omega_cut_computing(
+                        mu=variable_values["mu_0"],
+                        eta=variable_values["eta_m"],
+                    ),
+                    "omega_cut_k": omega_cut_computing(
+                        mu=variable_values["mu_k"],
+                        eta=variable_values["eta_k"],
+                    ),
+                    "omega_cut_b": omega_cut_computing(
+                        mu=variable_values["mu_0"],
+                        eta=variable_values["eta_k"],
+                    ),
+                }
+            )
+        return variable_values

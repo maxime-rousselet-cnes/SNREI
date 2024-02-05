@@ -1,0 +1,15 @@
+Urgent:
+    Ocean mask + Caron load from raw files to ocean_load: result[n, m, T] script
+    FT periodic to ocean_load_Fourier: result[n, m, omega]
+    get deformation_Fourier : result[n, m, omega]
+    get deformation: result[theta, phi, T]
+    save
+
+
+later:
+    comparative plots from result script 03
+    forgot the 3 in Lamba_0 expression in LaTeX
+    Vectorize and implement minimal computing policy for:
+        integration.py: y_system_integration method and subfunctions
+        surface_solutiuons.py
+        system_definitions.py

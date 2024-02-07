@@ -1,18 +1,24 @@
 Verif k2:
     tested elastic only. OK
-    tested k_2 -> ok with uncertainties for A and B but not C (3375-c3d6-ddb6-2967: 4, 100 points per layer)
+    tested k_2 -> ok with uncertainties for A and B but not C
+        (3375-c3d6-ddb6-2967: 4, 100 points per layer)
+        (91e5-67d2-e762-970f: 100, 10000 points per layer)
+        NOT THE SAME CURBS!!! -> r function sampling were unsufficients -> test with 100000 points: 7bb3-a52c-2f7f-ef2a -> same than 10000
 
-Currently running:
-    same plot but with lot of points
+info: with 2*pi error and 0.04 bias, results ok for A, B and C!
 
 Urgent:
-    plot fr and fi
-    plot mu(r)
+    verify curbs and k_2 with new pulsation/frequency differenciation -> OK
+    check integration __init__ -> OK
+    plot fr and fi -> OK
+    plot mu(r) -> OK
+
+TODO : launch 02.py and comparative plots for h', k and k' prime'
 
 Soon:
     Ocean mask + Caron load from raw files to ocean_load: result[n, m, T] script
-    FT periodic to ocean_load_Fourier: result[n, m, omega]
-    get deformation_Fourier : result[n, m, omega]
+    FT periodic to ocean_load_Fourier: result[n, m, frequency]
+    get deformation_Fourier : result[n, m, frequency]
     get deformation: result[theta, phi, T]
     save
 
@@ -24,3 +30,11 @@ later:
         integration.py: y_system_integration method and subfunctions
         surface_solutiuons.py
         system_definitions.py
+
+
+To talk about:
+    - mu
+    - k_2
+    - sampling in x
+    - lambda'
+    - spring analogy

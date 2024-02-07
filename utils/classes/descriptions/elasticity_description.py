@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
-from numpy import linspace, pi, sqrt
+from numpy import pi, sqrt
 from scipy import interpolate
 
 from ...constants import G
@@ -85,7 +85,7 @@ class ElasticityDescription(Description):
                 )
 
             # Computes g_0, mu_0, lambda_0.
-            x = linspace(description_layer.x_inf, description_layer.x_sup, profile_precision)
+            x = description_layer.x_profile(profile_precision=profile_precision)
             rho_0 = description_layer.evaluate(x=x, variable="rho_0")
             Vs = description_layer.evaluate(x=x, variable="Vs")
             Vp = description_layer.evaluate(x=x, variable="Vp")

@@ -13,9 +13,9 @@ class Direction(Enum):
     Result keys for values dict.
     """
 
-    radial = 1
-    tangential = 2
-    potential = 3
+    radial = 0
+    tangential = 1
+    potential = 2
 
 
 class BoundaryCondition(Enum):
@@ -23,9 +23,9 @@ class BoundaryCondition(Enum):
     Result keys for values sub-dict.
     """
 
-    load = 1
-    shear = 2
-    potential = 3
+    load = 0
+    shear = 1
+    potential = 2
 
 
 class Values(dict[Direction, dict[BoundaryCondition, ndarray[complex]]]):
@@ -84,9 +84,11 @@ class Result:
                 "hyper_parameters": self.hyper_parameters,
                 "values": {
                     key.value: {
-                        sub_key.value: sub_values
-                        if not isinstance(sub_values.flatten()[0], complex)
-                        else {"real": sub_values.real, "imag": sub_values.imag}
+                        sub_key.value: (
+                            sub_values
+                            if not isinstance(sub_values.flatten()[0], complex)
+                            else {"real": sub_values.real, "imag": sub_values.imag}
+                        )
                         for sub_key, sub_values in values.items()
                     }
                     for key, values in self.values.items()
@@ -107,14 +109,12 @@ class Result:
         result: dict[str, dict[str, dict[str, list[float]]]] = loaded_content["values"]
         self.hyper_parameters = (HyperParameters(**loaded_content["hyper_parameters"]),)
         self.values = {
-            Direction.radial
-            if direction == "1"
-            else (Direction.tangential if direction == "2" else Direction.potential): {
-                BoundaryCondition.load
-                if boundary_condition == "1"
-                else (BoundaryCondition.shear if boundary_condition == "2" else BoundaryCondition.potential): array(
-                    sub_values["real"]
-                )
+            Direction.radial if direction == "1" else (Direction.tangential if direction == "2" else Direction.potential): {
+                (
+                    BoundaryCondition.load
+                    if boundary_condition == "1"
+                    else (BoundaryCondition.shear if boundary_condition == "2" else BoundaryCondition.potential)
+                ): array(sub_values["real"])
                 + (0.0 if not ("imag" in sub_values.keys()) else array(sub_values["imag"])) * 1.0j
                 for boundary_condition, sub_values in values.items()
             }

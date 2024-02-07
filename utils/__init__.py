@@ -13,7 +13,7 @@ from .Love_numbers import (
     Love_numbers_computing,
     Love_numbers_from_models_to_result,
     elastic_Love_numbers_computing,
-    generate_log_omega_initial_values,
+    generate_log_frequency_initial_values,
 )
 from .paths import (
     descriptions_path,
@@ -21,7 +21,11 @@ from .paths import (
     real_descriptions_path,
     results_path,
 )
-from .plots import frequencies_to_periods
+from .plots import (
+    SYMBOLS_PER_BOUNDARY_CONDITION,
+    SYMBOLS_PER_DIRECTION,
+    frequencies_to_periods,
+)
 
 [
     interpolate_all,
@@ -38,10 +42,12 @@ from .plots import frequencies_to_periods
     Love_numbers_computing,
     Love_numbers_from_models_to_result,
     elastic_Love_numbers_computing,
-    generate_log_omega_initial_values,
+    generate_log_frequency_initial_values,
     descriptions_path,
     parameters_path,
     real_descriptions_path,
     results_path,
+    SYMBOLS_PER_BOUNDARY_CONDITION,
+    SYMBOLS_PER_DIRECTION,
     frequencies_to_periods,
 ]

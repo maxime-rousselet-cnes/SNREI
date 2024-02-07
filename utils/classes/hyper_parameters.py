@@ -56,15 +56,15 @@ class RealDescriptionParameters(HyperParameters):
 
 class LoveNumbersHyperParameters(HyperParameters):
     """
-    Describes the parameters needed for Love Numbers(n, omega) computing algorithm.
+    Describes the parameters needed for Love Numbers(n, frequency) computing algorithm.
     """
 
-    # Adaptative step (on omega) algorithm parameters.
-    omega_min: float  # log10(Low frequency limit (Hz)).
-    omega_max: float  # log10(High frequency limit (Hz)).
-    n_omega_0: int  # Minimal number of computed frequencies per degree.
-    max_tol: float  # Maximal curvature criteria: Love_number''(omega) d^2omega < max_tol * Love_number(omega).
-    decimals: int  # Precision in omega.
+    # Adaptative step (on frequency) algorithm parameters.
+    frequency_min: float  # log10(Low frequency limit (Hz)).
+    frequency_max: float  # log10(High frequency limit (Hz)).
+    n_frequency_0: int  # Minimal number of computed frequencies per degree.
+    max_tol: float  # Maximal curvature criteria between orders 1 and 2.
+    decimals: int  # Precision in log10(frequency / frequency_unit).
 
     # Lower level parameters. They can be file names.
     real_description_parameters: Optional[str] | RealDescriptionParameters  # To build an Earth Complete description.

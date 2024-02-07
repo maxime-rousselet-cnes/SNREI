@@ -8,7 +8,7 @@ from utils import (
     Result,
     elastic_Love_numbers_computing,
     generate_degrees_list,
-    generate_log_omega_initial_values,
+    generate_log_frequency_initial_values,
     load_base_model,
     parameters_path,
     results_path,
@@ -46,10 +46,10 @@ if __name__ == "__main__":
     )
 
     # Generates frequencies.
-    log_omega_initial_values = generate_log_omega_initial_values(
-        omega_min=Love_numbers_hyper_parameters.omega_min,
-        omega_max=Love_numbers_hyper_parameters.omega_max,
-        n_omega_0=Love_numbers_hyper_parameters.n_omega_0,
+    log_frequency_initial_values = generate_log_frequency_initial_values(
+        frequency_min=Love_numbers_hyper_parameters.frequency_min,
+        frequency_max=Love_numbers_hyper_parameters.frequency_max,
+        n_frequency_0=Love_numbers_hyper_parameters.n_frequency_0,
         frequency_unit=real_description.frequency_unit,
     )
 
@@ -58,14 +58,14 @@ if __name__ == "__main__":
     for use_anelasticity, use_attenuation in product([False, True], [True, False]):
         if use_anelasticity or use_attenuation:
             # Computes Love numbers.
-            run_path, log_omega_values, anelastic_Love_numbers = Love_numbers_computing(
+            run_path, log_frequency_values, anelastic_Love_numbers = Love_numbers_computing(
                 max_tol=Love_numbers_hyper_parameters.max_tol,
                 decimals=Love_numbers_hyper_parameters.decimals,
                 y_system_hyper_parameters=Love_numbers_hyper_parameters.y_system_hyper_parameters,
                 use_anelasticity=use_anelasticity,
                 use_attenuation=use_attenuation,
                 degrees=degrees,
-                log_omega_initial_values=log_omega_initial_values,
+                log_frequency_initial_values=log_frequency_initial_values,
                 real_description=real_description,
                 runs_path=results_for_description_path.joinpath("runs"),
                 id="anelasticity_" + str(use_anelasticity) + "__attenuation_" + str(use_attenuation),
@@ -76,7 +76,7 @@ if __name__ == "__main__":
             anelastic_result.update_values_from_array(result_array=anelastic_Love_numbers, degrees=degrees)
             anelastic_result.save(name="anelastic_Love_numbers", path=run_path)
             # Frequencies.
-            save_base_model(obj=10.0**log_omega_values * real_description.frequency_unit, name="frequencies", path=run_path)
+            save_base_model(obj=10.0**log_frequency_values * real_description.frequency_unit, name="frequencies", path=run_path)
 
     # Elastic.
     elastic_Love_numbers = elastic_Love_numbers_computing(

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from numpy import linspace, ndarray, sum
+from numpy import Inf, linspace, ndarray, sum
 from pydantic import BaseModel
 from scipy import interpolate
 
@@ -115,8 +115,8 @@ class Model(BaseModel):
         Infinite values and modified crust values are handled.
         """
         polynomial_degree = len(polynomial) - 1
-        if "Inf" in polynomial:
-            return "Inf", "Inf", 0
+        if Inf in polynomial:
+            return Inf, Inf, 0
         else:
             return interpolate.splrep(
                 x=x,

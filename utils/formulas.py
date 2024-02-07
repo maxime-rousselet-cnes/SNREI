@@ -49,7 +49,7 @@ def omega_cut_computing(mu: ndarray, eta: ndarray) -> ndarray[complex]:
 
 def m_prime_computing(omega_cut_m: ndarray, omega_j: complex) -> ndarray[complex]:
     """
-    Computes m_prime transfert function value given the Maxwell's cut frequency omega_cut_m, and frequency value omega.
+    Computes m_prime transfert function value given the Maxwell's cut pulsation omega_cut_m, and pulsation value omega.
     """
     return omega_cut_m / (omega_cut_m + omega_j)
 
@@ -57,7 +57,7 @@ def m_prime_computing(omega_cut_m: ndarray, omega_j: complex) -> ndarray[complex
 def b_computing(omega_cut_m: ndarray, omega_cut_k: ndarray, omega_cut_b: ndarray, omega_j: complex) -> ndarray[complex]:
     """
     Computes b transfert function value given the Maxwell's, Kelvin's and Burgers cut frequencies omega_cut_m, omega_cut_k and
-    omega_cut_b and frequency value omega.
+    omega_cut_b and pulsation value omega.
     """
     return (omega_j * omega_cut_b) / ((omega_j + omega_cut_k) * (omega_j + omega_cut_m))
 
@@ -70,7 +70,7 @@ def lambda_computing(
 ) -> ndarray[complex]:
     """
     Computes complex analog lambda values, given the real elastic moduli mu and lambda and m_prime and b transfert function
-    values at frequency value omega.
+    values at pulsation value omega.
     """
     return lambda_0 + (2.0 / 3.0) * mu_0 * (m_prime + b) / (1 + b)
 
@@ -82,29 +82,29 @@ def mu_computing(
 ) -> ndarray[complex]:
     """
     Computes complex analog mu values, given the real elastic modulus mu and m_prime and b transfert function values at
-    frequency value omega.
+    pulsation value omega.
     """
     return mu_0 * (1 - m_prime) / (1 + b)
 
 
 def delta_mu_computing(
-    mu_0: ndarray, Qmu: ndarray, omega_m: ndarray, alpha: ndarray, omega: float, omega_unit: float
+    mu_0: ndarray, Qmu: ndarray, omega_m: ndarray, alpha: ndarray, frequency: float, frequency_unit: float
 ) -> ndarray[complex]:
     """
-    Computes the first order frequency dependent variation from elasticity delta_mu at frequency value omega, given the real
+    Computes the first order frequency dependent variation from elasticity delta_mu at frequency value frequency, given the real
     elastic modulus mu_0, the elasticicty's quality factor Qmu and generalized attenuation parameters omega_m and alpha.
-    The omega_m and omega parameters are unitless.
+    The omega_m and frequency parameters are unitless frequencies.
     """
-    omega_0 = 1.0 / omega_unit  # (Unitless).
-    high_frequency_domain: ndarray[bool] = omega >= omega_m
+    omega_0 = 1.0 / frequency_unit  # (Unitless frequency).
+    high_frequency_domain: ndarray[bool] = frequency >= omega_m
     with errstate(invalid="ignore", divide="ignore"):
         return nan_to_num(  # Alpha or omega_m may equal 0.0, meaning no attenuation should be taken into account.
             x=(mu_0 / Qmu)
             * (
-                ((2.0 / pi) * log(omega / omega_0) + 1.0j) * high_frequency_domain
+                ((2.0 / pi) * log(frequency / omega_0) + 1.0j) * high_frequency_domain
                 + (
-                    (2.0 / pi) * (log(omega_m / omega_0) + (1 / alpha) * (1 - (omega_m / omega) ** alpha))
-                    + (omega_m / omega) ** alpha * 1.0j
+                    (2.0 / pi) * (log(omega_m / omega_0) + (1 / alpha) * (1 - (omega_m / frequency) ** alpha))
+                    + (omega_m / frequency) ** alpha * 1.0j
                 )
                 * (1 - high_frequency_domain)
             ),

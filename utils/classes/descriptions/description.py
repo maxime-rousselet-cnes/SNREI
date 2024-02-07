@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
-from numpy import array, ndarray
+from numpy import Inf, array, ndarray
 
 from ...database import generate_id, load_base_model, save_base_model
 from ..description_layer import DescriptionLayer
@@ -69,6 +69,9 @@ class Description:
         # Formats layers.
         for i_layer, layer in enumerate(description_dict["description_layers"]):
             self.description_layers[i_layer] = DescriptionLayer(**layer)
+            for variable_name, spline in layer["splines"].items():
+                if not isinstance(spline[0], list) and spline[0] == "Inf":
+                    self.description_layers[i_layer].splines[variable_name] = (Inf, Inf, 0)
         if "variable_values_per_layer" in description_dict.keys():
             self.variable_values_per_layer: list[dict[str, ndarray]] = [
                 {variable_name: array(values) for variable_name, values in layer_values.items()}
@@ -79,4 +82,15 @@ class Description:
         """
         Saves the Description instance in a (.JSON) file.
         """
+        # Converts Infinite values to strings.
+        for i_layer, layer in enumerate(self.description_layers):
+            for variable_name, spline in layer.splines.items():
+                if not isinstance(spline[0], ndarray) and spline[0] == Inf:
+                    self.description_layers[i_layer].splines[variable_name] = ("Inf", "Inf", 0)
+        # Saves as basic type.
         save_base_model(obj=self.__dict__, name=self.id, path=path)
+        # Converts back to numpy.Inf.
+        for i_layer, layer in enumerate(self.description_layers):
+            for variable_name, spline in layer.splines.items():
+                if not isinstance(spline[0], ndarray) and spline[0] == "Inf":
+                    self.description_layers[i_layer].splines[variable_name] = (Inf, Inf, 0)

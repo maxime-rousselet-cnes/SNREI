@@ -1,3 +1,5 @@
 LoveNumberHyperParameters:
     max_tol 1e-1 decimals 2 ~ 10min, ~160 points
     max_tol 1e-1 decimals 3 ~ 85min, ~1300 points
+profile precision:
+    stab betwenn 100 and 1000 points, take 10000.

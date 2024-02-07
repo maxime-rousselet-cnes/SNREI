@@ -39,7 +39,7 @@ def elastic_Love_numbers_computing(
         return [
             Integration(
                 real_description=real_description,
-                log_omega=Inf,
+                log_frequency=Inf,
                 use_attenuation=False,
                 use_anelasticity=False,
             ).y_system_integration(
@@ -59,13 +59,13 @@ def Love_numbers_computing(
     use_anelasticity: bool,
     use_attenuation: bool,
     degrees: list[int],
-    log_omega_initial_values: ndarray[float],
+    log_frequency_initial_values: ndarray[float],
     real_description: RealDescription,
     runs_path: Path,
     id: Optional[str] = None,
 ) -> tuple[Path, ndarray, ndarray]:
     """
-    Performs Love numbers computing (n, omega) with given real description and hyper-parameters.
+    Performs Love numbers computing (n, frequency) with given real description and hyper-parameters.
     """
     # Initializes the run.
     id_run = id if id else generate_id()
@@ -85,7 +85,7 @@ def Love_numbers_computing(
             y_system_hyper_parameters=y_system_hyper_parameters,
             use_anelasticity=use_anelasticity,
             use_attenuation=use_attenuation,
-            log_omega_initial_values=log_omega_initial_values,
+            log_frequency_initial_values=log_frequency_initial_values,
             max_tol=max_tol,
             decimals=decimals,
             result_per_degree_path=result_per_degree_path,
@@ -97,19 +97,21 @@ def Love_numbers_computing(
         )
 
     # Interpolates in frequency for all degrees.
-    log_omega_values_per_degree = [
+    log_frequency_values_per_degree = [
         round(a=anelastic_Love_numbers_tuple[0], decimals=decimals) for anelastic_Love_numbers_tuple in anelastic_Love_numbers
     ]
     Love_numbers = [anelastic_Love_numbers_tuple[1] for anelastic_Love_numbers_tuple in anelastic_Love_numbers]
-    log_omega_all_values = unique(concatenate(log_omega_values_per_degree))
+    log_frequency_all_values = unique(concatenate(log_frequency_values_per_degree))
     all_Love_numbers = interpolate_all(
-        x_values_per_component=log_omega_values_per_degree, function_values=Love_numbers, x_shared_values=log_omega_all_values
+        x_values_per_component=log_frequency_values_per_degree,
+        function_values=Love_numbers,
+        x_shared_values=log_frequency_all_values,
     )
 
     # Returns id for comparison purposes.
     return (
         run_path,
-        log_omega_all_values,
+        log_frequency_all_values,
         all_Love_numbers,
     )
 
@@ -120,7 +122,7 @@ def anelastic_Love_number_computing_per_degree_function(
     y_system_hyper_parameters: YSystemHyperParameters,
     use_anelasticity: bool,
     use_attenuation: bool,
-    log_omega_initial_values: ndarray[float],
+    log_frequency_initial_values: ndarray[float],
     max_tol: float,
     decimals: int,
     result_per_degree_path: Path,
@@ -129,25 +131,25 @@ def anelastic_Love_number_computing_per_degree_function(
     Computes Love numbers for all frequencies, for a given degree.
     """
 
-    # Defines a callable that computes Love numbers for an array of log10(omega) values.
-    Love_number_computing_parallel = lambda log_omega_values: array(
+    # Defines a callable that computes Love numbers for an array of log10(frequency/ unit_frequency) values.
+    Love_number_computing_parallel = lambda log_frequency_values: array(
         [
             Integration(
                 real_description=real_description,
-                log_omega=log_omega,
+                log_frequency=log_frequency,
                 use_anelasticity=use_anelasticity,
                 use_attenuation=use_attenuation,
             ).y_system_integration(
                 n=n,
                 hyper_parameters=y_system_hyper_parameters,
             )
-            for log_omega in log_omega_values
+            for log_frequency in log_frequency_values
         ]
     )
 
     # Processes for frequencies. Adaptative step for precise curvature.
-    log_omega_values, Love_numbers = precise_curvature(
-        x_initial_values=log_omega_initial_values,
+    log_frequency_values, Love_numbers = precise_curvature(
+        x_initial_values=log_frequency_initial_values,
         f=Love_number_computing_parallel,
         max_tol=max_tol,
         decimals=decimals,
@@ -155,14 +157,14 @@ def anelastic_Love_number_computing_per_degree_function(
 
     # Saves single degree results.
     path_for_degree = result_per_degree_path.joinpath(str(n))
-    save_base_model(obj=log_omega_values, name="frequencies", path=path_for_degree)
+    save_base_model(obj=log_frequency_values, name="frequencies", path=path_for_degree)
     save_base_model(
         obj={"real": Love_numbers.real, "imag": Love_numbers.imag},
         name="Love_numbers",
         path=path_for_degree,
     )
 
-    return log_omega_values, Love_numbers
+    return log_frequency_values, Love_numbers
 
 
 def Love_numbers_from_models_to_result() -> str:
@@ -198,23 +200,23 @@ def Love_numbers_from_models_to_result() -> str:
     )
 
     # Generates frequencies.
-    log_omega_initial_values = generate_log_omega_initial_values(
-        omega_min=Love_numbers_hyper_parameters.omega_min,
-        omega_max=Love_numbers_hyper_parameters.omega_max,
-        n_omega_0=Love_numbers_hyper_parameters.n_omega_0,
+    log_frequency_initial_values = generate_log_frequency_initial_values(
+        frequency_min=Love_numbers_hyper_parameters.frequency_min,
+        frequency_max=Love_numbers_hyper_parameters.frequency_max,
+        n_frequency_0=Love_numbers_hyper_parameters.n_frequency_0,
         frequency_unit=real_description.frequency_unit,
     )
 
     # Computes all Love numbers.
     results_for_description_path = results_path.joinpath(real_description.id)
-    run_path, log_omega_values, anelastic_Love_numbers = Love_numbers_computing(
+    run_path, log_frequency_values, anelastic_Love_numbers = Love_numbers_computing(
         max_tol=Love_numbers_hyper_parameters.max_tol,
         decimals=Love_numbers_hyper_parameters.decimals,
         y_system_hyper_parameters=Love_numbers_hyper_parameters.y_system_hyper_parameters,
         use_anelasticity=Love_numbers_hyper_parameters.use_anelasticity,
         use_attenuation=Love_numbers_hyper_parameters.use_attenuation,
         degrees=degrees,
-        log_omega_initial_values=log_omega_initial_values,
+        log_frequency_initial_values=log_frequency_initial_values,
         real_description=real_description,
         runs_path=results_for_description_path.joinpath("runs"),
     )
@@ -236,18 +238,20 @@ def Love_numbers_from_models_to_result() -> str:
     anelastic_result.update_values_from_array(result_array=anelastic_Love_numbers, degrees=degrees)
     anelastic_result.save(name="anelastic_Love_numbers", path=run_path)
     # Frequencies.
-    save_base_model(obj=10.0**log_omega_values * real_description.frequency_unit, name="frequencies", path=run_path)
+    save_base_model(obj=10.0**log_frequency_values * real_description.frequency_unit, name="frequencies", path=run_path)
 
     # returns id.
     return run_path.name
 
 
-def generate_log_omega_initial_values(omega_min: float, omega_max: float, n_omega_0: int, frequency_unit: float) -> ndarray:
+def generate_log_frequency_initial_values(
+    frequency_min: float, frequency_max: float, n_frequency_0: int, frequency_unit: float
+) -> ndarray:
     """
     Generates an array of logarithm-spaced frequency values.
     """
     return linspace(
-        start=log10(omega_min / frequency_unit),
-        stop=log10(omega_max / frequency_unit),
-        num=n_omega_0,
+        start=log10(frequency_min / frequency_unit),
+        stop=log10(frequency_max / frequency_unit),
+        num=n_frequency_0,
     )

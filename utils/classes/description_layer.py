@@ -1,6 +1,6 @@
 from typing import Optional
 
-from numpy import Inf, ndarray, ones, shape
+from numpy import Inf, linspace, ndarray, ones, shape
 from pydantic import BaseModel
 from scipy import interpolate
 
@@ -25,10 +25,14 @@ class DescriptionLayer(BaseModel):
         """
         Evaluates some quantity polynomial spline over an array x.
         """
-        if len(self.splines[variable][0]) == 1:  # Handles constant cases.
-            return (
-                Inf if self.splines[variable][0][0] == "Inf" else self.splines[variable][0][0]
-            ) * ones(  # Handles infinite cases.
+        if not isinstance(self.splines[variable][0], ndarray):  # Handles constant cases.
+            return (Inf if self.splines[variable][0] == Inf else self.splines[variable][0]) * ones(  # Handles infinite cases.
                 shape=(shape(x))
             )
         return interpolate.splev(x=x, tck=self.splines[variable], der=derivative_order)
+
+    def x_profile(self, profile_precision: int) -> ndarray:
+        """
+        Builds an array of x values in the layer.
+        """
+        return linspace(start=self.x_inf, stop=self.x_sup, num=profile_precision)

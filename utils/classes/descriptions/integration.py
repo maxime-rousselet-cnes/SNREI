@@ -1,6 +1,6 @@
 from typing import Any, Callable, Optional
 
-from numpy import Inf, array, errstate, ndarray, shape, where, zeros
+from numpy import Inf, array, errstate, ndarray, pi, shape, where, zeros
 from scipy import integrate, interpolate
 from scipy.integrate import OdeSolution
 
@@ -32,7 +32,7 @@ class Integration(Description):
     """
     "Applies" a real description to some frequency value.
     Describes the integration constants and all complex description layers at a given frequency.
-    Handles elastic case for omega = Inf.
+    Handles elastic case for frequency = Inf.
     Description layers variables include mu and lambda real and imaginary parts.
     """
 
@@ -44,14 +44,15 @@ class Integration(Description):
     CMB_x: float
 
     # Proper attributes.
-    omega: float  # (Unitless).
-    omega_j: complex  # (Unitless).
+    frequency: float  # (Unitless frequency).
+    omega: float  # (Unitless pulsation).
+    omega_j: complex  # (Complex unitless pulsation).
 
     def __init__(
         self,
         # Proper field parameters.
         real_description: RealDescription,
-        log_omega: float,  # Base 10 logarithm of the unitless frequency.
+        log_frequency: float,  # Base 10 logarithm of the unitless frequency.
         use_anelasticity: bool,
         use_attenuation: bool,
         # Other parameters.
@@ -68,7 +69,8 @@ class Integration(Description):
         )
 
         # Updates proper attributes.
-        self.omega = Inf if log_omega == Inf else 10.0**log_omega
+        self.frequency = Inf if log_frequency == Inf else 10.0**log_frequency
+        self.omega = Inf if self.frequency == Inf else 2 * pi * self.frequency
         self.omega_j = Inf if self.omega == Inf else self.omega * 1.0j
 
         # Initializes the needed description layers.
@@ -91,8 +93,8 @@ class Integration(Description):
                 {  # Just copies lambda_0 and mu_0.
                     "mu_real": description_layer.splines["mu_0"],
                     "lambda_real": description_layer.splines["lambda_0"],
-                    "mu_imag": Spline((array([0.0]), array([0.0]), 0)),
-                    "lambda_imag": Spline((array([0.0]), array([0.0]), 0)),
+                    "mu_imag": Spline((0.0, 0.0, 0)),
+                    "lambda_imag": Spline((0.0, 0.0, 0)),
                 }
             )
 
@@ -109,7 +111,10 @@ class Integration(Description):
                             omega_j=self.omega_j,
                         )
                         complex_lambda = lambda_computing(
-                            mu_0=variables["mu_0"], lambda_0=variables["lambda_0"], m_prime=m_prime, b=b
+                            mu_0=variables["mu_0"],
+                            lambda_0=variables["lambda_0"],
+                            m_prime=m_prime,
+                            b=b,
                         )
                         complex_mu = mu_computing(mu_0=variables["mu_0"], m_prime=m_prime, b=b)
 
@@ -121,12 +126,12 @@ class Integration(Description):
                     # Attenuation.
                     if use_attenuation:
                         delta_mu = delta_mu_computing(
-                            mu_0=variables["mu_0"],
+                            mu_0=variables["mu_1"],
                             Qmu=variables["Qmu"],
                             omega_m=variables["omega_m"],
                             alpha=variables["alpha"],
-                            omega=self.omega,
-                            omega_unit=real_description.frequency_unit,
+                            frequency=self.frequency,
+                            frequency_unit=real_description.frequency_unit,
                         )
                         complex_lambda -= 2.0 / 3.0 * delta_mu
                         complex_mu += delta_mu
@@ -223,7 +228,11 @@ class Integration(Description):
             else:
                 # ...Or starts to integrate from r = minimal_radius.
                 Y = array(
-                    [[0.0, 1.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]],
+                    [
+                        [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+                    ],
                     dtype=complex,
                 )
                 Y1i = Y[0, :].flatten()
@@ -318,7 +327,11 @@ class Integration(Description):
             else:
                 # 1) solution initiale.
                 Y = array(
-                    [[0.0, 1.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]],
+                    [
+                        [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+                    ],
                     dtype=complex,
                 )
                 Y1cmb = Y[0, :].flatten()

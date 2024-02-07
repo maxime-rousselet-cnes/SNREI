@@ -1,8 +1,14 @@
 from typing import Optional
 
-from numpy import array, linspace, ndarray
+from numpy import ndarray, pi
 
-from ...formulas import mu_k_computing, omega_cut_computing
+from ...formulas import (
+    b_computing,
+    m_prime_computing,
+    mu_computing,
+    mu_k_computing,
+    omega_cut_computing,
+)
 from ...paths import (
     anelasticity_descriptions_path,
     attenuation_descriptions_path,
@@ -184,9 +190,11 @@ class RealDescription(Description):
         # Checks all layers from CMB to surface and merges their descrptions.
         while x_inf < 1.0:
             # Checks which layer ends first.
-            x_sup_elasticity = elasticity_description.description_layers[i_layer_elasticity].x_sup
-            x_sup_anelasticity = anelasticity_description.description_layers[i_layer_anelasticity].x_sup
-            x_sup_attenuation = attenuation_description.description_layers[i_layer_attenuation].x_sup
+            x_sup_elasticity = round(number=elasticity_description.description_layers[i_layer_elasticity].x_sup, ndigits=8)
+            x_sup_anelasticity = round(
+                number=anelasticity_description.description_layers[i_layer_anelasticity].x_sup, ndigits=8
+            )
+            x_sup_attenuation = round(number=attenuation_description.description_layers[i_layer_attenuation].x_sup, ndigits=8)
             x_sup = min(x_sup_elasticity, x_sup_anelasticity, x_sup_attenuation)
 
             # Updates.
@@ -243,7 +251,7 @@ class RealDescription(Description):
             description_layer.splines[variable_name] = Spline(
                 (
                     splines[variable_name][0],
-                    array(splines[variable_name][1]) / unit,  # Gets unitless variable.
+                    splines[variable_name][1] / unit,  # Gets unitless variable.
                     splines[variable_name][2],
                 )
             )
@@ -265,7 +273,7 @@ class RealDescription(Description):
         """
         Computes explicit variable values for a single layer.
         """
-        x = linspace(layer.x_inf, layer.x_sup, self.profile_precision)
+        x = layer.x_profile(profile_precision=self.profile_precision)
         # Variables needed for all layers.
         variable_values = {
             "x": x,
@@ -303,6 +311,23 @@ class RealDescription(Description):
                         mu=variable_values["mu_0"],
                         eta=variable_values["eta_k"],
                     ),
+                }
+            )
+            # Computes mu_1 = Re(mu(1 Hz) for attenuation preprocessing.
+            variable_values.update(
+                {
+                    "mu_1": mu_computing(
+                        mu_0=variable_values["mu_0"],
+                        m_prime=m_prime_computing(
+                            omega_cut_m=variable_values["omega_cut_m"], omega_j=2 * pi / self.frequency_unit
+                        ),
+                        b=b_computing(
+                            omega_cut_m=variable_values["omega_cut_m"],
+                            omega_cut_k=variable_values["omega_cut_k"],
+                            omega_cut_b=variable_values["omega_cut_b"],
+                            omega_j=2 * pi / self.frequency_unit,
+                        ),
+                    )
                 }
             )
         return variable_values

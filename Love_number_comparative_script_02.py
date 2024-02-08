@@ -1,4 +1,6 @@
+import argparse
 from itertools import product
+from typing import Optional
 
 from utils import (
     Earth_radius,
@@ -15,7 +17,16 @@ from utils import (
     save_base_model,
 )
 
-if __name__ == "__main__":
+parser = argparse.ArgumentParser()
+parser.add_argument("real_description_id", type=str, help="Optional wanted ID for the real description")
+parser.add_argument(
+    "load_description", type=bool, action="store_true", help="Option to tell if the description should be loaded"
+)
+
+args = parser.parse_args()
+
+
+def Love_number_comparative(real_description_id: Optional[str], load_description: Optional[bool]) -> str:
     """
     Computes anelastic Love numbers with and without anelasticity and with and without attenuation.
     """
@@ -28,6 +39,7 @@ if __name__ == "__main__":
     # Loads/buils the planet's description.
     real_description_parameters = Love_numbers_hyper_parameters.real_description_parameters
     real_description = RealDescription(
+        id=real_description_id,
         below_ICB_layers=real_description_parameters.below_ICB_layers,
         below_CMB_layers=real_description_parameters.below_CMB_layers,
         splines_degree=real_description_parameters.splines_degree,
@@ -36,7 +48,7 @@ if __name__ == "__main__":
         n_splines_base=real_description_parameters.n_splines_base,
         profile_precision=real_description_parameters.profile_precision,
         radius=real_description_parameters.radius if real_description_parameters.radius else Earth_radius,
-        load_description=False,
+        load_description=load_description,
     )
 
     # Generates degrees.
@@ -89,3 +101,9 @@ if __name__ == "__main__":
     elastic_result.save(name="elastic_Love_numbers", path=results_for_description_path)
     # Save degrees.
     save_base_model(obj=degrees, name="degrees", path=results_for_description_path)
+
+    return real_description_id
+
+
+if __name__ == "__main__":
+    print(Love_number_comparative(real_description_id=args.real_description_id, load_description=args.load_description))

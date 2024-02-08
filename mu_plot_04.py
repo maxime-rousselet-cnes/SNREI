@@ -1,3 +1,4 @@
+import argparse
 from itertools import product
 from pathlib import Path
 
@@ -12,10 +13,16 @@ from utils import (
     real_descriptions_path,
 )
 
+parser = argparse.ArgumentParser()
+parser.add_argument("real_description_id", type=str, required=True, help="wanted ID for the real description to load")
+parser.add_argument("figure_path_string", type=str, required=True, help="wanted path to save figure")
+
+args = parser.parse_args()
+
 
 def plot_mu_profiles(
-    real_description_id: str = "9c6d-da8b-c18d-efa0",
-    figure_path_string: str = "/home/mrousselet/Documents/Réunions/07-02/",
+    real_description_id: str,
+    figure_path_string: str,
     period_values: list[int] = [18.6, 100, 1000],
 ):
     """
@@ -121,4 +128,4 @@ def plot_mu_profiles(
 
 
 if __name__ == "__main__":
-    plot_mu_profiles()
+    plot_mu_profiles(real_description_id=args.real_description_id, figure_path_string=args.figure_path_string)

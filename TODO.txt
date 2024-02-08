@@ -12,8 +12,7 @@ Urgent:
     check integration __init__ -> OK
     plot fr and fi -> OK
     plot mu(r) -> OK
-
-TODO : launch 02.py and comparative plots for h', k and k' prime'
+    comparative plots for h, k, k'... -> OK
 
 Soon:
     Ocean mask + Caron load from raw files to ocean_load: result[n, m, T] script
@@ -22,15 +21,12 @@ Soon:
     get deformation: result[theta, phi, T]
     save
 
-
 later:
-    comparative plots from result script 03
     forgot the 3 in Lamba_0 expression in LaTeX
     Vectorize and implement minimal computing policy for:
         integration.py: y_system_integration method and subfunctions
         surface_solutiuons.py
         system_definitions.py
-
 
 To talk about:
     - mu

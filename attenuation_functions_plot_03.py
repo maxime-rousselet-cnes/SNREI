@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -5,10 +6,14 @@ from numpy import linspace, log, pi
 
 from utils import Earth_radius, RealDescription, real_descriptions_path
 
+parser = argparse.ArgumentParser()
+parser.add_argument("real_description_id", type=str, required=True, help="wanted ID for the real description to load")
+parser.add_argument("figure_path_string", type=str, required=True, help="wanted path to save figure")
 
-def plot_attenuation_functions(
-    real_description_id: str = "9c6d-da8b-c18d-efa0", figure_path_string: str = "/home/mrousselet/Documents/Réunions/07-02/"
-):
+args = parser.parse_args()
+
+
+def plot_attenuation_functions(real_description_id: str, figure_path_string: str):
     """
     Generates a figure of attenuation functions f_r and f_i.
     """
@@ -48,4 +53,4 @@ def plot_attenuation_functions(
 
 
 if __name__ == "__main__":
-    plot_attenuation_functions()
+    plot_attenuation_functions(real_description_id=args.real_description_id, figure_path_string=args.figure_path_string)

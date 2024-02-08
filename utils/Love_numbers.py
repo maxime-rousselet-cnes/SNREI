@@ -19,7 +19,7 @@ from .database import (
     load_base_model,
     save_base_model,
 )
-from .paths import parameters_path, results_path
+from .paths import parameters_path, real_descriptions_path, results_path
 
 
 def elastic_Love_numbers_computing(
@@ -167,7 +167,9 @@ def anelastic_Love_number_computing_per_degree_function(
     return log_frequency_values, Love_numbers
 
 
-def Love_numbers_from_models_to_result() -> str:
+def Love_numbers_from_models_to_result(
+    real_description_id: Optional[str], run_id: Optional[str], load_description: Optional[bool]
+) -> str:
     """
     Loads models/descriptions, hyper parameters.
     Compute elastic and anelastic Love numbers.
@@ -182,6 +184,7 @@ def Love_numbers_from_models_to_result() -> str:
     # Loads/buils the planet's description.
     real_description_parameters = Love_numbers_hyper_parameters.real_description_parameters
     real_description = RealDescription(
+        id=real_description_id,
         below_ICB_layers=real_description_parameters.below_ICB_layers,
         below_CMB_layers=real_description_parameters.below_CMB_layers,
         splines_degree=real_description_parameters.splines_degree,
@@ -190,8 +193,11 @@ def Love_numbers_from_models_to_result() -> str:
         n_splines_base=real_description_parameters.n_splines_base,
         profile_precision=real_description_parameters.profile_precision,
         radius=real_description_parameters.radius if real_description_parameters.radius else Earth_radius,
-        load_description=False,
+        load_description=load_description,
     )
+
+    if load_description:
+        real_description.load(path=real_descriptions_path)
 
     # Generates degrees.
     degrees = generate_degrees_list(
@@ -210,6 +216,7 @@ def Love_numbers_from_models_to_result() -> str:
     # Computes all Love numbers.
     results_for_description_path = results_path.joinpath(real_description.id)
     run_path, log_frequency_values, anelastic_Love_numbers = Love_numbers_computing(
+        id=run_id,
         max_tol=Love_numbers_hyper_parameters.max_tol,
         decimals=Love_numbers_hyper_parameters.decimals,
         y_system_hyper_parameters=Love_numbers_hyper_parameters.y_system_hyper_parameters,

@@ -1,3 +1,4 @@
+import argparse
 from itertools import product
 from pathlib import Path
 
@@ -15,10 +16,16 @@ from utils import (
     results_path,
 )
 
+parser = argparse.ArgumentParser()
+parser.add_argument("real_description_id", type=str, required=True, help="wanted ID for the real description to load")
+parser.add_argument("figure_path_string", type=str, required=True, help="wanted path to save figure")
+
+args = parser.parse_args()
+
 
 def plot_comparative_Love_numbers(
-    real_description_id: str = "9c6d-da8b-c18d-efa0",
-    figure_path_string: str = "/home/mrousselet/Documents/Réunions/07-02/Love_numbers",
+    real_description_id: str,
+    figure_path_string: str,
     degrees_to_plot: list[int] = [2, 3, 4, 5, 10],
 ):
     """
@@ -90,4 +97,4 @@ def plot_comparative_Love_numbers(
 
 
 if __name__ == "__main__":
-    plot_comparative_Love_numbers()
+    plot_comparative_Love_numbers(real_description_id=args.real_description_id, figure_path_string=args.figure_path_string)

@@ -7,8 +7,8 @@ from numpy import linspace, log, pi
 from utils import Earth_radius, RealDescription, real_descriptions_path
 
 parser = argparse.ArgumentParser()
-parser.add_argument("real_description_id", type=str, required=True, help="wanted ID for the real description to load")
-parser.add_argument("figure_path_string", type=str, required=True, help="wanted path to save figure")
+parser.add_argument("--real_description_id", type=str, required=True, help="wanted ID for the real description to load")
+parser.add_argument("--figure_path_string", type=str, required=True, help="wanted path to save figure")
 
 args = parser.parse_args()
 

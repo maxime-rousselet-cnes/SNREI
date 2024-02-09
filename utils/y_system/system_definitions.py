@@ -1,6 +1,6 @@
 from math import factorial
 
-from numpy import Inf, array, dot, errstate, lib, nan_to_num, ndarray, sqrt
+from numpy import Inf, array, dot, errstate, lib, nan_to_num, ndarray, shape, sqrt
 
 from ..classes import DescriptionLayer
 
@@ -288,8 +288,7 @@ def solid_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: flo
         1.0
         - x1sqr / (2.0 * (2.0 * (n + 1.0) + 3.0))
         + (x1sqr**2) / (4.0 * (2.0 * (n + 1.0) + 3.0) * (2.0 * (n + 1.0) + 5.0) * 2.0)
-        - (x1sqr**3)
-        / (factorial(3) * (2.0**3) * (2.0 * (n + 1.0) + 7.0) * (2.0 * (n + 1.0) + 5.0) * (2.0 * (n + 1.0) + 3.0))
+        - (x1sqr**3) / (factorial(3) * (2.0**3) * (2.0 * (n + 1.0) + 7.0) * (2.0 * (n + 1.0) + 5.0) * (2.0 * (n + 1.0) + 3.0))
         + (x1sqr**4)
         / (
             factorial(4)
@@ -337,8 +336,7 @@ def solid_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: flo
         1.0
         - x2sqr / (2.0 * (2.0 * (n + 1.0) + 3.0))
         + (x2sqr**2) / (4.0 * (2.0 * (n + 1.0) + 3.0) * (2.0 * (n + 1.0) + 5.0) * 2.0)
-        - (x2sqr**3)
-        / (factorial(3) * (2.0**3) * (2.0 * (n + 1.0) + 7.0) * (2.0 * (n + 1.0) + 5.0) * (2.0 * (n + 1.0) + 3.0))
+        - (x2sqr**3) / (factorial(3) * (2.0**3) * (2.0 * (n + 1.0) + 7.0) * (2.0 * (n + 1.0) + 5.0) * (2.0 * (n + 1.0) + 3.0))
         + (x2sqr**4)
         / (
             factorial(4)

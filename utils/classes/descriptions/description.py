@@ -72,6 +72,12 @@ class Description:
             for variable_name, spline in layer["splines"].items():
                 if not isinstance(spline[0], list) and spline[0] == "Inf":
                     self.description_layers[i_layer].splines[variable_name] = (Inf, Inf, 0)
+                else:
+                    self.description_layers[i_layer].splines[variable_name] = (
+                        array(self.description_layers[i_layer].splines[variable_name][0]),
+                        array(self.description_layers[i_layer].splines[variable_name][1]),
+                        self.description_layers[i_layer].splines[variable_name][2],
+                    )
         if "variable_values_per_layer" in description_dict.keys():
             self.variable_values_per_layer: list[dict[str, ndarray]] = [
                 {variable_name: array(values) for variable_name, values in layer_values.items()}

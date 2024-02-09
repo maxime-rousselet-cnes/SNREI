@@ -13,15 +13,14 @@ from utils import (
     generate_log_frequency_initial_values,
     load_base_model,
     parameters_path,
+    real_descriptions_path,
     results_path,
     save_base_model,
 )
 
 parser = argparse.ArgumentParser()
-parser.add_argument("real_description_id", type=str, help="Optional wanted ID for the real description")
-parser.add_argument(
-    "load_description", type=bool, action="store_true", help="Option to tell if the description should be loaded"
-)
+parser.add_argument("--real_description_id", type=str, help="Optional wanted ID for the real description")
+parser.add_argument("--load_description", action="store_true", help="Option to tell if the description should be loaded")
 
 args = parser.parse_args()
 
@@ -50,6 +49,8 @@ def Love_number_comparative(real_description_id: Optional[str], load_description
         radius=real_description_parameters.radius if real_description_parameters.radius else Earth_radius,
         load_description=load_description,
     )
+    if load_description:
+        real_description.load(path=real_descriptions_path)
 
     # Generates degrees.
     degrees = generate_degrees_list(

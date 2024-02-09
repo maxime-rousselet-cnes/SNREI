@@ -135,7 +135,8 @@ class RealDescription(Description):
             )
 
         # Builds ID as the concatenation of the description IDs.
-        self.id = "-".join((elasticity_description.id, anelasticity_description.id, attenuation_description.id, self.id))
+        if not id:
+            self.id = "-".join((elasticity_description.id, anelasticity_description.id, attenuation_description.id, self.id))
 
         # Updates fields from elasticity description.
         self.radius_unit = elasticity_description.radius_unit

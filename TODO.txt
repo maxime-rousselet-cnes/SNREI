@@ -4,8 +4,7 @@ Verif k2:
         (3375-c3d6-ddb6-2967: 4, 100 points per layer)
         (91e5-67d2-e762-970f: 100, 10000 points per layer)
         NOT THE SAME CURBS!!! -> r function sampling were unsufficients -> test with 100000 points: 7bb3-a52c-2f7f-ef2a -> same than 10000
-
-info: with 2*pi error and 0.04 bias, results ok for A, B and C!
+    with 2*pi error and 0.04 bias, results ok for A, B and C!
 
 Urgent:
     verify curbs and k_2 with new pulsation/frequency differenciation -> OK
@@ -28,9 +27,8 @@ later:
         surface_solutiuons.py
         system_definitions.py
 
-To talk about:
+To talk about 07/02:
     - mu
     - k_2
     - sampling in x
     - lambda'
-    - spring analogy

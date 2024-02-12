@@ -55,6 +55,7 @@ class Integration(Description):
         log_frequency: float,  # Base 10 logarithm of the unitless frequency.
         use_anelasticity: bool,
         use_attenuation: bool,
+        bounded_attenuation_functions: bool,
         # Other parameters.
         id: Optional[str] = None,
     ) -> None:
@@ -132,6 +133,7 @@ class Integration(Description):
                             alpha=variables["alpha"],
                             frequency=self.frequency,
                             frequency_unit=real_description.frequency_unit,
+                            bounded_attenuation_functions=bounded_attenuation_functions,
                         )
                         complex_lambda -= 2.0 / 3.0 * delta_mu
                         complex_mu += delta_mu

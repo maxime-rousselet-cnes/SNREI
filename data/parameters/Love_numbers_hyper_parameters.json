@@ -6,6 +6,7 @@
     "decimals": 2,
     "use_anelasticity": true,
     "use_attenuation": true,
+    "bounded_attenuation_functions": true,
     "real_description_parameters": "real_description_parameters",
     "y_system_hyper_parameters": "Y_system_hyper_parameters",
     "degree_steps": "degree_steps",

@@ -63,7 +63,7 @@ class RealDescription(Description):
         real_crust: bool,
         n_splines_base: int,
         profile_precision: int,
-        # Complete description parameters.
+        # Real description parameters.
         radius: float,
         id: Optional[str] = None,
         # Loading parameters.

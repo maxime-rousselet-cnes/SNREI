@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from numpy import linspace, log, pi
+from numpy import linspace, log, ndarray, pi
 
 from utils import Earth_radius, RealDescription, real_descriptions_path
 
@@ -39,7 +39,7 @@ def plot_attenuation_functions(real_description_id: str, figure_path_string: str
     T_tab = 10 ** linspace(0, 10, 100)  # (s).
     f_tab = 1.0 / T_tab / real_description.frequency_unit
     high_frequency_domain = f_tab >= omega_m
-    f_r_f_i = ((2.0 / pi) * log(f_tab / omega_0) + 1.0j) * high_frequency_domain + (
+    f_r_f_i: ndarray[complex] = ((2.0 / pi) * log(f_tab / omega_0) + 1.0j) * high_frequency_domain + (
         (2.0 / pi) * (log(omega_m / omega_0) + (1 / alpha) * (1 - (omega_m / f_tab) ** alpha))
         + (omega_m / f_tab) ** alpha * 1.0j
     ) * (1 - high_frequency_domain)

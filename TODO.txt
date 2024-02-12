@@ -12,10 +12,17 @@ Urgent:
     plot fr and fi -> OK
     plot mu(r) -> OK
     comparative plots for h, k, k'... -> OK
-    comparative_for sampling with realistic omega band and script 06 that calls script function 02 and plot 07 with better inputs for fewer figures
+    comparative_for sampling with realistic omega band and script 06 that calls script function 02 and plot 07 with better inputs for fewer figures -> OK
+
+    Look at Alex's article (CNES mail)
+    README.md infography for code documentation
+    script_08_Love_number_comparative_for_model.py: like script 06 but with/without asthenosphere model and Dahlen attenuation
+    script_09_comparative_plots_mu_for_model.py: like 04 but ...
+    script_10_comparative_plots_Love_number_for_model.py: like 07 but ...
+
 
 Soon:
-    Ocean mask + Caron load from raw files to ocean_load: result[n, m, T] script
+    Ocean mask + Caron load from raw files (Barystatic) to ocean_load: result[n, m, T] script
     FT periodic to ocean_load_Fourier: result[n, m, frequency]
     get deformation_Fourier : result[n, m, frequency]
     get deformation: result[theta, phi, T]
@@ -28,8 +35,4 @@ later:
         surface_solutiuons.py
         system_definitions.py
 
-To talk about 07/02:
-    - mu
-    - k_2
-    - sampling in x
-    - lambda'
+To talk about 14/02: ?

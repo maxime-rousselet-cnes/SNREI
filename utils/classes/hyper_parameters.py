@@ -75,6 +75,7 @@ class LoveNumbersHyperParameters(HyperParameters):
     # Other parameters.
     use_anelasticity: bool  # Whether to use attenuation model or not.
     use_attenuation: bool  # Whether to use attenuation model or not.
+    bounded_attenuation_functions: bool  # Whether to use bounded version of attenuation functions or not.
 
     def load(self) -> None:
         """

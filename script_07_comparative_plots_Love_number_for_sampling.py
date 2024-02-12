@@ -28,8 +28,8 @@ def plot_comparative_sampling_Love_numbers(
     figure_path_string: str,
     real_description_id_parts: tuple[str, str] = ("p", "ns"),
     degrees_to_plot: list[int] = [2, 3, 4, 5, 10],
-    directions=[Direction.radial],
-    boundary_conditions=[BoundaryCondition.potential],
+    directions: list[Direction] = [Direction.radial],
+    boundary_conditions: list[BoundaryCondition] = [BoundaryCondition.potential],
     parts=["real"],
 ):
     """
@@ -88,7 +88,7 @@ def plot_comparative_sampling_Love_numbers(
             for part in parts:
                 for use_anelasticity, use_attenuation in options_list:
                     if use_anelasticity or use_attenuation:
-                        _, plots = plt.subplots(len(part_names), len(part_names), figsize=(12, 12), sharex=True, sharey=True)
+                        _, plots = plt.subplots(len(part_names), len(part_names), figsize=(18, 12), sharex=True, sharey=True)
                         for i_plot, (part_name_1, part_name_2) in enumerate(part_name_products):
                             plot = plots[i_plot // len(part_names)][i_plot % len(part_names)]
                             complex_result_values = results[part_name_1][part_name_2][use_anelasticity, use_attenuation].values[
@@ -123,9 +123,7 @@ def plot_comparative_sampling_Love_numbers(
                             + (" with attenuation" if use_attenuation else "")
                         )
                         plt.suptitle("$" + symbol + "$ " + base_title, fontsize=20)
-                        plt.show()
                         plt.savefig(figure_path.joinpath(symbol + " " + base_title + ".png"))
-                        plt.close()
 
 
 if __name__ == "__main__":

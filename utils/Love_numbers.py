@@ -42,6 +42,7 @@ def elastic_Love_numbers_computing(
                 log_frequency=Inf,
                 use_attenuation=False,
                 use_anelasticity=False,
+                bounded_attenuation_functions=False,
             ).y_system_integration(
                 n=n,
                 hyper_parameters=y_system_hyper_parameters,
@@ -58,6 +59,7 @@ def Love_numbers_computing(
     y_system_hyper_parameters: YSystemHyperParameters,
     use_anelasticity: bool,
     use_attenuation: bool,
+    bounded_attenuation_functions: bool,
     degrees: list[int],
     log_frequency_initial_values: ndarray[float],
     real_description: RealDescription,
@@ -85,6 +87,7 @@ def Love_numbers_computing(
             y_system_hyper_parameters=y_system_hyper_parameters,
             use_anelasticity=use_anelasticity,
             use_attenuation=use_attenuation,
+            bounded_attenuation_functions=bounded_attenuation_functions,
             log_frequency_initial_values=log_frequency_initial_values,
             max_tol=max_tol,
             decimals=decimals,
@@ -122,6 +125,7 @@ def anelastic_Love_number_computing_per_degree_function(
     y_system_hyper_parameters: YSystemHyperParameters,
     use_anelasticity: bool,
     use_attenuation: bool,
+    bounded_attenuation_functions: bool,
     log_frequency_initial_values: ndarray[float],
     max_tol: float,
     decimals: int,
@@ -139,6 +143,7 @@ def anelastic_Love_number_computing_per_degree_function(
                 log_frequency=log_frequency,
                 use_anelasticity=use_anelasticity,
                 use_attenuation=use_attenuation,
+                bounded_attenuation_functions=bounded_attenuation_functions,
             ).y_system_integration(
                 n=n,
                 hyper_parameters=y_system_hyper_parameters,
@@ -193,6 +198,7 @@ def Love_numbers_from_models_to_result(
         n_splines_base=real_description_parameters.n_splines_base,
         profile_precision=real_description_parameters.profile_precision,
         radius=real_description_parameters.radius if real_description_parameters.radius else Earth_radius,
+        bounded_attenuation_functions=Love_numbers_hyper_parameters.bounded_attenuation_functions,
         load_description=load_description,
     )
 
@@ -222,6 +228,7 @@ def Love_numbers_from_models_to_result(
         y_system_hyper_parameters=Love_numbers_hyper_parameters.y_system_hyper_parameters,
         use_anelasticity=Love_numbers_hyper_parameters.use_anelasticity,
         use_attenuation=Love_numbers_hyper_parameters.use_attenuation,
+        bounded_attenuation_functions=Love_numbers_hyper_parameters.bounded_attenuation_functions,
         degrees=degrees,
         log_frequency_initial_values=log_frequency_initial_values,
         real_description=real_description,

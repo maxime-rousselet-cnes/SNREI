@@ -88,7 +88,13 @@ def mu_computing(
 
 
 def delta_mu_computing(
-    mu_0: ndarray, Qmu: ndarray, omega_m: ndarray, alpha: ndarray, frequency: float, frequency_unit: float
+    mu_0: ndarray,
+    Qmu: ndarray,
+    omega_m: ndarray,
+    alpha: ndarray,
+    frequency: float,
+    frequency_unit: float,
+    bounded_attenuation_functions: bool,
 ) -> ndarray[complex]:
     """
     Computes the first order frequency dependent variation from elasticity delta_mu at frequency value frequency, given the real

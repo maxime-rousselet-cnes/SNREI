@@ -10,11 +10,13 @@
     ],
     "variable_names": [
         "omega_m",
-        "alpha"
+        "alpha",
+        "tau_M"
     ],
     "crust_values": {
         "omega_m": null,
-        "alpha": null
+        "alpha": null,
+        "tau_M": null
     },
     "polynomials": {
         "omega_m": [
@@ -34,6 +36,20 @@
         "alpha": [
             [
                 0.25,
+                0.0,
+                0.0,
+                0.0
+            ],
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ]
+        ],
+        "tau_M": [
+            [
+                20,
                 0.0,
                 0.0,
                 0.0

@@ -57,6 +57,7 @@ def plot_mu_profiles(
                 log_frequency=log10(frequency / real_description.frequency_unit),
                 use_anelasticity=use_anelasticity,
                 use_attenuation=use_attenuation,
+                bounded_attenuation_functions=False,
             )
             integrations[frequency][use_anelasticity, use_attenuation] = integration
 

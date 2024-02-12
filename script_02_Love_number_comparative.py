@@ -77,6 +77,7 @@ def Love_number_comparative(real_description_id: Optional[str], load_description
                 y_system_hyper_parameters=Love_numbers_hyper_parameters.y_system_hyper_parameters,
                 use_anelasticity=use_anelasticity,
                 use_attenuation=use_attenuation,
+                bounded_attenuation_functions=Love_numbers_hyper_parameters.bounded_attenuation_functions,
                 degrees=degrees,
                 log_frequency_initial_values=log_frequency_initial_values,
                 real_description=real_description,

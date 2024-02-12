@@ -5,6 +5,7 @@ from .classes import (
     Integration,
     LoveNumbersHyperParameters,
     RealDescription,
+    RealDescriptionParameters,
     Result,
 )
 from .constants import Earth_radius
@@ -34,6 +35,7 @@ from .plots import (
     Integration,
     LoveNumbersHyperParameters,
     RealDescription,
+    RealDescriptionParameters,
     Result,
     Earth_radius,
     generate_degrees_list,

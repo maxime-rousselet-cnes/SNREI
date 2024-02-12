@@ -12,6 +12,7 @@ Urgent:
     plot fr and fi -> OK
     plot mu(r) -> OK
     comparative plots for h, k, k'... -> OK
+    comparative_for sampling with realistic omega band and script 06 that calls script function 02 and plot 07 with better inputs for fewer figures
 
 Soon:
     Ocean mask + Caron load from raw files to ocean_load: result[n, m, T] script

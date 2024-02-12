@@ -1,3 +1,3 @@
-Tolerance inferieure degree CMB calculé avec x**n ?
-R_sc: constante d'adimensionnement en densité = rho_0(CMB+) ?
-Solution homogène instable en hauts degrés ?
+Min tolerance on degree CMB computed with x**n?
+R_sc = rho_0(CMB+)?
+Instable homogeneous solution at high degrees?

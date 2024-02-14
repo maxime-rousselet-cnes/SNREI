@@ -16,9 +16,10 @@ Urgent:
 
     Look at Alex's article (CNES mail)
     README.md infography for code documentation
-    script_08_Love_number_comparative_for_model.py: like script 06 but with/without asthenosphere model and Dahlen attenuation
-    script_09_comparative_plots_mu_for_model.py: like 04 but ...
-    script_10_comparative_plots_Love_number_for_model.py: like 07 but ...
+    script_08: script 4 version but with different tau_M values
+    script_09_Love_number_comparative_for_model.py: like script 06 but with/without asthenosphere model and Dahlen attenuation
+    script_10_comparative_plots_mu_for_model.py: like 04 but ...
+    script_11_comparative_plots_Love_number_for_model.py: like 07 but ...
 
 
 Soon:
@@ -35,4 +36,5 @@ later:
         surface_solutiuons.py
         system_definitions.py
 
-To talk about 14/02: ?
+To talk about 14/02:
+    - discuss on the needed bounded f_r and f_i (depends on T)

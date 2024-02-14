@@ -23,7 +23,7 @@ args = parser.parse_args()
 def plot_mu_profiles(
     real_description_id: str,
     figure_path_string: str,
-    period_values: list[int] = [18.6, 100, 1000],
+    period_values: list[float] = [18.6, 100.0, 1000.0],
 ):
     """
     Generates figures of mu_1/Q_0, and real and imaginary parts of mu for several period values.
@@ -123,6 +123,7 @@ def plot_mu_profiles(
             plot.set_xlabel("$\mu_{" + part + "}$ (Pa)")
             plot.set_ylabel("Depth (km)")
             plot.invert_yaxis()
+            plot.grid()
             plot.set_title("$T=" + str(period) + "$ (y)")
         plt.savefig(figure_path.joinpath("mu_" + part + ".png"))
         plt.show()

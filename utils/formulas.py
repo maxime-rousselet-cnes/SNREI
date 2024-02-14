@@ -1,4 +1,18 @@
-from numpy import convolve, cumsum, diff, errstate, log, nan_to_num, ndarray, pi, zeros
+from numpy import (
+    Inf,
+    array,
+    convolve,
+    cumsum,
+    diff,
+    errstate,
+    exp,
+    log,
+    nan_to_num,
+    ndarray,
+    pi,
+    zeros,
+)
+from scipy import integrate
 
 
 def mu_0_computing(rho_0: ndarray, Vs: ndarray) -> ndarray:
@@ -90,8 +104,9 @@ def mu_computing(
 def delta_mu_computing(
     mu_0: ndarray,
     Qmu: ndarray,
-    omega_m: ndarray,
-    alpha: ndarray,
+    omega_m_tab: ndarray,
+    tau_M_tab: ndarray,
+    alpha_tab: ndarray,
     frequency: float,
     frequency_unit: float,
     bounded_attenuation_functions: bool,
@@ -102,17 +117,41 @@ def delta_mu_computing(
     The omega_m and frequency parameters are unitless frequencies.
     """
     omega_0 = 1.0 / frequency_unit  # (Unitless frequency).
-    high_frequency_domain: ndarray[bool] = frequency >= omega_m
-    with errstate(invalid="ignore", divide="ignore"):
-        return nan_to_num(  # Alpha or omega_m may equal 0.0, meaning no attenuation should be taken into account.
-            x=(mu_0 / Qmu)
-            * (
-                ((2.0 / pi) * log(frequency / omega_0) + 1.0j) * high_frequency_domain
-                + (
-                    (2.0 / pi) * (log(omega_m / omega_0) + (1 / alpha) * (1 - (omega_m / frequency) ** alpha))
-                    + (omega_m / frequency) ** alpha * 1.0j
-                )
-                * (1 - high_frequency_domain)
-            ),
-            nan=0.0,
-        )
+    if bounded_attenuation_functions:
+        tau = lambda tau_log: exp(tau_log)
+        Y = lambda tau_log, alpha: (tau(tau_log=tau_log) ** alpha)
+        denom = lambda tau_log, omega: (1.0 + (omega * tau(tau_log=tau_log) * 1.0j))
+        integrand = lambda tau_log, omega, alpha: Y(tau_log=tau_log, alpha=alpha) / denom(tau_log=tau_log, omega=omega)
+        with errstate(invalid="ignore", divide="ignore"):
+            return (mu_0 / Qmu) * array(
+                [
+                    (
+                        0.0
+                        if omega_m <= 0.0 or tau_M <= 0.0
+                        else -integrate.quad(
+                            func=integrand,
+                            a=log(1.0 / omega_m),
+                            b=log(tau_M),
+                            args=(2.0 * pi * frequency, alpha),
+                            complex_func=True,
+                        )[0]
+                    )
+                    for alpha, omega_m, tau_M in zip(alpha_tab, omega_m_tab, tau_M_tab)
+                ]
+            )
+    else:
+        high_frequency_domain: ndarray[bool] = frequency >= omega_m_tab
+        with errstate(invalid="ignore", divide="ignore"):
+            return nan_to_num(  # Alpha or omega_m may equal 0.0, meaning no attenuation should be taken into account.
+                x=(mu_0 / Qmu)
+                * (
+                    ((2.0 / pi) * log(frequency / omega_0) + 1.0j) * high_frequency_domain
+                    + (
+                        (2.0 / pi)
+                        * (log(omega_m_tab / omega_0) + (1 / alpha_tab) * (1 - (omega_m_tab / frequency) ** alpha_tab))
+                        + (omega_m_tab / frequency) ** alpha_tab * 1.0j
+                    )
+                    * (1 - high_frequency_domain)
+                ),
+                nan=0.0,
+            )

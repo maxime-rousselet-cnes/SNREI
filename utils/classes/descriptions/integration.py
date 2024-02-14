@@ -129,8 +129,9 @@ class Integration(Description):
                         delta_mu = delta_mu_computing(
                             mu_0=variables["mu_1"],
                             Qmu=variables["Qmu"],
-                            omega_m=variables["omega_m"],
-                            alpha=variables["alpha"],
+                            omega_m_tab=variables["omega_m"],
+                            tau_M_tab=variables["tau_M"],
+                            alpha_tab=variables["alpha"],
                             frequency=self.frequency,
                             frequency_unit=real_description.frequency_unit,
                             bounded_attenuation_functions=bounded_attenuation_functions,

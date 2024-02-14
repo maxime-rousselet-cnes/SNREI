@@ -198,7 +198,6 @@ def Love_numbers_from_models_to_result(
         n_splines_base=real_description_parameters.n_splines_base,
         profile_precision=real_description_parameters.profile_precision,
         radius=real_description_parameters.radius if real_description_parameters.radius else Earth_radius,
-        bounded_attenuation_functions=Love_numbers_hyper_parameters.bounded_attenuation_functions,
         load_description=load_description,
     )
 

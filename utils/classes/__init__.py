@@ -1,5 +1,10 @@
 from .description_layer import DescriptionLayer
-from .descriptions import Integration, RealDescription
+from .descriptions import (
+    AttenuationDescription,
+    ElasticityDescription,
+    Integration,
+    RealDescription,
+)
 from .hyper_parameters import (
     LoveNumbersHyperParameters,
     RealDescriptionParameters,
@@ -9,6 +14,8 @@ from .result import BoundaryCondition, Direction, Result
 
 [
     DescriptionLayer,
+    AttenuationDescription,
+    ElasticityDescription,
     Integration,
     RealDescription,
     LoveNumbersHyperParameters,

@@ -15,6 +15,7 @@ from ...paths import (
     elasticity_descriptions_path,
     real_descriptions_path,
 )
+from ...plots import SECONDS_PER_YEAR
 from ..description_layer import DescriptionLayer
 from ..spline import Spline
 from .anelasticity_description import AnelasticityDescription
@@ -75,6 +76,8 @@ class RealDescription(Description):
         attenuation_description_from_id: Optional[str] = None,
         # Whether to load the whole real description later or not.
         load_description: bool = True,
+        # Whether to save when preprocessed or not.
+        save: bool = True,
     ) -> None:
         super().__init__(
             id=id,
@@ -88,7 +91,17 @@ class RealDescription(Description):
         # Elasticity description.
         if elasticity_description_from_id:
             # Loads elasticity description.
-            elasticity_description = ElasticityDescription(id=elasticity_description_from_id)
+            elasticity_description = ElasticityDescription(
+                radius_unit=0.0,
+                below_ICB_layers=None,
+                below_CMB_layers=None,
+                real_crust=False,
+                n_splines_base=0,
+                profile_precision=0,
+                splines_degree=0,
+                model_filename="",
+                id=elasticity_description_from_id,
+            )
             elasticity_description.load(path=elasticity_descriptions_path)
         else:
             # Builds elasticity description.
@@ -107,7 +120,17 @@ class RealDescription(Description):
         # Anelasticity description.
         if anelasticity_description_from_id:
             # Loads anelasticity description.
-            anelasticity_description = AnelasticityDescription(id=anelasticity_description_from_id)
+            anelasticity_description = AnelasticityDescription(
+                radius_unit=0.0,
+                below_ICB_layers=None,
+                below_CMB_layers=None,
+                real_crust=False,
+                n_splines_base=0,
+                profile_precision=0,
+                splines_degree=0,
+                model_filename="",
+                id=anelasticity_description_from_id,
+            )
             anelasticity_description.load(path=anelasticity_descriptions_path)
         else:
             # Builds anelasticity description.
@@ -122,7 +145,13 @@ class RealDescription(Description):
         # Attenuation description.
         if attenuation_description_from_id:
             # Loads attenuation description.
-            attenuation_description = AttenuationDescription(id=attenuation_description_from_id)
+            attenuation_description = AttenuationDescription(
+                radius_unit=0.0,
+                real_crust=False,
+                n_splines_base=0,
+                model_filename="",
+                id=attenuation_description_from_id,
+            )
             attenuation_description.load(path=attenuation_descriptions_path)
         else:
             # Builds attenuation description.
@@ -170,7 +199,8 @@ class RealDescription(Description):
         self.elasticity_description = elasticity_description.id
         self.anelasticity_description = anelasticity_description.id
         self.attenuation_description = attenuation_description.id
-        self.save(path=real_descriptions_path)
+        if save:
+            self.save(path=real_descriptions_path)
 
     def merge_descriptions(
         self,
@@ -248,6 +278,7 @@ class RealDescription(Description):
             ("eta_k", self.viscosity_unit, anelasticity_layer.splines),
             ("mu_K1", self.elasticity_unit, anelasticity_layer.splines),
             ("omega_m", self.frequency_unit, attenuation_layer.splines),
+            ("tau_M", self.period_unit / SECONDS_PER_YEAR, attenuation_layer.splines),
         ]:
             description_layer.splines[variable_name] = Spline(
                 (
@@ -295,6 +326,7 @@ class RealDescription(Description):
                     "Qmu": layer.evaluate(x=x, variable="Qmu"),
                     "alpha": layer.evaluate(x=x, variable="alpha"),
                     "omega_m": layer.evaluate(x=x, variable="omega_m"),
+                    "tau_M": layer.evaluate(x=x, variable="tau_M"),
                 }
             )
             # New explicit variables (needed) for lambda and mu complex computings.

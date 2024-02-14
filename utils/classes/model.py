@@ -41,6 +41,7 @@ class Model(BaseModel):
     #   - for attenuation part:
     #       - alpha: (Unitless).
     #       - omega_m: (Hz).
+    #       - tau_M: (y).
     polynomials: dict[str, list[list[float | str]]]
 
     def build_description_layers_list(

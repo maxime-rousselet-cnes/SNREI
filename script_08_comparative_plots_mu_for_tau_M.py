@@ -1,5 +1,6 @@
 import argparse
 from pathlib import Path
+from typing import Optional
 
 import matplotlib.pyplot as plt
 from numpy import linspace, log10, ndarray, ones, round
@@ -18,12 +19,15 @@ from utils import (
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--figure_path_string", type=str, required=True, help="wanted path to save figure")
-
+parser.add_argument(
+    "--use_anelasticity", action="store_true", help="Option to tell if the Maxwell/Burgers viscosity should be used"
+)
 args = parser.parse_args()
 
 
 def plot_mu_profiles(
     figure_path_string: str,
+    use_anelasticity: Optional[bool],
     period_values: list[float] = [18.6, 100, 1000],
     tau_M_values: list[float] = [1.0 / 12.0, 1.0, 5.0, 20.0, 100.0],
 ):
@@ -32,7 +36,7 @@ def plot_mu_profiles(
     """
     # Initializes.
     frequencies = frequencies_to_periods(period_values)  # It is OK to converts years like this. Tested.
-    figure_path = Path(figure_path_string)
+    figure_path = Path(figure_path_string.joinpath("with" + ("" if use_anelasticity else "out") + "_anelasticity"))
     figure_path.mkdir(parents=True, exist_ok=True)
     Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_base_model(
         name="Love_numbers_hyper_parameters", path=parameters_path, base_model_type=LoveNumbersHyperParameters
@@ -90,7 +94,7 @@ def plot_mu_profiles(
             integration = Integration(
                 real_description=real_description,
                 log_frequency=log10(frequency / real_description.frequency_unit),
-                use_anelasticity=False,
+                use_anelasticity=use_anelasticity,
                 use_attenuation=True,
                 bounded_attenuation_functions=True,
             )
@@ -142,4 +146,4 @@ def plot_mu_profiles(
 
 
 if __name__ == "__main__":
-    plot_mu_profiles(figure_path_string=args.figure_path_string)
+    plot_mu_profiles(figure_path_string=args.figure_path_string, use_anelasticity=args.use_anelasticity)

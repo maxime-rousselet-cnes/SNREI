@@ -1,6 +1,6 @@
 from numpy import (
-    Inf,
     array,
+    conjugate,
     convolve,
     cumsum,
     diff,
@@ -128,13 +128,15 @@ def delta_mu_computing(
                     (
                         0.0
                         if omega_m <= 0.0 or tau_M <= 0.0
-                        else -integrate.quad(
-                            func=integrand,
-                            a=log(1.0 / omega_m),
-                            b=log(tau_M),
-                            args=(2.0 * pi * frequency, alpha),
-                            complex_func=True,
-                        )[0]
+                        else -conjugate(
+                            integrate.quad(
+                                func=integrand,
+                                a=log(1.0 / omega_m),
+                                b=log(tau_M),
+                                args=(2.0 * pi * frequency, alpha),
+                                complex_func=True,
+                            )[0]
+                        )
                     )
                     for alpha, omega_m, tau_M in zip(alpha_tab, omega_m_tab, tau_M_tab)
                 ]

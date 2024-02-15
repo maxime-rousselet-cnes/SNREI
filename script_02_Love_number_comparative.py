@@ -25,7 +25,9 @@ parser.add_argument("--load_description", action="store_true", help="Option to t
 args = parser.parse_args()
 
 
-def Love_number_comparative(real_description_id: Optional[str], load_description: Optional[bool]) -> str:
+def Love_number_comparative(
+    real_description_id: Optional[str], load_description: Optional[bool], anelasticity_model_from_name: Optional[str] = None
+) -> str:
     """
     Computes anelastic Love numbers with and without anelasticity and with and without attenuation.
     """
@@ -48,6 +50,7 @@ def Love_number_comparative(real_description_id: Optional[str], load_description
         profile_precision=real_description_parameters.profile_precision,
         radius=real_description_parameters.radius if real_description_parameters.radius else Earth_radius,
         load_description=load_description,
+        anelasticity_model_from_name=anelasticity_model_from_name,
     )
     if load_description:
         real_description.load(path=real_descriptions_path)

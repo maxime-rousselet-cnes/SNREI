@@ -97,6 +97,13 @@ def plot_attenuation_functions(
             [tau_M * real_description.period_unit] * 15, linspace(start=min(f_r_f_i.imag), stop=max(f_r_f_i.imag), num=15), s=5
         )
 
+    f_r_f_i: ndarray[complex] = ((2.0 / pi) * log(f_tab / omega_0) + 1.0j) * high_frequency_domain + (
+        (2.0 / pi) * (log(omega_m / omega_0) + (1 / alpha) * (1 - (omega_m / f_tab) ** alpha))
+        + (omega_m / f_tab) ** alpha * 1.0j
+    ) * (1 - high_frequency_domain)
+    plots[0].plot(T_tab, f_r_f_i.real)
+    plots[1].plot(T_tab, f_r_f_i.imag, label="unbounded")
+
     plots[0].set_ylabel("$f_r$")
     plots[0].set_xlim(1.0, 1e10)
     plots[0].set_ylim(-120.0, 0.0)

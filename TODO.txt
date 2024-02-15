@@ -16,10 +16,8 @@ Urgent:
 
     Look at Alex's article (CNES mail)
     README.md infography for code documentation
-    script_08: script 4 version but with different tau_M values
-    script_09_Love_number_comparative_for_model.py: like script 06 but with/without asthenosphere model and Dahlen attenuation
-    script_10_comparative_plots_mu_for_model.py: like 04 but ...
-    script_11_comparative_plots_Love_number_for_model.py: like 07 but ...
+    select plots
+    LaTeX disponible figures
 
 
 Soon:

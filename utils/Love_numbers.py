@@ -173,7 +173,10 @@ def anelastic_Love_number_computing_per_degree_function(
 
 
 def Love_numbers_from_models_to_result(
-    real_description_id: Optional[str], run_id: Optional[str], load_description: Optional[bool]
+    real_description_id: Optional[str],
+    run_id: Optional[str],
+    load_description: Optional[bool],
+    anelasticity_model_from_name: Optional[str] = None,
 ) -> str:
     """
     Loads models/descriptions, hyper parameters.
@@ -199,6 +202,7 @@ def Love_numbers_from_models_to_result(
         profile_precision=real_description_parameters.profile_precision,
         radius=real_description_parameters.radius if real_description_parameters.radius else Earth_radius,
         load_description=load_description,
+        anelasticity_model_from_name=anelasticity_model_from_name,
     )
 
     if load_description:
@@ -251,7 +255,9 @@ def Love_numbers_from_models_to_result(
     anelastic_result.update_values_from_array(result_array=anelastic_Love_numbers, degrees=degrees)
     anelastic_result.save(name="anelastic_Love_numbers", path=run_path)
     # Frequencies.
-    save_base_model(obj=10.0**log_frequency_values * real_description.frequency_unit, name="frequencies", path=run_path)
+    save_base_model(obj=10.0**log_frequency_values * real_description.frequency_unit, name="frequencies", path=run_path.parent)
+    # Save degrees.
+    save_base_model(obj=degrees, name="degrees", path=results_for_description_path)
 
     # returns id.
     return run_path.name

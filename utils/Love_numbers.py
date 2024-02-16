@@ -177,6 +177,7 @@ def Love_numbers_from_models_to_result(
     run_id: Optional[str],
     load_description: Optional[bool],
     anelasticity_model_from_name: Optional[str] = None,
+    Love_numbers_hyper_parameters: Optional[LoveNumbersHyperParameters] = None,
 ) -> str:
     """
     Loads models/descriptions, hyper parameters.
@@ -184,10 +185,11 @@ def Love_numbers_from_models_to_result(
     Save Results in (.JSON) files.
     """
     # Loads hyper parameters.
-    Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_base_model(
-        name="Love_numbers_hyper_parameters", path=parameters_path, base_model_type=LoveNumbersHyperParameters
-    )
-    Love_numbers_hyper_parameters.load()
+    if not Love_numbers_hyper_parameters:
+        Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_base_model(
+            name="Love_numbers_hyper_parameters", path=parameters_path, base_model_type=LoveNumbersHyperParameters
+        )
+        Love_numbers_hyper_parameters.load()
 
     # Loads/buils the planet's description.
     real_description_parameters = Love_numbers_hyper_parameters.real_description_parameters
@@ -255,7 +257,7 @@ def Love_numbers_from_models_to_result(
     anelastic_result.update_values_from_array(result_array=anelastic_Love_numbers, degrees=degrees)
     anelastic_result.save(name="anelastic_Love_numbers", path=run_path)
     # Frequencies.
-    save_base_model(obj=10.0**log_frequency_values * real_description.frequency_unit, name="frequencies", path=run_path.parent)
+    save_base_model(obj=10.0**log_frequency_values * real_description.frequency_unit, name="frequencies", path=run_path)
     # Save degrees.
     save_base_model(obj=degrees, name="degrees", path=results_for_description_path)
 

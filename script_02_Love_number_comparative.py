@@ -26,16 +26,20 @@ args = parser.parse_args()
 
 
 def Love_number_comparative(
-    real_description_id: Optional[str], load_description: Optional[bool], anelasticity_model_from_name: Optional[str] = None
+    real_description_id: Optional[str],
+    load_description: Optional[bool],
+    anelasticity_model_from_name: Optional[str] = None,
+    Love_numbers_hyper_parameters: Optional[LoveNumbersHyperParameters] = None,
 ) -> str:
     """
     Computes anelastic Love numbers with and without anelasticity and with and without attenuation.
     """
     # Loads hyper parameters.
-    Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_base_model(
-        name="Love_numbers_hyper_parameters", path=parameters_path, base_model_type=LoveNumbersHyperParameters
-    )
-    Love_numbers_hyper_parameters.load()
+    if not Love_numbers_hyper_parameters:
+        Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_base_model(
+            name="Love_numbers_hyper_parameters", path=parameters_path, base_model_type=LoveNumbersHyperParameters
+        )
+        Love_numbers_hyper_parameters.load()
 
     # Loads/buils the planet's description.
     real_description_parameters = Love_numbers_hyper_parameters.real_description_parameters

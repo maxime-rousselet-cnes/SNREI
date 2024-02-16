@@ -64,7 +64,12 @@ def plot_comparative_Love_numbers(
     for direction in Direction:
         for boundary_condition in BoundaryCondition:
             _, plots = plt.subplots(4, 2, figsize=(14, 8), sharex=True)
-            symbol = SYMBOLS_PER_DIRECTION[direction.value] + "_n" + SYMBOLS_PER_BOUNDARY_CONDITION[boundary_condition.value]
+            symbol = (
+                ("" if direction == Direction.radial else "n ")
+                + SYMBOLS_PER_DIRECTION[direction.value]
+                + "_n"
+                + SYMBOLS_PER_BOUNDARY_CONDITION[boundary_condition.value]
+            )
             for part in ["real", "imaginary"]:
                 for use_Asthenosphere_model, bounded_attenuation_functions in options_list:
                     plot = plots[int(use_Asthenosphere_model) + 2 * int(bounded_attenuation_functions)][

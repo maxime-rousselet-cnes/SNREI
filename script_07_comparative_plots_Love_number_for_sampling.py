@@ -84,7 +84,12 @@ def plot_comparative_sampling_Love_numbers(
     # Plots Love numbers.
     for direction in directions:
         for boundary_condition in boundary_conditions:
-            symbol = SYMBOLS_PER_DIRECTION[direction.value] + "_n" + SYMBOLS_PER_BOUNDARY_CONDITION[boundary_condition.value]
+            symbol = (
+                ("" if direction == Direction.radial else "n ")
+                + SYMBOLS_PER_DIRECTION[direction.value]
+                + "_n"
+                + SYMBOLS_PER_BOUNDARY_CONDITION[boundary_condition.value]
+            )
             for part in parts:
                 for use_anelasticity, use_attenuation in options_list:
                     if use_anelasticity or use_attenuation:

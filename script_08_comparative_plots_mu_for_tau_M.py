@@ -36,7 +36,7 @@ def plot_mu_profiles(
     """
     # Initializes.
     frequencies = frequencies_to_periods(period_values)  # It is OK to converts years like this. Tested.
-    figure_path = Path(figure_path_string.joinpath("with" + ("" if use_anelasticity else "out") + "_anelasticity"))
+    figure_path = Path(figure_path_string + "with" + ("" if use_anelasticity else "out") + "_anelasticity")
     figure_path.mkdir(parents=True, exist_ok=True)
     Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_base_model(
         name="Love_numbers_hyper_parameters", path=parameters_path, base_model_type=LoveNumbersHyperParameters

@@ -50,7 +50,7 @@ def plot_mu_profiles(
 
     # Preprocesses.
     for frequency in frequencies:
-        integrations[frequency]: dict[tuple[bool, bool], Integration] = {}
+        integrations[frequency] = {}
         for use_anelasticity, use_attenuation in options_list:
             integration = Integration(
                 real_description=real_description,

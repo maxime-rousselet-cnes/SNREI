@@ -14,6 +14,10 @@ Urgent:
     comparative plots for h, k, k'... -> OK
     comparative_for sampling with realistic omega band and script 06 that calls script function 02 and plot 07 with better inputs for fewer figures -> OK
 
+    redo script_09 such as the compared models are: 
+        elastic/anelastic/attenuated/anelastic & attenuated/anelastic with Asthenosphere/attenuated with bounded functions/anelastic & attenuated with bounded functions
+        <=> everything but pass attenuation when Asthenosphere/pass bounded when not attenuation/pass Asthenosphere when not anelastic
+    redo scripts 10 & 11 such as there is no attenuation when the Asthenosphere model is used. 3 experiments.
     Look at Alex's article (CNES mail)
     README.md infography for code documentation
     select plots

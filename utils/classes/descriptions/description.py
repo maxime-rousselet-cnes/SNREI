@@ -80,7 +80,7 @@ class Description:
                     )
         if "variable_values_per_layer" in description_dict.keys():
             self.variable_values_per_layer: list[dict[str, ndarray]] = [
-                {variable_name: array(values) for variable_name, values in layer_values.items()}
+                {variable_name: array(values, dtype=float) for variable_name, values in layer_values.items()}
                 for layer_values in description_dict["variable_values_per_layer"]
             ]
 

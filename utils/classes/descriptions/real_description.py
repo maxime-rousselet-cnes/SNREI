@@ -1,7 +1,8 @@
 from typing import Optional
 
-from numpy import ndarray, pi
+from numpy import Inf, array, ndarray, pi
 
+from ...constants import SECONDS_PER_YEAR, Earth_radius
 from ...formulas import (
     b_computing,
     m_prime_computing,
@@ -15,8 +16,8 @@ from ...paths import (
     elasticity_descriptions_path,
     real_descriptions_path,
 )
-from ...plots import SECONDS_PER_YEAR
 from ..description_layer import DescriptionLayer
+from ..hyper_parameters import LoveNumbersHyperParameters
 from ..spline import Spline
 from .anelasticity_description import AnelasticityDescription
 from .attenuation_description import AttenuationDescription
@@ -49,6 +50,9 @@ class RealDescription(Description):
     splines_degree: int
 
     # Different parts descriptions.
+    elasticity_model_name: str
+    anelasticity_model_name: str
+    attenuation_model_name: str
     elasticity_description: str  # Unitless.
     anelasticicty_description: str  # With units.
     attenuation_description: str  # With units.
@@ -106,6 +110,7 @@ class RealDescription(Description):
         else:
             # Builds elasticity description.
             elasticity_description = ElasticityDescription(
+                id=elasticity_model_from_name,
                 radius_unit=radius_unit,
                 below_ICB_layers=below_ICB_layers,
                 below_CMB_layers=below_CMB_layers,
@@ -115,6 +120,7 @@ class RealDescription(Description):
                 splines_degree=splines_degree,
                 model_filename=elasticity_model_from_name if elasticity_model_from_name else "PREM",
                 load_description=False,
+                save=save,
             )
 
         # Anelasticity description.
@@ -135,11 +141,13 @@ class RealDescription(Description):
         else:
             # Builds anelasticity description.
             anelasticity_description = AnelasticityDescription(
+                id=anelasticity_model_from_name,
                 radius_unit=radius_unit,
                 real_crust=real_crust,
                 n_splines_base=n_splines_base,
                 model_filename=anelasticity_model_from_name if anelasticity_model_from_name else "test",
                 load_description=False,
+                save=save,
             )
 
         # Attenuation description.
@@ -156,11 +164,13 @@ class RealDescription(Description):
         else:
             # Builds attenuation description.
             attenuation_description = AttenuationDescription(
+                id=attenuation_model_from_name,
                 radius_unit=radius_unit,
                 real_crust=real_crust,
                 n_splines_base=n_splines_base,
                 model_filename=attenuation_model_from_name if attenuation_model_from_name else "Benjamin",
                 load_description=False,
+                save=save,
             )
 
         # Builds ID as the concatenation of the description IDs.
@@ -196,11 +206,14 @@ class RealDescription(Description):
         self.variable_values_per_layer = self.compute_variable_values()
 
         # Saves resulting real description in a (.JSON) file.
+        self.elasticity_model_name = elasticity_description.model_filename
+        self.anelasticity_model_name = anelasticity_description.model_filename
+        self.attenuation_model_name = attenuation_description.model_filename
         self.elasticity_description = elasticity_description.id
         self.anelasticity_description = anelasticity_description.id
         self.attenuation_description = attenuation_description.id
         if save:
-            self.save(path=real_descriptions_path)
+            self.real_description_save()
 
     def merge_descriptions(
         self,
@@ -364,3 +377,57 @@ class RealDescription(Description):
                 }
             )
         return variable_values
+
+    def real_description_save(self) -> None:
+        """
+        Replace carrefully infinite values by strings in fields for convenient (.JSON) writing, then save and replace back by
+        infinite values.
+        """
+        # Replace infinite values by strings.
+        for i_layer, variable_values in enumerate(self.variable_values_per_layer):
+            for variable_name, values in variable_values.items():
+                if Inf in values:
+                    self.variable_values_per_layer[i_layer][variable_name] = array(["Inf"] * len(values))
+        # Saves to (.JSON) file.
+        self.save(path=real_descriptions_path)
+        # Replace back strings by infinite values.
+        for i_layer, variable_values in enumerate(self.variable_values_per_layer):
+            for variable_name, values in variable_values.items():
+                if "Inf" in values:
+                    self.variable_values_per_layer[i_layer][variable_name] = array([Inf] * len(values))
+
+
+def real_description_from_parameters(
+    Love_numbers_hyper_parameters: LoveNumbersHyperParameters,
+    real_description_id: Optional[str] = None,
+    load_description: Optional[bool] = None,
+    elasticity_model_from_name: Optional[str] = None,
+    anelasticity_model_from_name: Optional[str] = None,
+    attenuation_model_from_name: Optional[str] = None,
+    save: bool = True,
+) -> RealDescription:
+    """
+    Builds a real description instance given the needed hyper parameters.
+    """
+    real_description_parameters = Love_numbers_hyper_parameters.real_description_parameters
+    real_description = RealDescription(
+        id=real_description_id,
+        below_ICB_layers=real_description_parameters.below_ICB_layers,
+        below_CMB_layers=real_description_parameters.below_CMB_layers,
+        splines_degree=real_description_parameters.splines_degree,
+        radius_unit=real_description_parameters.radius_unit if real_description_parameters.radius_unit else Earth_radius,
+        real_crust=real_description_parameters.real_crust,
+        n_splines_base=real_description_parameters.n_splines_base,
+        profile_precision=real_description_parameters.profile_precision,
+        radius=real_description_parameters.radius if real_description_parameters.radius else Earth_radius,
+        load_description=False if load_description is None else load_description,
+        elasticity_model_from_name=elasticity_model_from_name,
+        anelasticity_model_from_name=anelasticity_model_from_name,
+        attenuation_model_from_name=attenuation_model_from_name,
+        save=save,
+    )
+
+    if load_description:
+        real_description.load(path=real_descriptions_path)
+
+    return real_description

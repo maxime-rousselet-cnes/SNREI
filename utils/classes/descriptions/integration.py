@@ -7,6 +7,7 @@ from scipy.integrate import OdeSolution
 from ...formulas import (
     b_computing,
     delta_mu_computing,
+    f_attenuation_computing,
     lambda_computing,
     m_prime_computing,
     mu_computing,
@@ -126,15 +127,26 @@ class Integration(Description):
 
                     # Attenuation.
                     if use_attenuation:
-                        delta_mu = delta_mu_computing(
-                            mu_0=variables["mu_1"],
-                            Qmu=variables["Qmu"],
+                        # Updates with attenuation functions f_r and f_i.
+                        f = f_attenuation_computing(
                             omega_m_tab=variables["omega_m"],
                             tau_M_tab=variables["tau_M"],
                             alpha_tab=variables["alpha"],
                             frequency=self.frequency,
                             frequency_unit=real_description.frequency_unit,
                             bounded_attenuation_functions=bounded_attenuation_functions,
+                        )
+                        description_layer.splines.update(
+                            {
+                                "f_r": interpolate.splrep(x=variables["x"], y=f.real),
+                                "f_i": interpolate.splrep(x=variables["x"], y=f.imag),
+                            }
+                        )
+                        # Adds delta mu, computed using f_r and f_i.
+                        delta_mu = delta_mu_computing(
+                            mu_0=variables["mu_1"],
+                            Qmu=variables["Qmu"],
+                            f=f,
                         )
                         complex_lambda -= 2.0 / 3.0 * delta_mu
                         complex_mu += delta_mu

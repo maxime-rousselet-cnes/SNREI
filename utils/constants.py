@@ -3,3 +3,6 @@ G = 6.67430e-11
 
 # Earth mean radius (m).
 Earth_radius = 6.371e6
+
+# s.y^-1
+SECONDS_PER_YEAR = 365.25 * 86400

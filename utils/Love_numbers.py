@@ -1,3 +1,4 @@
+from itertools import product
 from multiprocessing import Pool
 from pathlib import Path
 from typing import Optional
@@ -11,15 +12,14 @@ from .classes import (
     RealDescription,
     Result,
     YSystemHyperParameters,
+    load_Love_numbers_hyper_parameters,
+    real_description_from_parameters,
 )
-from .constants import Earth_radius
-from .database import (
-    generate_degrees_list,
-    generate_id,
-    load_base_model,
-    save_base_model,
-)
-from .paths import parameters_path, real_descriptions_path, results_path
+from .database import generate_degrees_list, save_base_model
+from .paths import results_path
+
+BOOLEANS = [False, True]
+SAMPLINGS = {"low": 10, "mid": 100, "high": 1000}
 
 
 def elastic_Love_numbers_computing(
@@ -53,6 +53,68 @@ def elastic_Love_numbers_computing(
         return array(p.map(func=elastic_Love_number_computing_per_degree, iterable=degrees))
 
 
+def save_frequencies(log_frequency_values: ndarray[float], frequency_unit: float, path: Path) -> None:
+    """
+    Maps back log unitless frequencies to (Hz) and save to (.JSON) file.
+    """
+    save_base_model(obj=10.0**log_frequency_values * frequency_unit, name="frequencies", path=path)
+
+
+def anelastic_Love_number_computing_per_degree_function(
+    n: int,
+    real_description: RealDescription,
+    y_system_hyper_parameters: YSystemHyperParameters,
+    use_anelasticity: bool,
+    use_attenuation: bool,
+    bounded_attenuation_functions: bool,
+    log_frequency_initial_values: ndarray[float],
+    max_tol: float,
+    decimals: int,
+    result_per_degree_path: Path,
+) -> tuple[ndarray[float], ndarray[complex]]:
+    """
+    Computes Love numbers for all frequencies, for a given degree.
+    """
+
+    # Defines a callable that computes Love numbers for an array of log10(frequency/ unit_frequency) values.
+    Love_number_computing_parallel = lambda log_frequency_values: array(
+        [
+            Integration(
+                real_description=real_description,
+                log_frequency=log_frequency,
+                use_anelasticity=use_anelasticity,
+                use_attenuation=use_attenuation,
+                bounded_attenuation_functions=bounded_attenuation_functions,
+            ).y_system_integration(
+                n=n,
+                hyper_parameters=y_system_hyper_parameters,
+            )
+            for log_frequency in log_frequency_values
+        ]
+    )
+
+    # Processes for frequencies. Adaptative step for precise curvature.
+    log_frequency_values, Love_numbers = precise_curvature(
+        x_initial_values=log_frequency_initial_values,
+        f=Love_number_computing_parallel,
+        max_tol=max_tol,
+        decimals=decimals,
+    )
+
+    # Saves single degree results.
+    path_for_degree = result_per_degree_path.joinpath(str(n))
+    save_frequencies(
+        log_frequency_values=log_frequency_values, frequency_unit=real_description.frequency_unit, path=path_for_degree
+    )
+    save_base_model(
+        obj={"real": Love_numbers.real, "imag": Love_numbers.imag},
+        name="Love_numbers",
+        path=path_for_degree,
+    )
+
+    return log_frequency_values, Love_numbers
+
+
 def Love_numbers_computing(
     max_tol: float,
     decimals: int,
@@ -64,14 +126,13 @@ def Love_numbers_computing(
     log_frequency_initial_values: ndarray[float],
     real_description: RealDescription,
     runs_path: Path,
-    id: Optional[str] = None,
+    run_id: str,
 ) -> tuple[Path, ndarray, ndarray]:
     """
     Performs Love numbers computing (n, frequency) with given real description and hyper-parameters.
     """
     # Initializes the run.
-    id_run = id if id else generate_id()
-    run_path = runs_path.joinpath(id_run)
+    run_path = runs_path.joinpath(run_id)
     result_per_degree_path = run_path.joinpath("per_degree")
 
     # Anelastic case.
@@ -119,66 +180,42 @@ def Love_numbers_computing(
     )
 
 
-def anelastic_Love_number_computing_per_degree_function(
-    n: int,
-    real_description: RealDescription,
-    y_system_hyper_parameters: YSystemHyperParameters,
-    use_anelasticity: bool,
-    use_attenuation: bool,
-    bounded_attenuation_functions: bool,
-    log_frequency_initial_values: ndarray[float],
-    max_tol: float,
-    decimals: int,
-    result_per_degree_path: Path,
-) -> tuple[ndarray[float], ndarray[complex]]:
+def gets_run_id(Love_numbers_hyper_parameters: LoveNumbersHyperParameters) -> str:
     """
-    Computes Love numbers for all frequencies, for a given degree.
+    Generates an ID for a run using its hyper parameters.
     """
-
-    # Defines a callable that computes Love numbers for an array of log10(frequency/ unit_frequency) values.
-    Love_number_computing_parallel = lambda log_frequency_values: array(
-        [
-            Integration(
-                real_description=real_description,
-                log_frequency=log_frequency,
-                use_anelasticity=use_anelasticity,
-                use_attenuation=use_attenuation,
-                bounded_attenuation_functions=bounded_attenuation_functions,
-            ).y_system_integration(
-                n=n,
-                hyper_parameters=y_system_hyper_parameters,
-            )
-            for log_frequency in log_frequency_values
-        ]
+    return "_".join(
+        (
+            "anelasticity" if Love_numbers_hyper_parameters.use_anelasticity else "",
+            "bouded" if Love_numbers_hyper_parameters.bounded_attenuation_functions else "",
+            "attenuation" if Love_numbers_hyper_parameters.use_attenuation else "",
+        )
     )
 
-    # Processes for frequencies. Adaptative step for precise curvature.
-    log_frequency_values, Love_numbers = precise_curvature(
-        x_initial_values=log_frequency_initial_values,
-        f=Love_number_computing_parallel,
-        max_tol=max_tol,
-        decimals=decimals,
-    )
 
-    # Saves single degree results.
-    path_for_degree = result_per_degree_path.joinpath(str(n))
-    save_base_model(obj=log_frequency_values, name="frequencies", path=path_for_degree)
-    save_base_model(
-        obj={"real": Love_numbers.real, "imag": Love_numbers.imag},
-        name="Love_numbers",
-        path=path_for_degree,
+def generate_log_frequency_initial_values(
+    frequency_min: float, frequency_max: float, n_frequency_0: int, frequency_unit: float
+) -> ndarray:
+    """
+    Generates an array of logarithm-spaced frequency values.
+    """
+    return linspace(
+        start=log10(frequency_min / frequency_unit),
+        stop=log10(frequency_max / frequency_unit),
+        num=n_frequency_0,
     )
-
-    return log_frequency_values, Love_numbers
 
 
 def Love_numbers_from_models_to_result(
     real_description_id: Optional[str],
-    run_id: Optional[str],
-    load_description: Optional[bool],
+    run_id: Optional[str] = None,
+    load_description: Optional[bool] = None,
+    elasticity_model_from_name: Optional[str] = None,
     anelasticity_model_from_name: Optional[str] = None,
+    attenuation_model_from_name: Optional[str] = None,
     Love_numbers_hyper_parameters: Optional[LoveNumbersHyperParameters] = None,
-) -> str:
+    save: bool = True,
+) -> None:
     """
     Loads models/descriptions, hyper parameters.
     Compute elastic and anelastic Love numbers.
@@ -186,29 +223,27 @@ def Love_numbers_from_models_to_result(
     """
     # Loads hyper parameters.
     if not Love_numbers_hyper_parameters:
-        Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_base_model(
-            name="Love_numbers_hyper_parameters", path=parameters_path, base_model_type=LoveNumbersHyperParameters
-        )
-        Love_numbers_hyper_parameters.load()
+        Love_numbers_hyper_parameters = load_Love_numbers_hyper_parameters()
+
+    # Generates an ID for the run.
+    if not run_id:
+        run_id = gets_run_id(Love_numbers_hyper_parameters=Love_numbers_hyper_parameters)
+
+    # Eventually stops.
+    if Love_numbers_hyper_parameters.bounded_attenuation_functions and not Love_numbers_hyper_parameters.use_attenuation:
+        print("Skip description", real_description_id, "- run ", run_id, "because of incompatible attenuation options.")
+        return
 
     # Loads/buils the planet's description.
-    real_description_parameters = Love_numbers_hyper_parameters.real_description_parameters
-    real_description = RealDescription(
-        id=real_description_id,
-        below_ICB_layers=real_description_parameters.below_ICB_layers,
-        below_CMB_layers=real_description_parameters.below_CMB_layers,
-        splines_degree=real_description_parameters.splines_degree,
-        radius_unit=real_description_parameters.radius_unit if real_description_parameters.radius_unit else Earth_radius,
-        real_crust=real_description_parameters.real_crust,
-        n_splines_base=real_description_parameters.n_splines_base,
-        profile_precision=real_description_parameters.profile_precision,
-        radius=real_description_parameters.radius if real_description_parameters.radius else Earth_radius,
+    real_description = real_description_from_parameters(
+        Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+        real_description_id=real_description_id,
         load_description=load_description,
+        elasticity_model_from_name=elasticity_model_from_name,
         anelasticity_model_from_name=anelasticity_model_from_name,
+        attenuation_model_from_name=attenuation_model_from_name,
+        save=save,
     )
-
-    if load_description:
-        real_description.load(path=real_descriptions_path)
 
     # Generates degrees.
     degrees = generate_degrees_list(
@@ -227,7 +262,6 @@ def Love_numbers_from_models_to_result(
     # Computes all Love numbers.
     results_for_description_path = results_path.joinpath(real_description.id)
     run_path, log_frequency_values, anelastic_Love_numbers = Love_numbers_computing(
-        id=run_id,
         max_tol=Love_numbers_hyper_parameters.max_tol,
         decimals=Love_numbers_hyper_parameters.decimals,
         y_system_hyper_parameters=Love_numbers_hyper_parameters.y_system_hyper_parameters,
@@ -238,6 +272,7 @@ def Love_numbers_from_models_to_result(
         log_frequency_initial_values=log_frequency_initial_values,
         real_description=real_description,
         runs_path=results_for_description_path.joinpath("runs"),
+        run_id=run_id,
     )
 
     # Builds result structures and saves to (.JSON) files.
@@ -257,22 +292,143 @@ def Love_numbers_from_models_to_result(
     anelastic_result.update_values_from_array(result_array=anelastic_Love_numbers, degrees=degrees)
     anelastic_result.save(name="anelastic_Love_numbers", path=run_path)
     # Frequencies.
-    save_base_model(obj=10.0**log_frequency_values * real_description.frequency_unit, name="frequencies", path=run_path)
+    save_frequencies(log_frequency_values=log_frequency_values, frequency_unit=real_description.frequency_unit, path=run_path)
     # Save degrees.
     save_base_model(obj=degrees, name="degrees", path=results_for_description_path)
 
-    # returns id.
-    return run_path.name
+    # Prints status.
+    print("Finished description", real_description_id, "- run", run_id)
 
 
-def generate_log_frequency_initial_values(
-    frequency_min: float, frequency_max: float, n_frequency_0: int, frequency_unit: float
-) -> ndarray:
+def Love_number_comparative_for_options(
+    real_description_id: str,
+    load_description: Optional[bool],
+    elasticity_model_from_name: Optional[str] = None,
+    anelasticity_model_from_name: Optional[str] = None,
+    attenuation_model_from_name: Optional[str] = None,
+    Love_numbers_hyper_parameters: Optional[LoveNumbersHyperParameters] = None,
+) -> None:
     """
-    Generates an array of logarithm-spaced frequency values.
+    Computes anelastic Love numbers by iterating on run options: uses long term anelasticity or attenuation or both,
+    with/without bounded functions when it is possible.
     """
-    return linspace(
-        start=log10(frequency_min / frequency_unit),
-        stop=log10(frequency_max / frequency_unit),
-        num=n_frequency_0,
+    # Loads hyper parameters.
+    if not Love_numbers_hyper_parameters:
+        Love_numbers_hyper_parameters = load_Love_numbers_hyper_parameters()
+
+    # Eventually builds description.
+    real_description = real_description_from_parameters(
+        Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+        real_description_id=real_description_id,
+        load_description=load_description,
+        elasticity_model_from_name=elasticity_model_from_name,
+        anelasticity_model_from_name=anelasticity_model_from_name,
+        attenuation_model_from_name=attenuation_model_from_name,
     )
+
+    # Loops on boolean options.
+    for use_anelasticity, use_attenuation, bounded_attenuation_functions in product(BOOLEANS, BOOLEANS, BOOLEANS):
+        if use_anelasticity or use_attenuation:
+            Love_numbers_hyper_parameters.use_anelasticity = use_anelasticity
+            Love_numbers_hyper_parameters.use_attenuation = use_attenuation
+            Love_numbers_hyper_parameters.bounded_attenuation_functions = bounded_attenuation_functions
+            Love_numbers_from_models_to_result(
+                real_description_id=real_description.id,
+                load_description=True,
+                Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+            )
+
+
+def Love_number_comparative_for_sampling(
+    initial_real_description_id: str,
+    load_initial_description: Optional[bool] = None,
+    profile_precisions: dict[str, int] = SAMPLINGS,
+    n_splines_bases: dict[str, int] = SAMPLINGS,
+) -> None:
+    """
+    Computes anelastic Love numbers by iterating on description sampling parameters.
+    """
+    # Loads hyper parameters.
+    Love_numbers_hyper_parameters = load_Love_numbers_hyper_parameters()
+
+    # Eventually builds description.
+    initial_real_description = real_description_from_parameters(
+        Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+        real_description_id=initial_real_description_id,
+        load_description=load_initial_description,
+        save=False,
+    )
+
+    # Sets boolean options to worst case in terms of variations with frequency.
+    Love_numbers_hyper_parameters.use_anelasticity = True
+    Love_numbers_hyper_parameters.use_attenuation = True
+    run_id = gets_run_id(Love_numbers_hyper_parameters=Love_numbers_hyper_parameters)
+
+    # Iterates on sampling parameters.
+    for (profile_precision_name_part, profile_precision), (n_splines_base_name_part, n_splines_base) in product(
+        profile_precisions.items(), n_splines_bases.items()
+    ):
+        Love_numbers_hyper_parameters.real_description_parameters.profile_precision = profile_precision
+        Love_numbers_hyper_parameters.real_description_parameters.n_splines_base = n_splines_base
+        Love_numbers_from_models_to_result(
+            real_description_id=profile_precision_name_part + "_p_" + n_splines_base_name_part + "_ns",
+            run_id=run_id,
+            load_description=False,
+            elasticity_model_from_name=initial_real_description.elasticity_model_name,
+            anelasticity_model_from_name=initial_real_description.anelasticity_model_name,
+            attenuation_model_from_name=initial_real_description.attenuation_model_name,
+            Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+        )
+
+
+def Love_number_comparative_for_model(
+    initial_real_description_id: str,
+    load_initial_description: Optional[bool] = None,
+    elasticity_model_names: Optional[list[str]] = None,
+    anelasticity_model_names: Optional[list[str]] = None,
+    attenuation_model_names: Optional[list[str]] = None,
+) -> None:
+    """
+    Computes anelastic Love numbers by iterating on:
+        - run options: uses long term anelasticity or attenuation or both, with/without bounded functions when it is possible.
+        - models: A real description is used per triplet of:
+            - 'elasticity_model_name'
+            - 'anelasticity_model_name'
+            - 'attenuation_model_name'
+    """
+    # Loads hyper parameters.
+    Love_numbers_hyper_parameters = load_Love_numbers_hyper_parameters()
+
+    # Eventually builds description.
+    initial_real_description = real_description_from_parameters(
+        Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+        real_description_id=initial_real_description_id,
+        load_description=load_initial_description,
+        save=False,
+    )
+
+    # Builds dummy lists for unmodified models.
+    if not elasticity_model_names:
+        elasticity_model_names = [initial_real_description.elasticity_model_name]
+    if not anelasticity_model_names:
+        anelasticity_model_names = [initial_real_description.anelasticity_model_name]
+    if not attenuation_model_names:
+        attenuation_model_names = [initial_real_description.attenuation_model_name]
+
+    for elasticity_model_name, anelasticity_model_name, attenuation_model_name in product(
+        elasticity_model_names, anelasticity_model_names, attenuation_model_names
+    ):
+        Love_number_comparative_for_options(
+            real_description_id=(
+                initial_real_description_id
+                if (elasticity_model_name == initial_real_description.elasticity_model_name)
+                and (anelasticity_model_name == initial_real_description.anelasticity_model_name)
+                and (attenuation_model_name == initial_real_description.attenuation_model_name)
+                else "-".join((elasticity_model_name, anelasticity_model_name, attenuation_model_name))
+            ),
+            load_description=False,
+            elasticity_model_from_name=elasticity_model_name,
+            anelasticity_model_from_name=anelasticity_model_name,
+            attenuation_model_from_name=attenuation_model_name,
+            Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+        )

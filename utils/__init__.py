@@ -1,65 +1,52 @@
-from .abstract_computing import interpolate_all
 from .classes import (
-    AttenuationDescription,
     BoundaryCondition,
     Direction,
-    ElasticityDescription,
     Integration,
     LoveNumbersHyperParameters,
+    Model,
     RealDescription,
-    RealDescriptionParameters,
     Result,
+    load_Love_numbers_hyper_parameters,
+    real_description_from_parameters,
 )
-from .constants import Earth_radius
-from .database import generate_degrees_list, load_base_model, save_base_model
+from .database import load_base_model, save_base_model
+from .formulas import frequencies_to_periods
 from .Love_numbers import (
-    Love_numbers_computing,
+    Love_number_comparative_for_model,
+    Love_number_comparative_for_options,
+    Love_number_comparative_for_sampling,
     Love_numbers_from_models_to_result,
     elastic_Love_numbers_computing,
-    generate_log_frequency_initial_values,
 )
 from .paths import (
-    attenuation_descriptions_path,
+    attenuation_models_path,
     descriptions_path,
-    elasticity_descriptions_path,
+    figures_path,
     parameters_path,
-    real_descriptions_path,
     results_path,
-)
-from .plots import (
-    SECONDS_PER_YEAR,
-    SYMBOLS_PER_BOUNDARY_CONDITION,
-    SYMBOLS_PER_DIRECTION,
-    frequencies_to_periods,
 )
 
 [
-    interpolate_all,
-    AttenuationDescription,
     BoundaryCondition,
     Direction,
-    ElasticityDescription,
     Integration,
     LoveNumbersHyperParameters,
+    Model,
     RealDescription,
-    RealDescriptionParameters,
     Result,
-    Earth_radius,
-    generate_degrees_list,
+    load_Love_numbers_hyper_parameters,
+    real_description_from_parameters,
     load_base_model,
     save_base_model,
-    Love_numbers_computing,
+    frequencies_to_periods,
+    Love_number_comparative_for_model,
+    Love_number_comparative_for_options,
+    Love_number_comparative_for_sampling,
     Love_numbers_from_models_to_result,
     elastic_Love_numbers_computing,
-    generate_log_frequency_initial_values,
-    attenuation_descriptions_path,
+    attenuation_models_path,
     descriptions_path,
-    elasticity_descriptions_path,
+    figures_path,
     parameters_path,
-    real_descriptions_path,
     results_path,
-    SECONDS_PER_YEAR,
-    SYMBOLS_PER_BOUNDARY_CONDITION,
-    SYMBOLS_PER_DIRECTION,
-    frequencies_to_periods,
 ]

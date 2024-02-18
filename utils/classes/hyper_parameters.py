@@ -106,3 +106,14 @@ class LoveNumbersHyperParameters(HyperParameters):
                 name=self.degree_thresholds if self.degree_thresholds else "degree_thresholds",
                 path=parameters_path,
             )
+
+
+def load_Love_numbers_hyper_parameters() -> LoveNumbersHyperParameters:
+    """
+    Routine that gets Love numbers hyper parameters from (.JSON) file.
+    """
+    Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_base_model(
+        name="Love_numbers_hyper_parameters", path=parameters_path, base_model_type=LoveNumbersHyperParameters
+    )
+    Love_numbers_hyper_parameters.load()
+    return Love_numbers_hyper_parameters

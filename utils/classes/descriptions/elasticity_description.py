@@ -40,6 +40,7 @@ class ElasticityDescription(Description):
         models_path: Path = elasticity_models_path,
         id: Optional[str] = None,
         load_description: bool = True,
+        save: bool = True,
     ) -> None:
         if load_description:
             super().__init__(id=id)
@@ -112,7 +113,8 @@ class ElasticityDescription(Description):
         self.splines_degree = splines_degree
 
         # Saves in (.JSON) file.
-        self.save(path=elasticity_descriptions_path)
+        if save:
+            self.save(path=elasticity_descriptions_path)
 
     def find_fluid_layers(self, layer_names: list[str]) -> tuple[int, int]:
         """

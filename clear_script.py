@@ -1,3 +1,8 @@
+# Clears dataset folders:
+#   > data
+#       > descriptions
+#       > results
+
 from shutil import rmtree
 
 from utils import descriptions_path, results_path

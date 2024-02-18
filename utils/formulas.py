@@ -1,6 +1,5 @@
 from numpy import (
     array,
-    conjugate,
     convolve,
     cumsum,
     diff,
@@ -13,6 +12,20 @@ from numpy import (
     zeros,
 )
 from scipy import integrate
+
+from .constants import SECONDS_PER_YEAR
+
+SYMBOLS_PER_DIRECTION = ["h", "l", "k"]
+SYMBOLS_PER_BOUNDARY_CONDITION = ["'", "*", ""]
+
+
+def frequencies_to_periods(
+    frequencies: ndarray | list[float],
+) -> ndarray:
+    """
+    Converts tab from (Hz) to (y). Works also from (y) to (Hz).
+    """
+    return (1.0 / SECONDS_PER_YEAR) / array(frequencies)
 
 
 def mu_0_computing(rho_0: ndarray, Vs: ndarray) -> ndarray:
@@ -101,9 +114,7 @@ def mu_computing(
     return mu_0 * (1 - m_prime) / (1 + b)
 
 
-def delta_mu_computing(
-    mu_0: ndarray,
-    Qmu: ndarray,
+def f_attenuation_computing(
     omega_m_tab: ndarray,
     tau_M_tab: ndarray,
     alpha_tab: ndarray,
@@ -112,8 +123,7 @@ def delta_mu_computing(
     bounded_attenuation_functions: bool,
 ) -> ndarray[complex]:
     """
-    Computes the first order frequency dependent variation from elasticity delta_mu at frequency value frequency, given the real
-    elastic modulus mu_0, the elasticicty's quality factor Qmu and generalized attenuation parameters omega_m and alpha.
+    computes the attenuation function f using parameters omega_m and alpha.
     The omega_m and frequency parameters are unitless frequencies.
     """
     omega_0 = 1.0 / frequency_unit  # (Unitless frequency).
@@ -123,20 +133,18 @@ def delta_mu_computing(
         denom = lambda tau_log, omega: (1.0 + (omega * tau(tau_log=tau_log) * 1.0j))
         integrand = lambda tau_log, omega, alpha: Y(tau_log=tau_log, alpha=alpha) / denom(tau_log=tau_log, omega=omega)
         with errstate(invalid="ignore", divide="ignore"):
-            return (mu_0 / Qmu) * array(
+            return array(
                 [
                     (
                         0.0
                         if omega_m <= 0.0 or tau_M <= 0.0
-                        else -conjugate(
-                            integrate.quad(
-                                func=integrand,
-                                a=log(1.0 / omega_m),
-                                b=log(tau_M),
-                                args=(2.0 * pi * frequency, alpha),
-                                complex_func=True,
-                            )[0]
-                        )
+                        else -integrate.quad(
+                            func=integrand,
+                            a=log(1.0 / omega_m),
+                            b=log(tau_M),
+                            args=(2.0 * pi * frequency, alpha),
+                            complex_func=True,
+                        )[0]
                     )
                     for alpha, omega_m, tau_M in zip(alpha_tab, omega_m_tab, tau_M_tab)
                 ]
@@ -144,16 +152,24 @@ def delta_mu_computing(
     else:
         high_frequency_domain: ndarray[bool] = frequency >= omega_m_tab
         with errstate(invalid="ignore", divide="ignore"):
-            return nan_to_num(  # Alpha or omega_m may equal 0.0, meaning no attenuation should be taken into account.
-                x=(mu_0 / Qmu)
-                * (
-                    ((2.0 / pi) * log(frequency / omega_0) + 1.0j) * high_frequency_domain
-                    + (
-                        (2.0 / pi)
-                        * (log(omega_m_tab / omega_0) + (1 / alpha_tab) * (1 - (omega_m_tab / frequency) ** alpha_tab))
-                        + (omega_m_tab / frequency) ** alpha_tab * 1.0j
-                    )
-                    * (1 - high_frequency_domain)
-                ),
+            return nan_to_num(  # Alpha or omega_m may be equal to 0.0, meaning no attenuation should be taken into account.
+                x=((2.0 / pi) * log(frequency / omega_0) + 1.0j) * high_frequency_domain
+                + (
+                    (2.0 / pi) * (log(omega_m_tab / omega_0) + (1 / alpha_tab) * (1 - (omega_m_tab / frequency) ** alpha_tab))
+                    + (omega_m_tab / frequency) ** alpha_tab * 1.0j
+                )
+                * (1 - high_frequency_domain),
                 nan=0.0,
             )
+
+
+def delta_mu_computing(mu_0: ndarray, Qmu: ndarray, f: ndarray[complex]) -> ndarray[complex]:
+    """
+    Computes the first order frequency dependent variation from elasticity delta_mu at frequency value frequency, given the real
+    elastic modulus mu_0, the elasticicty's quality factor Qmu and attenuation function f.
+    """
+    with errstate(invalid="ignore", divide="ignore"):
+        return nan_to_num(  # Qmu may be equal to infinity, meaning no attenuation should be taken into account.
+            x=(mu_0 / Qmu) * f,
+            nan=0.0,
+        )

@@ -19,6 +19,7 @@ class AttenuationDescription(Description):
         models_path: Path = attenuation_models_path,
         id: Optional[str] = None,
         load_description: bool = True,
+        save: bool = True,
     ) -> None:
         if load_description:
             super().__init__(id=id)
@@ -31,4 +32,5 @@ class AttenuationDescription(Description):
             id=id,
             model_filename=model_filename,
         )
-        self.save(path=attenuation_descriptions_path)
+        if save:
+            self.save(path=attenuation_descriptions_path)

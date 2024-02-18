@@ -68,11 +68,9 @@ class Result:
             direction: {
                 boundary_condition: result_array[:, :, i_direction + 3 * i_boundary_condition]
                 * (radial_factor if direction == Direction.radial else non_radial_factor)
-                for i_boundary_condition, boundary_condition in enumerate(
-                    [BoundaryCondition.load, BoundaryCondition.shear, BoundaryCondition.potential]
-                )
+                for i_boundary_condition, boundary_condition in enumerate(BoundaryCondition)
             }
-            for i_direction, direction in enumerate([Direction.radial, Direction.tangential, Direction.potential])
+            for i_direction, direction in enumerate(Direction)
         }
 
     def save(self, name: str, path: Path):
@@ -109,11 +107,11 @@ class Result:
         result: dict[str, dict[str, dict[str, list[float]]]] = loaded_content["values"]
         self.hyper_parameters = (HyperParameters(**loaded_content["hyper_parameters"]),)
         self.values = {
-            Direction.radial if direction == "1" else (Direction.tangential if direction == "2" else Direction.potential): {
+            Direction.radial if direction == "0" else (Direction.tangential if direction == "1" else Direction.potential): {
                 (
                     BoundaryCondition.load
-                    if boundary_condition == "1"
-                    else (BoundaryCondition.shear if boundary_condition == "2" else BoundaryCondition.potential)
+                    if boundary_condition == "0"
+                    else (BoundaryCondition.shear if boundary_condition == "1" else BoundaryCondition.potential)
                 ): array(sub_values["real"])
                 + (0.0 if not ("imag" in sub_values.keys()) else array(sub_values["imag"])) * 1.0j
                 for boundary_condition, sub_values in values.items()

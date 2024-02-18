@@ -17,3 +17,5 @@ real_descriptions_path = descriptions_path.joinpath("real_descriptions")
 
 
 results_path = data_path.joinpath("results")
+
+figures_path = data_path.joinpath("figures")

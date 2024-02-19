@@ -10,7 +10,6 @@ from utils import Love_number_comparative_for_options
 parser = argparse.ArgumentParser()
 parser.add_argument("--real_description_id", type=str, required=True, help="Optional wanted ID for the real description")
 parser.add_argument("--load_description", action="store_true", help="Option to tell if the description should be loaded")
-
 args = parser.parse_args()
 
 

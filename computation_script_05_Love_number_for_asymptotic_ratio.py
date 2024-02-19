@@ -6,7 +6,7 @@
 
 import argparse
 
-from utils import Love_number_comparative_for_model
+from utils import Love_number_comparative_for_asymptotic_ratio
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -18,8 +18,9 @@ parser.add_argument(
 args = parser.parse_args()
 
 if __name__ == "__main__":
-    Love_number_comparative_for_model(
+    Love_number_comparative_for_asymptotic_ratio(
         initial_real_description_id=args.initial_real_description_id,
+        asymptotic_ratios=[[1.0, 1.0], [0.5, 1.0], [0.2, 1.0], [0.1, 1.0], [0.05, 1.0]],
         load_initial_description=args.load_initial_description,
         anelasticity_model_names=["test", "test-low-viscosity-Asthenosphere"],
     )

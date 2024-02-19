@@ -9,9 +9,11 @@ from .classes import (
     load_Love_numbers_hyper_parameters,
     real_description_from_parameters,
 )
+from .constants import SECONDS_PER_YEAR
 from .database import load_base_model, save_base_model
 from .formulas import frequencies_to_periods
 from .Love_numbers import (
+    Love_number_comparative_for_asymptotic_ratio,
     Love_number_comparative_for_model,
     Love_number_comparative_for_options,
     Love_number_comparative_for_sampling,
@@ -36,9 +38,11 @@ from .paths import (
     Result,
     load_Love_numbers_hyper_parameters,
     real_description_from_parameters,
+    SECONDS_PER_YEAR,
     load_base_model,
     save_base_model,
     frequencies_to_periods,
+    Love_number_comparative_for_asymptotic_ratio,
     Love_number_comparative_for_model,
     Love_number_comparative_for_options,
     Love_number_comparative_for_sampling,

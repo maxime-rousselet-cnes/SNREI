@@ -5,17 +5,16 @@
 
 from shutil import rmtree
 
-from utils import descriptions_path, results_path
+from utils import descriptions_path, figures_path, results_path
 
 
 def clear_products() -> None:
     """
     Deletes preprocessings and results.
     """
-    if descriptions_path.exists():
-        rmtree(descriptions_path)
-    if results_path.exists():
-        rmtree(results_path)
+    for path in [descriptions_path, figures_path, results_path]:
+        if path.exists():
+            rmtree(path)
 
 
 if __name__ == "__main__":

@@ -1,15 +1,18 @@
-# TODO.
+# Creates figures for attenuation functions f_r and f_i.
 #
+# Generates 3 figures per layer of interest:
+#   - unbounded f_r and f_i.
+#   - bounded f_r and f_i for different tau_M values
+#   - bounded f_r and f_i for different asymptotic_ratio values.
 
 import argparse
-from typing import Optional
 
 import matplotlib.pyplot as plt
-from numpy import linspace, log, log10, ndarray, pi, round
+from numpy import linspace, log10, ndarray, round
 
 from utils import (
+    SECONDS_PER_YEAR,
     Integration,
-    LoveNumbersHyperParameters,
     Model,
     RealDescription,
     attenuation_models_path,
@@ -23,18 +26,21 @@ from utils import (
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--attenuation_model", type=str, help="wanted ID for the real description to load")
+parser.add_argument("--load_description", action="store_true", help="Option to tell if the description should be loaded")
 parser.add_argument("--subpath", type=str, help="wanted sub-path to save figures")
 args = parser.parse_args()
 
 
 def plot_attenuation_functions(
-    attenuation_model_name: Optional[str],
+    attenuation_model_name: str,
     figure_subpath_string: str,
-    tau_M_years_values: dict[int, list[float]] = {2: [1.0 / 12 / 1.0, 5.0, 20.0]},
+    tau_M_years_values: dict[int, list[float]] = {0: [1.0 / 12, 1.0, 5.0, 20.0, 100.0, 500.0, 1000.0]},
+    asymptotic_ratio_values: dict[int, list[float]] = {0: [1.0, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01]},
 ):
     """
-    Generates plots of attenuation functions f_r and f_i. A figure for unbounded attenuation functions and a second one for
-    bounded attenuation functions.
+    Generates plots of attenuation functions f_r and f_i. A figure for unbounded attenuation functions, a second one for
+    bounded attenuation functions with given tau_M values and a third one for bounded attenuation functions with given
+    asymptotic_ratio values.
     """
     # Initializes.
     Love_numbers_hyper_parameters = load_Love_numbers_hyper_parameters()
@@ -52,13 +58,24 @@ def plot_attenuation_functions(
     )
     temp_name_attenuation_model = initial_real_description.attenuation_model_name + "-variable-tau_M"
     path = figures_path.joinpath(figure_subpath_string).joinpath(initial_real_description.attenuation_model_name)
-    T_tab = 10 ** linspace(0, 10, 100)  # (s).
+    T_tab = 10 ** linspace(
+        0,
+        2
+        + log10(
+            SECONDS_PER_YEAR * max([max(tau_M_years_list_values) for _, tau_M_years_list_values in tau_M_years_values.items()])
+        ),
+        100,
+    )  # (s).
 
     # Iterates on layers on interest.
     for k_layer, tau_M_years_list_values in tau_M_years_values.items():
         # Creates directory for layer.
-        subpath = path.joinpath(initial_real_description.description_layers[k_layer].name)
+        layer_name = attenuation_model.layer_names[k_layer]
+        subpath = path.joinpath(layer_name)
         subpath.mkdir(parents=True, exist_ok=True)
+        k_layer_real_description = [
+            description_layer.name.split(sep="-")[-1] for description_layer in initial_real_description.description_layers
+        ].index(layer_name)
 
         # Gets unbounded f.
         f_r_unbounded, f_i_unbounded = get_attenuation_function(
@@ -66,7 +83,7 @@ def plot_attenuation_functions(
             real_description=initial_real_description,
             use_anelasticity=Love_numbers_hyper_parameters.use_anelasticity,
             bounded_attenuation_functions=False,
-            k_layer=k_layer,
+            k_layer=k_layer_real_description,
         )
 
         # Plots unbounded f.
@@ -79,11 +96,12 @@ def plot_attenuation_functions(
         plt.show()
 
         # Iterates on tau_M values.
-        _, plots = plt.subplots(2, 1, sharex=True, figsize=(12, 15))
+        _, plots = plt.subplots(2, 1, sharex=True, figsize=(8, 11))
         for tau_M_years in tau_M_years_list_values:
             # Modifies tau_M value in model.
             tau_M = 1.0 / frequencies_to_periods(frequencies=tau_M_years)
-            attenuation_model.polynomials["tau_M"][k_layer - 2][0] = tau_M_years
+            attenuation_model.polynomials["tau_M"][k_layer][0] = tau_M_years
+            attenuation_model.polynomials["asymptotic_attenuation"][k_layer][0] = 0.0
             save_base_model(obj=attenuation_model, name=temp_name_attenuation_model, path=attenuation_models_path)
             real_description = real_description_from_parameters(
                 Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
@@ -99,7 +117,7 @@ def plot_attenuation_functions(
                 real_description=real_description,
                 use_anelasticity=Love_numbers_hyper_parameters.use_anelasticity,
                 bounded_attenuation_functions=True,
-                k_layer=k_layer,
+                k_layer=k_layer_real_description,
             )
 
             plots[0].plot(T_tab, f_r)
@@ -107,25 +125,80 @@ def plot_attenuation_functions(
             plots[0].scatter([tau_M] * 15, linspace(start=min(f_r), stop=max(f_r), num=15), s=5)
             plots[1].scatter([tau_M] * 15, linspace(start=min(f_i), stop=max(f_i), num=15), s=5)
 
-    plots[0].plot(T_tab, f_r_unbounded)
-    plots[1].plot(T_tab, f_i_unbounded, label="unbounded")
+        plots[0].plot(T_tab, f_r_unbounded)
+        plots[1].plot(T_tab, f_i_unbounded, label="unbounded")
 
-    plots[0].set_ylabel("$f_r$")
-    plots[0].set_xlim(1.0, 1e10)
-    plots[0].set_ylim(-120.0, 0.0)
-    plots[0].set_yticks(linspace(-120.0, 0.0, 25))
-    plots[0].grid()
+        plots[0].set_ylabel("$f_r$")
+        plots[0].grid()
 
-    plots[1].set_ylabel("$f_i$")
-    plots[1].set_ylim(-5.0, 30.0)
-    plots[1].set_yticks(linspace(-5.0, 30.0, 36))
-    plots[1].grid()
+        plots[1].set_ylabel("$f_i$")
+        plots[1].grid()
 
-    plt.xlabel("Period (s)")
-    plt.xscale("log")
-    plt.legend()
-    plt.savefig(subpath.joinpath("bounded_attenuation_functions.png"))
-    plt.show()
+        plt.xlabel("Period (s)")
+        plt.xscale("log")
+        plt.legend()
+        plt.savefig(subpath.joinpath("bounded_attenuation_functions_for_tau_M.png"))
+        plt.show()
+
+        # Iterates on asymptotic_ratio values.
+        _, plots = plt.subplots(2, 1, sharex=True, figsize=(12, 15))
+        for asymptotic_ratio in asymptotic_ratio_values[k_layer]:
+            # Modifies tau_M value in model.
+            attenuation_model.polynomials["tau_M"][k_layer][0] = 0.0
+            attenuation_model.polynomials["asymptotic_attenuation"][k_layer][0] = 1.0 - asymptotic_ratio
+            save_base_model(obj=attenuation_model, name=temp_name_attenuation_model, path=attenuation_models_path)
+            real_description = real_description_from_parameters(
+                Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+                real_description_id=None,
+                load_description=False,
+                attenuation_model_from_name=temp_name_attenuation_model,
+                save=False,
+            )
+
+            # Gets bounded f.
+            f_r, f_i = get_attenuation_function(
+                T_tab=T_tab,
+                real_description=real_description,
+                use_anelasticity=Love_numbers_hyper_parameters.use_anelasticity,
+                bounded_attenuation_functions=True,
+                k_layer=k_layer_real_description,
+            )
+
+            plots[0].plot(T_tab, f_r)
+            plots[1].plot(
+                T_tab,
+                f_i,
+                label="$\\mu_\\infty / \\mu_0=$"
+                + str(asymptotic_ratio)
+                + " : $\\tau _M=$"
+                + str(
+                    round(
+                        a=real_description.description_layers[k_layer_real_description].evaluate(
+                            x=attenuation_model.r_limits[k_layer_real_description] / real_description.radius_unit,
+                            variable="tau_M",
+                        )
+                        / SECONDS_PER_YEAR
+                        * real_description.period_unit,
+                        decimals=2,
+                    )
+                )
+                + " (y)",
+            )
+
+        plots[0].plot(T_tab, f_r_unbounded)
+        plots[1].plot(T_tab, f_i_unbounded, label="unbounded")
+
+        plots[0].set_ylabel("$f_r$")
+        plots[0].grid()
+
+        plots[1].set_ylabel("$f_i$")
+        plots[1].grid()
+
+        plt.xlabel("Period (s)")
+        plt.xscale("log")
+        plt.legend()
+        plt.savefig(subpath.joinpath("bounded_attenuation_functions_for_ratio.png"))
+        plt.show()
 
 
 def get_attenuation_function(

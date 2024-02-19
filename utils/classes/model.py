@@ -42,6 +42,7 @@ class Model(BaseModel):
     #       - alpha: (Unitless).
     #       - omega_m: (Hz).
     #       - tau_M: (y).
+    #       - asymptotic_attenuation: Defines mu(omega->Inf) = (1.0 - asymptotic_attenuation) * mu_0 (Unitless).
     polynomials: dict[str, list[list[float | str]]]
 
     def build_description_layers_list(

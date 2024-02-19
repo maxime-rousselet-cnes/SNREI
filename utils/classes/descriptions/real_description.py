@@ -1,10 +1,12 @@
 from typing import Optional
 
-from numpy import Inf, array, ndarray, pi
+from numpy import Inf, array, ndarray, pi, round
+from scipy import interpolate
 
 from ...constants import SECONDS_PER_YEAR, Earth_radius
 from ...formulas import (
     b_computing,
+    find_tau_M,
     m_prime_computing,
     mu_computing,
     mu_k_computing,
@@ -110,7 +112,7 @@ class RealDescription(Description):
         else:
             # Builds elasticity description.
             elasticity_description = ElasticityDescription(
-                id=elasticity_model_from_name,
+                id=id,
                 radius_unit=radius_unit,
                 below_ICB_layers=below_ICB_layers,
                 below_CMB_layers=below_CMB_layers,
@@ -141,7 +143,7 @@ class RealDescription(Description):
         else:
             # Builds anelasticity description.
             anelasticity_description = AnelasticityDescription(
-                id=anelasticity_model_from_name,
+                id=id,
                 radius_unit=radius_unit,
                 real_crust=real_crust,
                 n_splines_base=n_splines_base,
@@ -164,7 +166,7 @@ class RealDescription(Description):
         else:
             # Builds attenuation description.
             attenuation_description = AttenuationDescription(
-                id=attenuation_model_from_name,
+                id=id,
                 radius_unit=radius_unit,
                 real_crust=real_crust,
                 n_splines_base=n_splines_base,
@@ -175,7 +177,7 @@ class RealDescription(Description):
 
         # Builds ID as the concatenation of the description IDs.
         if not id:
-            self.id = "-".join((elasticity_description.id, anelasticity_description.id, attenuation_description.id, self.id))
+            self.id = "_".join((elasticity_description.id, anelasticity_description.id, attenuation_description.id, self.id))
 
         # Updates fields from elasticity description.
         self.radius_unit = elasticity_description.radius_unit
@@ -234,11 +236,9 @@ class RealDescription(Description):
         # Checks all layers from CMB to surface and merges their descrptions.
         while x_inf < 1.0:
             # Checks which layer ends first.
-            x_sup_elasticity = round(number=elasticity_description.description_layers[i_layer_elasticity].x_sup, ndigits=8)
-            x_sup_anelasticity = round(
-                number=anelasticity_description.description_layers[i_layer_anelasticity].x_sup, ndigits=8
-            )
-            x_sup_attenuation = round(number=attenuation_description.description_layers[i_layer_attenuation].x_sup, ndigits=8)
+            x_sup_elasticity = round(a=elasticity_description.description_layers[i_layer_elasticity].x_sup, decimals=8)
+            x_sup_anelasticity = round(a=anelasticity_description.description_layers[i_layer_anelasticity].x_sup, decimals=8)
+            x_sup_attenuation = round(a=attenuation_description.description_layers[i_layer_attenuation].x_sup, decimals=8)
             x_sup = min(x_sup_elasticity, x_sup_anelasticity, x_sup_attenuation)
 
             # Updates.
@@ -284,6 +284,7 @@ class RealDescription(Description):
         # Adds anelasticity and attenuation unitless variables.
         description_layer.splines["c"] = anelasticity_layer.splines["c"]
         description_layer.splines["alpha"] = attenuation_layer.splines["alpha"]
+        description_layer.splines["asymptotic_attenuation"] = attenuation_layer.splines["asymptotic_attenuation"]
 
         # Builds anelasticity and attenuation unitless variables from variables with units.
         for variable_name, unit, splines in [
@@ -320,7 +321,7 @@ class RealDescription(Description):
         """
         x = layer.x_profile(profile_precision=self.profile_precision)
         # Variables needed for all layers.
-        variable_values = {
+        variable_values: dict[str, ndarray] = {
             "x": x,
             "mu_0": layer.evaluate(x=x, variable="mu_0"),
             "lambda_0": layer.evaluate(x=x, variable="lambda_0"),
@@ -340,6 +341,7 @@ class RealDescription(Description):
                     "alpha": layer.evaluate(x=x, variable="alpha"),
                     "omega_m": layer.evaluate(x=x, variable="omega_m"),
                     "tau_M": layer.evaluate(x=x, variable="tau_M"),
+                    "asymptotic_attenuation": layer.evaluate(x=x, variable="asymptotic_attenuation"),
                 }
             )
             # New explicit variables (needed) for lambda and mu complex computings.
@@ -371,11 +373,32 @@ class RealDescription(Description):
                             omega_cut_m=variable_values["omega_cut_m"],
                             omega_cut_k=variable_values["omega_cut_k"],
                             omega_cut_b=variable_values["omega_cut_b"],
-                            omega_j=2 * pi / self.frequency_unit,
+                            omega_j=2.0 * pi / self.frequency_unit,
                         ),
                     )
                 }
             )
+            # Eventually finds tau_M profile that constrains mu(omega -> Inf) = asymptotic_ratio * mu_0:
+            if round(a=variable_values["asymptotic_attenuation"], decimals=4).any():
+                for i_x, (omega_m, alpha, asymptotic_attenuation, Qmu) in enumerate(
+                    zip(
+                        variable_values["omega_m"],
+                        variable_values["alpha"],
+                        variable_values["asymptotic_attenuation"],
+                        variable_values["Qmu"],
+                    )
+                ):
+                    variable_values["tau_M"][i_x] = find_tau_M(
+                        omega_m=omega_m,
+                        alpha=alpha,
+                        asymptotic_attenuation=asymptotic_attenuation,
+                        Qmu=Qmu,
+                    )
+                self.description_layers[i_layer].splines.update(
+                    {
+                        "tau_M": interpolate.splrep(x=variable_values["x"], y=variable_values["tau_M"]),
+                    }
+                )
         return variable_values
 
     def real_description_save(self) -> None:

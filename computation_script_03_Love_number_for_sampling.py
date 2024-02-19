@@ -14,7 +14,6 @@ parser.add_argument(
 parser.add_argument(
     "--load_initial_description", action="store_true", help="Option to tell if the description should be loaded"
 )
-
 args = parser.parse_args()
 
 

@@ -11,12 +11,14 @@
     "variable_names": [
         "omega_m",
         "alpha",
-        "tau_M"
+        "tau_M",
+        "asymptotic_attenuation"
     ],
     "crust_values": {
         "omega_m": null,
         "alpha": null,
-        "tau_M": null
+        "tau_M": null,
+        "asymptotic_attenuation": null
     },
     "polynomials": {
         "omega_m": [
@@ -50,6 +52,20 @@
         "tau_M": [
             [
                 10.0,
+                0.0,
+                0.0,
+                0.0
+            ],
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ]
+        ],
+        "asymptotic_attenuation": [
+            [
+                0.0,
                 0.0,
                 0.0,
                 0.0

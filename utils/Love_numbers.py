@@ -9,14 +9,15 @@ from .abstract_computing import interpolate_all, precise_curvature
 from .classes import (
     Integration,
     LoveNumbersHyperParameters,
+    Model,
     RealDescription,
     Result,
     YSystemHyperParameters,
     load_Love_numbers_hyper_parameters,
     real_description_from_parameters,
 )
-from .database import generate_degrees_list, save_base_model
-from .paths import results_path
+from .database import generate_degrees_list, load_base_model, save_base_model
+from .paths import attenuation_models_path, results_path
 
 BOOLEANS = [False, True]
 SAMPLINGS = {"low": 10, "mid": 100, "high": 1000}
@@ -381,6 +382,25 @@ def Love_number_comparative_for_sampling(
         )
 
 
+def id_from_model_names(
+    id: str,
+    real_description: RealDescription,
+    elasticity_model_name: str,
+    anelasticity_model_name: str,
+    attenuation_model_name: str,
+) -> str:
+    """
+    Generates an ID for a real description given the name of the used model files.
+    """
+    return (
+        id
+        if (elasticity_model_name == real_description.elasticity_model_name)
+        and (anelasticity_model_name == real_description.anelasticity_model_name)
+        and (attenuation_model_name == real_description.attenuation_model_name)
+        else "_".join((elasticity_model_name, anelasticity_model_name, attenuation_model_name))
+    )
+
+
 def Love_number_comparative_for_model(
     initial_real_description_id: str,
     load_initial_description: Optional[bool] = None,
@@ -415,16 +435,18 @@ def Love_number_comparative_for_model(
     if not attenuation_model_names:
         attenuation_model_names = [initial_real_description.attenuation_model_name]
 
+    # Loops on model files.
     for elasticity_model_name, anelasticity_model_name, attenuation_model_name in product(
         elasticity_model_names, anelasticity_model_names, attenuation_model_names
     ):
+        # Loops on options.
         Love_number_comparative_for_options(
-            real_description_id=(
-                initial_real_description_id
-                if (elasticity_model_name == initial_real_description.elasticity_model_name)
-                and (anelasticity_model_name == initial_real_description.anelasticity_model_name)
-                and (attenuation_model_name == initial_real_description.attenuation_model_name)
-                else "-".join((elasticity_model_name, anelasticity_model_name, attenuation_model_name))
+            real_description_id=id_from_model_names(
+                id=initial_real_description_id,
+                real_description=initial_real_description,
+                elasticity_model_name=elasticity_model_name,
+                anelasticity_model_name=anelasticity_model_name,
+                attenuation_model_name=attenuation_model_name,
             ),
             load_description=False,
             elasticity_model_from_name=elasticity_model_name,
@@ -432,3 +454,71 @@ def Love_number_comparative_for_model(
             attenuation_model_from_name=attenuation_model_name,
             Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
         )
+
+
+def Love_number_comparative_for_asymptotic_ratio(
+    initial_real_description_id: str,
+    asymptotic_ratios: list[list[float]],
+    load_initial_description: Optional[bool] = None,
+    elasticity_model_names: Optional[list[str]] = None,
+    anelasticity_model_names: Optional[list[str]] = None,
+    attenuation_model_names: Optional[list[str]] = None,
+) -> None:
+    """
+    Computes anelastic Love numbers by iterating on:
+        - models: A real description is used per triplet of:
+            - 'elasticity_model_name'
+            - 'anelasticity_model_name'
+            - 'attenuation_model_name'
+        - asymptotic_ratios
+    """
+    # Loads hyper parameters.
+    Love_numbers_hyper_parameters = load_Love_numbers_hyper_parameters()
+    Love_numbers_hyper_parameters.use_attenuation = True
+    Love_numbers_hyper_parameters.bounded_attenuation_functions = True
+
+    # Eventually builds description.
+    initial_real_description = real_description_from_parameters(
+        Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+        real_description_id=initial_real_description_id,
+        load_description=load_initial_description,
+        save=False,
+    )
+
+    # Builds dummy lists for unmodified models.
+    if not elasticity_model_names:
+        elasticity_model_names = [initial_real_description.elasticity_model_name]
+    if not anelasticity_model_names:
+        anelasticity_model_names = [initial_real_description.anelasticity_model_name]
+    if not attenuation_model_names:
+        attenuation_model_names = [initial_real_description.attenuation_model_name]
+
+    # Loops on model files.
+    for elasticity_model_name, anelasticity_model_name, attenuation_model_name in product(
+        elasticity_model_names, anelasticity_model_names, attenuation_model_names
+    ):
+        attenuation_model: Model = load_base_model(
+            name=attenuation_model_name, path=attenuation_models_path, base_model_type=Model
+        )
+        temp_name_attenuation_model = attenuation_model_name + "-variable-asymptotic_ratio"
+        # Loops on asymptotic_ratio.
+        for asymptotic_ratio_per_layer in asymptotic_ratios:
+            for k_layer, asymptotic_ratio in enumerate(asymptotic_ratio_per_layer):
+                attenuation_model.polynomials["asymptotic_attenuation"][k_layer][0] = 1.0 - asymptotic_ratio
+            save_base_model(obj=attenuation_model, name=temp_name_attenuation_model, path=attenuation_models_path)
+            Love_numbers_from_models_to_result(
+                real_description_id=id_from_model_names(
+                    id=initial_real_description_id,
+                    real_description=initial_real_description,
+                    elasticity_model_name=elasticity_model_name,
+                    anelasticity_model_name=anelasticity_model_name,
+                    attenuation_model_name=attenuation_model_name,
+                ),
+                run_id="asymptotic_ratio-"
+                + "-".join([str(asymptotic_ratio) for asymptotic_ratio in asymptotic_ratio_per_layer]),
+                load_description=False,
+                elasticity_model_from_name=elasticity_model_name,
+                anelasticity_model_from_name=anelasticity_model_name,
+                attenuation_model_from_name=attenuation_model_name,
+                Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+            )

@@ -3,10 +3,9 @@
 #
 # See script_01 for details on parameter and result files.
 
-
 import argparse
 
-from utils import Love_number_comparative_for_model
+from utils import Love_number_comparative_for_models
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -18,7 +17,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 if __name__ == "__main__":
-    Love_number_comparative_for_model(
+    Love_number_comparative_for_models(
         initial_real_description_id=args.initial_real_description_id,
         load_initial_description=args.load_initial_description,
         anelasticity_model_names=["test", "test-low-viscosity-Asthenosphere"],

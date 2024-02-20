@@ -16,14 +16,12 @@ Urgent:
     rewrite integration such as if there is a non null high_frequency_elastic_ratio variable_value, tau_M variable_value is overwritten. Needs:
         write find_tau_M (high_frequency_elastic_ratio) -> OK
 
-    currently searching why plots are fucked up. with asymp. ratio = 1.0
-    need to launch computation_scripts 03, 04 and 05
+    Fourier Ocean
     Look at Alex's article (CNES mail)
     README.md infography for code documentation. redo with high_frequency_elastic_ratio
     select plots
     LaTeX disponible figures
     plots_Love_numbers
-    Fourier Ocean
 
 
 Soon:

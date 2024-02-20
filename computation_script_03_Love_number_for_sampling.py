@@ -2,7 +2,6 @@
 #
 # See script_01 for details on parameter and result files.
 
-
 import argparse
 
 from utils import Love_number_comparative_for_sampling

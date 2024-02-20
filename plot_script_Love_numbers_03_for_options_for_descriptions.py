@@ -2,7 +2,7 @@
 #
 # A figure is generated per Love number direction, per boundary condition and per real/imaginary part.
 # Every figure consist of a panel of Love number graphs, a graph per option set.
-# Every graphs shows Love numbers ratio to elastic version for some given degrees with respect to frequencies,
+# Every graphs shows Love numbers ratio to elastic version for some given degrees with respect to frequencies.
 # A column of graph per given description.
 
 import argparse
@@ -131,6 +131,6 @@ def plot_comparative_Love_numbers_for_options_for_descriptions(
 
 if __name__ == "__main__":
     plot_comparative_Love_numbers_for_options_for_descriptions(
-        real_description_ids=["base-model", "PREM_test-low-viscosity-Asthenosphere_Benjamin-variable-asymptotic_ratio"],
+        real_description_ids=["base-model", "PREM_test-low-viscosity-Asthenosphere_Benjamin"],
         figure_subpath_string=args.subpath if args.subpath else "Love_numbers_for_options_for_descriptions",
     )

@@ -1,8 +1,7 @@
-Verif k2:
+Historic:
     tested elastic only. OK
     with 2*pi error and 0.04 bias, results ok for A, B and C!
 
-Urgent:
     verify curbs and k_2 with new pulsation/frequency differenciation -> OK
     check integration __init__ -> OK
     plot fr and fi -> OK
@@ -16,6 +15,9 @@ Urgent:
     rewrite integration such as if there is a non null high_frequency_elastic_ratio variable_value, tau_M variable_value is overwritten. Needs:
         write find_tau_M (high_frequency_elastic_ratio) -> OK
 
+Urgent:
+    Re-launch /bin/python3 computation_script_03_Love_number_for_sampling.py --initial_real_description_id base-model --load_initial_description
+    launch /bin/python3 computation_script_02_Love_number_for_descriptions.py --initial_real_description_id base-model --load_initial_description
     Fourier Ocean
     Look at Alex's article (CNES mail)
     README.md infography for code documentation. redo with high_frequency_elastic_ratio

@@ -2,7 +2,7 @@
 #
 # A figure is generated per Love number direction, per boundary condition and per real/imaginary part.
 # Every figure consist of a panel of Love number graphs, a graph per asymptotic ratio value.
-# Every graphs shows Love numbers ratio to elastic version for some given degrees with respect to frequencies,
+# Every graphs shows Love numbers ratio to elastic version for some given degrees with respect to frequencies.
 # A column of graph per given description.
 
 import argparse

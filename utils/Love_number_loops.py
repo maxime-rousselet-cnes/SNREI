@@ -181,11 +181,15 @@ def gets_run_id_asymptotic_ratios(use_anelasticity: bool, asymptotic_ratios_per_
     """
     Generates an ID for a run using its asymptotic ratios per layer.
     """
-    return gets_run_id(
-        use_anelasticity=use_anelasticity,
-        bounded_attenuation_functions=True,
-        use_attenuation=True,
-    ) + ("-asymptotic_ratios-" + "-".join([str(asymptotic_ratio) for asymptotic_ratio in asymptotic_ratios_per_layer]),)
+    return (
+        gets_run_id(
+            use_anelasticity=use_anelasticity,
+            bounded_attenuation_functions=True,
+            use_attenuation=True,
+        )
+        + "-asymptotic_ratios-"
+        + "-".join([str(asymptotic_ratio) for asymptotic_ratio in asymptotic_ratios_per_layer])
+    )
 
 
 def Love_number_comparative_for_asymptotic_ratio(

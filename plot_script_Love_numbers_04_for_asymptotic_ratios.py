@@ -1,9 +1,9 @@
-# Generates panels of Love number graphs for some given different descriptions.
+# Generates panels of Love number graphs for a given description.
 #
-# A figure is generated per Love number direction, per boundary condition and per real/imaginary part.
+# A figure is generated per Love number direction and per boundary condition.
 # Every figure consist of a panel of Love number graphs, a graph per asymptotic ratio value.
-# Every graphs shows Love numbers ratio to elastic version for some given degrees with respect to frequencies,
-# A column of graph per given description.
+# Every graphs shows Love numbers real/imaginary parts ratio to elastic version for some given degrees with respect to
+# frequencies.
 
 import argparse
 

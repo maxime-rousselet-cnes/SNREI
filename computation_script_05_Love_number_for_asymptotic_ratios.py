@@ -21,5 +21,5 @@ if __name__ == "__main__":
         initial_real_description_id=args.initial_real_description_id,
         asymptotic_ratios=[[1.0, 1.0], [0.5, 1.0], [0.2, 1.0], [0.1, 1.0], [0.05, 1.0]],
         load_initial_description=args.load_initial_description,
-        anelasticity_model_names=["test", "test-low-viscosity-Asthenosphere"],
+        anelasticity_model_names=["test-low-viscosity-Asthenosphere", "test"],
     )

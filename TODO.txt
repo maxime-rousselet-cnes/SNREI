@@ -17,6 +17,7 @@ Historic:
 
 Urgent:
     Re-launch /bin/python3 computation_script_03_Love_number_for_sampling.py --initial_real_description_id base-model --load_initial_description
+    chose a single asymptotic_ratio value and set it in Benjamin's model
     launch /bin/python3 computation_script_02_Love_number_for_descriptions.py --initial_real_description_id base-model --load_initial_description
     Fourier Ocean
     Look at Alex's article (CNES mail)

@@ -229,34 +229,37 @@ def Love_number_comparative_for_asymptotic_ratio(
     if not attenuation_model_names:
         attenuation_model_names = [initial_real_description.attenuation_model_name]
 
-    # Loops on model files.
-    for elasticity_model_name, anelasticity_model_name, attenuation_model_name in product(
-        elasticity_model_names, anelasticity_model_names, attenuation_model_names
-    ):
-        attenuation_model: Model = load_base_model(
-            name=attenuation_model_name, path=attenuation_models_path, base_model_type=Model
-        )
-        temp_name_attenuation_model = attenuation_model_name + "-variable-asymptotic_ratio"
-        # Loops on asymptotic_ratio.
-        for asymptotic_ratios_per_layer in asymptotic_ratios:
-            for k_layer, asymptotic_ratio in enumerate(asymptotic_ratios_per_layer):
-                attenuation_model.polynomials["asymptotic_attenuation"][k_layer][0] = 1.0 - asymptotic_ratio
-            save_base_model(obj=attenuation_model, name=temp_name_attenuation_model, path=attenuation_models_path)
-            Love_numbers_from_models_to_result(
-                real_description_id=id_from_model_names(
-                    id=initial_real_description_id,
-                    real_description=initial_real_description,
-                    elasticity_model_name=elasticity_model_name,
-                    anelasticity_model_name=anelasticity_model_name,
-                    attenuation_model_name=attenuation_model_name,
-                ),
-                run_id=gets_run_id_asymptotic_ratios(
-                    use_anelasticity=Love_numbers_hyper_parameters.use_anelasticity,
-                    asymptotic_ratios_per_layer=asymptotic_ratios_per_layer,
-                ),
-                load_description=False,
-                elasticity_model_from_name=elasticity_model_name,
-                anelasticity_model_from_name=anelasticity_model_name,
-                attenuation_model_from_name=attenuation_model_name,
-                Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+    # Loops on whether to use anelasticity or not.
+    for use_anelasticity in BOOLEANS:
+        Love_numbers_hyper_parameters.use_anelasticity = use_anelasticity
+        # Loops on model files.
+        for elasticity_model_name, anelasticity_model_name, attenuation_model_name in product(
+            elasticity_model_names, anelasticity_model_names, attenuation_model_names
+        ):
+            attenuation_model: Model = load_base_model(
+                name=attenuation_model_name, path=attenuation_models_path, base_model_type=Model
             )
+            temp_name_attenuation_model = attenuation_model_name + "-variable-asymptotic_ratio"
+            # Loops on asymptotic_ratio.
+            for asymptotic_ratios_per_layer in asymptotic_ratios:
+                for k_layer, asymptotic_ratio in enumerate(asymptotic_ratios_per_layer):
+                    attenuation_model.polynomials["asymptotic_attenuation"][k_layer][0] = 1.0 - asymptotic_ratio
+                save_base_model(obj=attenuation_model, name=temp_name_attenuation_model, path=attenuation_models_path)
+                Love_numbers_from_models_to_result(
+                    real_description_id=id_from_model_names(
+                        id=initial_real_description_id,
+                        real_description=initial_real_description,
+                        elasticity_model_name=elasticity_model_name,
+                        anelasticity_model_name=anelasticity_model_name,
+                        attenuation_model_name=attenuation_model_name,
+                    ),
+                    run_id=gets_run_id_asymptotic_ratios(
+                        use_anelasticity=Love_numbers_hyper_parameters.use_anelasticity,
+                        asymptotic_ratios_per_layer=asymptotic_ratios_per_layer,
+                    ),
+                    load_description=False,
+                    elasticity_model_from_name=elasticity_model_name,
+                    anelasticity_model_from_name=anelasticity_model_name,
+                    attenuation_model_from_name=attenuation_model_name,
+                    Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+                )

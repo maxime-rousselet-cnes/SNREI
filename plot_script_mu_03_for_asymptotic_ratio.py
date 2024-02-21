@@ -49,7 +49,11 @@ def plot_mu_profiles_for_asymptotic_ratio(
     # Initializes.
     Love_numbers_hyper_parameters = load_Love_numbers_hyper_parameters()
     Love_numbers_hyper_parameters.use_anelasticity = with_anelasticity
-    path = figures_path.joinpath(figure_subpath_string).joinpath(initial_real_description_id)
+    path = (
+        figures_path.joinpath(figure_subpath_string)
+        .joinpath(initial_real_description_id)
+        .joinpath("with" + ("" if with_anelasticity else "out") + "_anelasticity")
+    )
     integrations: dict[int, dict[float, Integration]] = {}
     frequencies = frequencies_to_periods(period_values)  # It is OK to converts years like this. Tested.
     path.mkdir(parents=True, exist_ok=True)
@@ -62,20 +66,23 @@ def plot_mu_profiles_for_asymptotic_ratio(
     attenuation_model: Model = load_base_model(
         name=initial_real_description.attenuation_model_name, path=attenuation_models_path, base_model_type=Model
     )
-    temp_name_attenuation_model = initial_real_description.attenuation_model_name + "-variable-asymptotic_ratio"
 
     # Preprocesses.
     for i_ratio, asymptotic_ratio_values_per_layer in enumerate(asymptotic_ratio_values):
         for k_layer, asymptotic_ratio in enumerate(asymptotic_ratio_values_per_layer):
             attenuation_model.polynomials["tau_M"][k_layer][0] = 0.0
             attenuation_model.polynomials["asymptotic_attenuation"][k_layer][0] = 1.0 - asymptotic_ratio
-        save_base_model(obj=attenuation_model, name=temp_name_attenuation_model, path=attenuation_models_path)
+        save_base_model(
+            obj=attenuation_model, name=initial_real_description.attenuation_model_name, path=attenuation_models_path
+        )
         real_description: RealDescription = real_description_from_parameters(
             Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
             real_description_id=initial_real_description_id,
             load_description=False,
-            attenuation_model_from_name=temp_name_attenuation_model,
-            save=True,
+            elasticity_model_from_name=initial_real_description.elasticity_model_name,
+            anelasticity_model_from_name=initial_real_description.anelasticity_model_name,
+            attenuation_model_from_name=initial_real_description.attenuation_model_name,
+            save=False,
         )
         integrations[i_ratio] = {}
         for frequency in frequencies:
@@ -127,7 +134,9 @@ def plot_mu_profiles_for_asymptotic_ratio(
 
 if __name__ == "__main__":
     plot_mu_profiles_for_asymptotic_ratio(
-        initial_real_description_id=args.initial_real_description_id if args.initial_real_description_id else "base-model",
+        initial_real_description_id=(
+            args.initial_real_description_id if args.initial_real_description_id else "PREM_test_Benjamin"
+        ),
         load_description=args.load_initial_description if args.load_initial_description else False,
         with_anelasticity=args.with_anelasticity if args.with_anelasticity else False,
         figure_subpath_string=args.subpath if args.subpath else "mu_for_asymptotic_ratio",

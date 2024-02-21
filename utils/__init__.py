@@ -23,7 +23,7 @@ from .Love_number_loops import (
     Love_number_comparative_for_models,
     Love_number_comparative_for_options,
     Love_number_comparative_for_sampling,
-    gets_run_id_asymptotic_ratios,
+    gets_id_asymptotic_ratios,
 )
 from .Love_numbers import (
     Love_numbers_from_models_to_result,
@@ -60,7 +60,7 @@ from .paths import (
     Love_number_comparative_for_models,
     Love_number_comparative_for_options,
     Love_number_comparative_for_sampling,
-    gets_run_id_asymptotic_ratios,
+    gets_id_asymptotic_ratios,
     Love_numbers_from_models_to_result,
     elastic_Love_numbers_computing,
     gets_run_id,

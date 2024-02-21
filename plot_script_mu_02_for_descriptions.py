@@ -138,7 +138,9 @@ def plot_mu_profiles_for_descriptions(
 
 if __name__ == "__main__":
     plot_mu_profiles_for_descriptions(
-        initial_real_description_id=args.initial_real_description_id if args.initial_real_description_id else "base-model",
+        initial_real_description_id=(
+            args.initial_real_description_id if args.initial_real_description_id else "PREM_test_Benjamin"
+        ),
         load_description=args.load_initial_description if args.load_initial_description else False,
         figure_subpath_string=args.subpath if args.subpath else "mu_for_descriptions",
         anelasticity_model_names=["test", "test-low-viscosity-Asthenosphere"],

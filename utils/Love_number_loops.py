@@ -177,19 +177,14 @@ def Love_number_comparative_for_models(
         )
 
 
-def gets_run_id_asymptotic_ratios(use_anelasticity: bool, asymptotic_ratios_per_layer: list[int]) -> str:
+def gets_id_asymptotic_ratios(
+    asymptotic_ratios_per_layer: list[int],
+    real_description_id: str = "",
+) -> str:
     """
     Generates an ID for a run using its asymptotic ratios per layer.
     """
-    return (
-        gets_run_id(
-            use_anelasticity=use_anelasticity,
-            bounded_attenuation_functions=True,
-            use_attenuation=True,
-        )
-        + "-asymptotic_ratios-"
-        + "-".join([str(asymptotic_ratio) for asymptotic_ratio in asymptotic_ratios_per_layer])
-    )
+    return real_description_id + "-".join([str(asymptotic_ratio) for asymptotic_ratio in asymptotic_ratios_per_layer])
 
 
 def Love_number_comparative_for_asymptotic_ratio(
@@ -246,20 +241,24 @@ def Love_number_comparative_for_asymptotic_ratio(
                     attenuation_model.polynomials["asymptotic_attenuation"][k_layer][0] = 1.0 - asymptotic_ratio
                 save_base_model(obj=attenuation_model, name=temp_name_attenuation_model, path=attenuation_models_path)
                 Love_numbers_from_models_to_result(
-                    real_description_id=id_from_model_names(
-                        id=initial_real_description_id,
-                        real_description=initial_real_description,
-                        elasticity_model_name=elasticity_model_name,
-                        anelasticity_model_name=anelasticity_model_name,
-                        attenuation_model_name=attenuation_model_name,
-                    ),
-                    run_id=gets_run_id_asymptotic_ratios(
-                        use_anelasticity=Love_numbers_hyper_parameters.use_anelasticity,
+                    real_description_id=gets_id_asymptotic_ratios(
+                        real_description_id=id_from_model_names(
+                            id=initial_real_description_id,
+                            real_description=initial_real_description,
+                            elasticity_model_name=elasticity_model_name,
+                            anelasticity_model_name=anelasticity_model_name,
+                            attenuation_model_name=temp_name_attenuation_model,
+                        ),
                         asymptotic_ratios_per_layer=asymptotic_ratios_per_layer,
+                    ),
+                    run_id=gets_run_id(
+                        use_anelasticity=Love_numbers_hyper_parameters.use_anelasticity,
+                        bounded_attenuation_functions=True,
+                        use_attenuation=True,
                     ),
                     load_description=False,
                     elasticity_model_from_name=elasticity_model_name,
                     anelasticity_model_from_name=anelasticity_model_name,
-                    attenuation_model_from_name=attenuation_model_name,
+                    attenuation_model_from_name=temp_name_attenuation_model,
                     Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
                 )

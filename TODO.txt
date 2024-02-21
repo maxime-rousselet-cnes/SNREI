@@ -16,21 +16,16 @@ Historic:
         write find_tau_M (high_frequency_elastic_ratio) -> OK
 
 Urgent:
-    Re-launch /bin/python3 computation_script_03_Love_number_for_sampling.py --initial_real_description_id base-model --load_initial_description
-    chose a single asymptotic_ratio value and set it in Benjamin's model
-    launch /bin/python3 computation_script_02_Love_number_for_descriptions.py --initial_real_description_id base-model --load_initial_description
     Fourier Ocean
     Look at Alex's article (CNES mail)
-    README.md infography for code documentation. redo with high_frequency_elastic_ratio
+    README.md infography for code documentation
     select plots
     LaTeX disponible figures
     plots_Love_numbers
 
 
 Soon:
-    Ocean mask + Caron load from raw files (Barystatic) to ocean_load: result[n, m, T] script
-    FT periodic to ocean_load_Fourier: result[n, m, frequency]
-    get deformation_Fourier : result[n, m, frequency]
+    get deformation_Fourier: result[n, m, frequency]
     get deformation: result[theta, phi, T]
     save
 

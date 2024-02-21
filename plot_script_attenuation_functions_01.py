@@ -227,6 +227,6 @@ def get_attenuation_function(
 
 if __name__ == "__main__":
     plot_attenuation_functions(
-        attenuation_model_name=args.attenuation_model,
+        attenuation_model_name=args.attenuation_model if args.attenuation_model else "Benjamin",
         figure_subpath_string=args.subpath if args.subpath else "attenuation_functions",
     )

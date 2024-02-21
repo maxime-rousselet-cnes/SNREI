@@ -66,22 +66,21 @@ def plot_mu_profiles_for_asymptotic_ratio(
     attenuation_model: Model = load_base_model(
         name=initial_real_description.attenuation_model_name, path=attenuation_models_path, base_model_type=Model
     )
+    temp_attenuation_model_name = initial_real_description.attenuation_model_name + "-variable-asymptotic_ratio"
 
     # Preprocesses.
     for i_ratio, asymptotic_ratio_values_per_layer in enumerate(asymptotic_ratio_values):
         for k_layer, asymptotic_ratio in enumerate(asymptotic_ratio_values_per_layer):
             attenuation_model.polynomials["tau_M"][k_layer][0] = 0.0
             attenuation_model.polynomials["asymptotic_attenuation"][k_layer][0] = 1.0 - asymptotic_ratio
-        save_base_model(
-            obj=attenuation_model, name=initial_real_description.attenuation_model_name, path=attenuation_models_path
-        )
+        save_base_model(obj=attenuation_model, name=temp_attenuation_model_name, path=attenuation_models_path)
         real_description: RealDescription = real_description_from_parameters(
             Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
             real_description_id=initial_real_description_id,
             load_description=False,
             elasticity_model_from_name=initial_real_description.elasticity_model_name,
             anelasticity_model_from_name=initial_real_description.anelasticity_model_name,
-            attenuation_model_from_name=initial_real_description.attenuation_model_name,
+            attenuation_model_from_name=temp_attenuation_model_name,
             save=False,
         )
         integrations[i_ratio] = {}
@@ -140,5 +139,4 @@ if __name__ == "__main__":
         load_description=args.load_initial_description if args.load_initial_description else False,
         with_anelasticity=args.with_anelasticity if args.with_anelasticity else False,
         figure_subpath_string=args.subpath if args.subpath else "mu_for_asymptotic_ratio",
-        asymptotic_ratio_values=[[0.05, 1.0]],
     )

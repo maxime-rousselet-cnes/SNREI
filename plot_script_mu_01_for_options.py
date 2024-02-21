@@ -90,7 +90,7 @@ def plot_mu_profiles_for_options(
                 (1.0 - x) * real_description.radius_unit / 1e3,
                 color=(
                     1.0 if use_anelasticity else 0.0,
-                    0.5 if bounded_attenuation_functions else 0.0,
+                    1.0 if bounded_attenuation_functions else 0.0,
                     1.0 if use_attenuation else 0.0,
                 ),
                 linestyle=(

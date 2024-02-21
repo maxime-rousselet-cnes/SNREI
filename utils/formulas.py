@@ -90,28 +90,28 @@ def b_computing(omega_cut_m: ndarray, omega_cut_k: ndarray, omega_cut_b: ndarray
 
 
 def lambda_computing(
-    mu_0: ndarray[complex],
-    lambda_0: ndarray[complex],
+    mu_complex: ndarray[complex],
+    lambda_complex: ndarray[complex],
     m_prime: ndarray[complex],
     b: ndarray[complex],
 ) -> ndarray[complex]:
     """
-    Computes complex analog lambda values, given the real elastic moduli mu and lambda and m_prime and b transfert function
+    Computes complex analog lambda values, given the complex elastic moduli mu and lambda and m_prime and b transfert function
     values at pulsation value omega.
     """
-    return lambda_0 + (2.0 / 3.0) * mu_0 * (m_prime + b) / (1 + b)
+    return lambda_complex + (2.0 / 3.0) * mu_complex * (m_prime + b) / (1 + b)
 
 
 def mu_computing(
-    mu_0: ndarray[complex],
+    mu_complex: ndarray[complex],
     m_prime: ndarray[complex],
     b: ndarray[complex],
 ) -> ndarray[complex]:
     """
-    Computes complex analog mu values, given the real elastic modulus mu and m_prime and b transfert function values at
+    Computes complex analog mu values, given the complex elastic modulus mu and m_prime and b transfert function values at
     pulsation value omega.
     """
-    return mu_0 * (1 - m_prime) / (1 + b)
+    return mu_complex * (1 - m_prime) / (1 + b)
 
 
 def f_attenuation_computing(

@@ -140,4 +140,5 @@ if __name__ == "__main__":
         load_description=args.load_initial_description if args.load_initial_description else False,
         with_anelasticity=args.with_anelasticity if args.with_anelasticity else False,
         figure_subpath_string=args.subpath if args.subpath else "mu_for_asymptotic_ratio",
+        asymptotic_ratio_values=[[0.05, 1.0]],
     )

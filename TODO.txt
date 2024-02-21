@@ -16,7 +16,9 @@ Historic:
         write find_tau_M (high_frequency_elastic_ratio) -> OK
 
 Urgent:
-    Fourier Ocean
+
+        Tfinverse(Tf(omega)(*1/kel(l))/(1+kvis(omega,l))) -> trend GRACE / Ocean mask
+
     Look at Alex's article (CNES mail)
     README.md infography for code documentation
     select plots

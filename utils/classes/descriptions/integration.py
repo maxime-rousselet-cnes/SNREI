@@ -103,27 +103,6 @@ class Integration(Description):
             # Computes complex mu and lambda.
             if i_layer >= real_description.below_CMB_layers:
                 if i_layer >= real_description.below_CMB_layers:
-                    # Anelasticity.
-                    if use_anelasticity:
-                        m_prime = m_prime_computing(omega_cut_m=variables["omega_cut_m"], omega_j=self.omega_j)
-                        b = b_computing(
-                            omega_cut_m=variables["omega_cut_m"],
-                            omega_cut_k=variables["omega_cut_k"],
-                            omega_cut_b=variables["omega_cut_b"],
-                            omega_j=self.omega_j,
-                        )
-                        complex_lambda = lambda_computing(
-                            mu_0=variables["mu_0"],
-                            lambda_0=variables["lambda_0"],
-                            m_prime=m_prime,
-                            b=b,
-                        )
-                        complex_mu = mu_computing(mu_0=variables["mu_0"], m_prime=m_prime, b=b)
-
-                    else:
-                        # No anelasticity: mu = mu_0 and lambda = lambda_0.
-                        complex_mu = array(variables["mu_0"], dtype=complex)
-                        complex_lambda = array(variables["lambda_0"], dtype=complex)
 
                     # Attenuation.
                     if use_attenuation:
@@ -148,8 +127,29 @@ class Integration(Description):
                             Qmu=variables["Qmu"],
                             f=f,
                         )
-                        complex_lambda -= 2.0 / 3.0 * delta_mu
-                        complex_mu += delta_mu
+                        complex_lambda = variables["lambda_0"] - 2.0 / 3.0 * delta_mu
+                        complex_mu = variables["mu_0"] + delta_mu
+                    else:
+                        # No attenuation: mu = mu_0 and lambda = lambda_0.
+                        complex_mu = array(variables["mu_0"], dtype=complex)
+                        complex_lambda = array(variables["lambda_0"], dtype=complex)
+
+                    # Anelasticity.
+                    if use_anelasticity:
+                        m_prime = m_prime_computing(omega_cut_m=variables["omega_cut_m"], omega_j=self.omega_j)
+                        b = b_computing(
+                            omega_cut_m=variables["omega_cut_m"],
+                            omega_cut_k=variables["omega_cut_k"],
+                            omega_cut_b=variables["omega_cut_b"],
+                            omega_j=self.omega_j,
+                        )
+                        complex_lambda = lambda_computing(
+                            mu_complex=complex_mu,
+                            lambda_complex=complex_lambda,
+                            m_prime=m_prime,
+                            b=b,
+                        )
+                        complex_mu = mu_computing(mu_complex=complex_mu, m_prime=m_prime, b=b)
 
                     # Updates.
                     description_layer.splines.update(

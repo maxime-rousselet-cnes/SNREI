@@ -348,15 +348,15 @@ class RealDescription(Description):
             variable_values.update(
                 {
                     "omega_cut_m": omega_cut_computing(
-                        mu=variable_values["mu_0"],
+                        mu=variable_values["mu_0"] * (1.0 - variable_values["asymptotic_attenuation"]),
                         eta=variable_values["eta_m"],
                     ),
                     "omega_cut_k": omega_cut_computing(
-                        mu=variable_values["mu_k"],
+                        mu=variable_values["mu_k"] * (1.0 - variable_values["asymptotic_attenuation"]),
                         eta=variable_values["eta_k"],
                     ),
                     "omega_cut_b": omega_cut_computing(
-                        mu=variable_values["mu_0"],
+                        mu=variable_values["mu_0"] * (1.0 - variable_values["asymptotic_attenuation"]),
                         eta=variable_values["eta_k"],
                     ),
                 }
@@ -365,7 +365,7 @@ class RealDescription(Description):
             variable_values.update(
                 {
                     "mu_1": mu_computing(
-                        mu_0=variable_values["mu_0"],
+                        mu_complex=variable_values["mu_0"],
                         m_prime=m_prime_computing(
                             omega_cut_m=variable_values["omega_cut_m"], omega_j=2 * pi / self.frequency_unit
                         ),

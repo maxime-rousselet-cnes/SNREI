@@ -1,6 +1,6 @@
 from math import factorial
 
-from numpy import Inf, array, dot, errstate, lib, nan_to_num, ndarray, shape, sqrt
+from numpy import Inf, array, dot, errstate, lib, nan_to_num, ndarray, sqrt
 
 from ..classes import DescriptionLayer
 

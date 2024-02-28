@@ -9,6 +9,7 @@ from .descriptions import (
 from .hyper_parameters import (
     LoveNumbersHyperParameters,
     RealDescriptionParameters,
+    SignalHyperParameters,
     YSystemHyperParameters,
     load_Love_numbers_hyper_parameters,
 )
@@ -24,6 +25,7 @@ from .result import BoundaryCondition, Direction, Result
     real_description_from_parameters,
     LoveNumbersHyperParameters,
     RealDescriptionParameters,
+    SignalHyperParameters,
     YSystemHyperParameters,
     load_Love_numbers_hyper_parameters,
     Model,

@@ -12,7 +12,7 @@ from .database import load_base_model, save_base_model
 from .Love_numbers import Love_numbers_from_models_to_result, gets_run_id
 from .paths import attenuation_models_path
 
-BOOLEANS = [False, True]
+BOOLEANS = [True, False]
 SAMPLINGS = {"low": 10, "mid": 100, "high": 1000}
 
 
@@ -201,7 +201,8 @@ def Love_number_comparative_for_asymptotic_ratio(
             - 'elasticity_model_name'
             - 'anelasticity_model_name'
             - 'attenuation_model_name'
-        - asymptotic_ratios
+        - options
+        - asymptotic_ratios, when the options allow it.
     """
     # Loads hyper parameters.
     Love_numbers_hyper_parameters = load_Love_numbers_hyper_parameters()
@@ -223,10 +224,17 @@ def Love_number_comparative_for_asymptotic_ratio(
         anelasticity_model_names = [initial_real_description.anelasticity_model_name]
     if not attenuation_model_names:
         attenuation_model_names = [initial_real_description.attenuation_model_name]
+    dummy_ratios = asymptotic_ratios[0]
 
-    # Loops on whether to use anelasticity or not.
-    for use_anelasticity in BOOLEANS:
+    # Loops on options.
+    for use_attenuation, bounded_attenuation_functions, use_anelasticity in product(BOOLEANS, BOOLEANS, BOOLEANS):
         Love_numbers_hyper_parameters.use_anelasticity = use_anelasticity
+        Love_numbers_hyper_parameters.bounded_attenuation_functions = bounded_attenuation_functions
+        Love_numbers_hyper_parameters.use_attenuation = use_attenuation
+        if not use_anelasticity and not use_attenuation and not bounded_attenuation_functions:
+            continue
+        if bounded_attenuation_functions and not use_attenuation:
+            continue
         # Loops on model files.
         for elasticity_model_name, anelasticity_model_name, attenuation_model_name in product(
             elasticity_model_names, anelasticity_model_names, attenuation_model_names
@@ -236,29 +244,33 @@ def Love_number_comparative_for_asymptotic_ratio(
             )
             temp_name_attenuation_model = attenuation_model_name + "-variable-asymptotic_ratio"
             # Loops on asymptotic_ratio.
-            for asymptotic_ratios_per_layer in asymptotic_ratios:
+            for asymptotic_ratios_per_layer in asymptotic_ratios if bounded_attenuation_functions else dummy_ratios:
                 for k_layer, asymptotic_ratio in enumerate(asymptotic_ratios_per_layer):
                     attenuation_model.polynomials["asymptotic_attenuation"][k_layer][0] = 1.0 - asymptotic_ratio
                 save_base_model(obj=attenuation_model, name=temp_name_attenuation_model, path=attenuation_models_path)
                 Love_numbers_from_models_to_result(
-                    real_description_id=gets_id_asymptotic_ratios(
-                        real_description_id=id_from_model_names(
-                            id=initial_real_description_id,
-                            real_description=initial_real_description,
-                            elasticity_model_name=elasticity_model_name,
-                            anelasticity_model_name=anelasticity_model_name,
-                            attenuation_model_name=temp_name_attenuation_model,
-                        ),
-                        asymptotic_ratios_per_layer=asymptotic_ratios_per_layer,
+                    real_description_id=(
+                        gets_id_asymptotic_ratios(
+                            real_description_id=id_from_model_names(
+                                id=initial_real_description_id,
+                                real_description=initial_real_description,
+                                elasticity_model_name=elasticity_model_name,
+                                anelasticity_model_name=anelasticity_model_name,
+                                attenuation_model_name=temp_name_attenuation_model,
+                            ),
+                            asymptotic_ratios_per_layer=asymptotic_ratios_per_layer,
+                        )
                     ),
                     run_id=gets_run_id(
                         use_anelasticity=Love_numbers_hyper_parameters.use_anelasticity,
-                        bounded_attenuation_functions=True,
-                        use_attenuation=True,
+                        bounded_attenuation_functions=Love_numbers_hyper_parameters.bounded_attenuation_functions,
+                        use_attenuation=Love_numbers_hyper_parameters.use_attenuation,
                     ),
-                    load_description=False,
+                    # Real description created during the first options iteration, loaded during the others.
+                    load_description=not (use_anelasticity and bounded_attenuation_functions and use_attenuation),
                     elasticity_model_from_name=elasticity_model_name,
                     anelasticity_model_from_name=anelasticity_model_name,
                     attenuation_model_from_name=temp_name_attenuation_model,
                     Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
                 )
+            # Calls without attenuation too.

@@ -72,7 +72,7 @@ class LoveNumbersHyperParameters(HyperParameters):
     degree_steps: Optional[str] | list[int]  # Love numbers are computed every degree_steps[i] between...
     degree_thresholds: Optional[str] | list[int]  # ... degree_thresholds[i] and degree_thresholds[i + 1].
 
-    # Other parameters.
+    # Run parameters.
     use_anelasticity: bool  # Whether to use attenuation model or not.
     use_attenuation: bool  # Whether to use attenuation model or not.
     bounded_attenuation_functions: bool  # Whether to use bounded version of attenuation functions or not.
@@ -117,3 +117,25 @@ def load_Love_numbers_hyper_parameters() -> LoveNumbersHyperParameters:
     )
     Love_numbers_hyper_parameters.load()
     return Love_numbers_hyper_parameters
+
+
+class SignalHyperParameters(HyperParameters):
+    """
+    Describes the parameters needed for to compute some viscoelastic induced signal using elastic induced signal and Love
+    numbers.
+    """
+
+    # Parameters describing the extended signal.
+    spline_time: int
+    zero_duration: int
+    anti_Gibbs_effect_factor: int
+    signal: str
+
+    # Parameters describing spacially-dependent signal.
+    weights_map: str
+    n_max: int
+
+    # Run parameters.
+    use_anelasticity: bool  # Whether to use attenuation model or not.
+    use_attenuation: bool  # Whether to use attenuation model or not.
+    bounded_attenuation_functions: bool  # Whether to use bounded version of attenuation functions or not.

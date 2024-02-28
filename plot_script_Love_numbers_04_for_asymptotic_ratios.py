@@ -138,7 +138,7 @@ if __name__ == "__main__":
         initial_real_description_id=(
             args.initial_real_description_id
             if args.initial_real_description_id
-            else "PREM_test_Benjamin-variable-asymptotic_ratio"
+            else "PREM_high-viscosity-asthenosphere-elastic-lithosphere_Benjamin-variable-asymptotic_ratio"
         ),
         use_anelasticity=args.with_anelasticity if args.with_anelasticity else False,
         figure_subpath_string=args.subpath if args.subpath else "Love_numbers_for_asymptotic_ratios",

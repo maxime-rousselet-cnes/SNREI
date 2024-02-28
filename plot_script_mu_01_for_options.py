@@ -161,7 +161,11 @@ def plot_mu_profiles_for_options(
 
 if __name__ == "__main__":
     plot_mu_profiles_for_options(
-        real_description_id=args.real_description_id if args.real_description_id else "PREM_test_Benjamin",
+        real_description_id=(
+            args.real_description_id
+            if args.real_description_id
+            else "PREM_high-viscosity-asthenosphere-elastic-lithosphere_Benjamin"
+        ),
         load_description=args.load_description if args.load_description else False,
         figure_subpath_string=args.subpath if args.subpath else "mu_for_options",
     )

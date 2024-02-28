@@ -134,7 +134,9 @@ def plot_mu_profiles_for_asymptotic_ratio(
 if __name__ == "__main__":
     plot_mu_profiles_for_asymptotic_ratio(
         initial_real_description_id=(
-            args.initial_real_description_id if args.initial_real_description_id else "PREM_test_Benjamin"
+            args.initial_real_description_id
+            if args.initial_real_description_id
+            else "PREM_high-viscosity-asthenosphere-elastic-lithosphere_Benjamin"
         ),
         load_description=args.load_initial_description if args.load_initial_description else False,
         with_anelasticity=args.with_anelasticity if args.with_anelasticity else False,

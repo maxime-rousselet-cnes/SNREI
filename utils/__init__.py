@@ -6,6 +6,7 @@ from .classes import (
     Model,
     RealDescription,
     Result,
+    SignalHyperParameters,
     load_Love_numbers_hyper_parameters,
     real_description_from_parameters,
 )
@@ -37,6 +38,7 @@ from .paths import (
     parameters_path,
     results_path,
 )
+from .signal import single_spatial_viscoelastic_signal, single_viscoelastic_signal
 
 [
     BoundaryCondition,
@@ -46,6 +48,7 @@ from .paths import (
     Model,
     RealDescription,
     Result,
+    SignalHyperParameters,
     load_Love_numbers_hyper_parameters,
     real_description_from_parameters,
     SECONDS_PER_YEAR,
@@ -69,4 +72,6 @@ from .paths import (
     figures_path,
     parameters_path,
     results_path,
+    single_spatial_viscoelastic_signal,
+    single_viscoelastic_signal,
 ]

@@ -139,6 +139,11 @@ def plot_comparative_Love_numbers_for_options_for_descriptions(
 
 if __name__ == "__main__":
     plot_comparative_Love_numbers_for_options_for_descriptions(
-        real_description_ids=["PREM_test_Benjamin", "PREM_test-low-viscosity-Asthenosphere_Benjamin"],
+        real_description_ids=[
+            "PREM_high-viscosity-asthenosphere-elastic-lithosphere_Benjamin",
+            "PREM_low-viscosity-asthenosphere-elastic-lithosphere_Benjamin",
+            "PREM_high-viscosity-asthenosphere-anelastic-lithosphere_Benjamin",
+            "PREM_low-viscosity-asthenosphere-anelastic-lithosphere_Benjamin",
+        ],
         figure_subpath_string=args.subpath if args.subpath else "Love_numbers_for_options_for_descriptions",
     )

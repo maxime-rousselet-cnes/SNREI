@@ -147,7 +147,11 @@ class RealDescription(Description):
                 radius_unit=radius_unit,
                 real_crust=real_crust,
                 n_splines_base=n_splines_base,
-                model_filename=anelasticity_model_from_name if anelasticity_model_from_name else "test",
+                model_filename=(
+                    anelasticity_model_from_name
+                    if anelasticity_model_from_name
+                    else "high-viscosity-asthenosphere-elastic-lithosphere"
+                ),
                 load_description=False,
                 save=save,
             )

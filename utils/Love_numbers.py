@@ -186,7 +186,7 @@ def gets_run_id(use_anelasticity: bool, bounded_attenuation_functions: bool, use
     return "_".join(
         (
             "anelasticity" if use_anelasticity else "",
-            "bouded" if bounded_attenuation_functions else "",
+            "bounded" if bounded_attenuation_functions else "",
             "attenuation" if use_attenuation else "",
         )
     )

@@ -17,15 +17,15 @@ Historic:
 
 Urgent:
 
+        already made 1 to 3. TODO from 4.
         Tfinverse(Tf(omega)(*1/kel(l))/(1+kvis(omega,l))) -> trend GRACE / Ocean mask
 
     
     Inscription cours TESS dernière minute
     Look at Alex's article (CNES mail)
     README.md infography for code documentation
-    select plots
+    select plots / plots_Love_numbers
     LaTeX disponible figures
-    plots_Love_numbers
 
 later:
     forgot the 3 in Lamba_0 expression in LaTeX

@@ -187,7 +187,7 @@ def gets_id_asymptotic_ratios(
     return real_description_id + "-".join([str(asymptotic_ratio) for asymptotic_ratio in asymptotic_ratios_per_layer])
 
 
-def Love_number_comparative_for_asymptotic_ratio(
+def Love_number_comparative_for_asymptotic_ratios(
     initial_real_description_id: str,
     asymptotic_ratios: list[list[float]],
     load_initial_description: Optional[bool] = None,
@@ -206,8 +206,6 @@ def Love_number_comparative_for_asymptotic_ratio(
     """
     # Loads hyper parameters.
     Love_numbers_hyper_parameters = load_Love_numbers_hyper_parameters()
-    Love_numbers_hyper_parameters.use_attenuation = True
-    Love_numbers_hyper_parameters.bounded_attenuation_functions = True
 
     # Eventually builds description.
     initial_real_description = real_description_from_parameters(
@@ -224,7 +222,7 @@ def Love_number_comparative_for_asymptotic_ratio(
         anelasticity_model_names = [initial_real_description.anelasticity_model_name]
     if not attenuation_model_names:
         attenuation_model_names = [initial_real_description.attenuation_model_name]
-    dummy_ratios = asymptotic_ratios[0]
+    dummy_ratios = [asymptotic_ratios[0]]
 
     # Loops on options.
     for use_attenuation, bounded_attenuation_functions, use_anelasticity in product(BOOLEANS, BOOLEANS, BOOLEANS):
@@ -273,4 +271,3 @@ def Love_number_comparative_for_asymptotic_ratio(
                     attenuation_model_from_name=temp_name_attenuation_model,
                     Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
                 )
-            # Calls without attenuation too.

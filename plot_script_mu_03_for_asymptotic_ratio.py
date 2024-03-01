@@ -35,7 +35,7 @@ prop_cycle = plt.rcParams["axes.prop_cycle"]
 colors = prop_cycle.by_key()["color"]
 
 
-def plot_mu_profiles_for_asymptotic_ratio(
+def plot_mu_profiles_for_asymptotic_ratios(
     initial_real_description_id: str,
     load_description: bool,
     with_anelasticity: bool,
@@ -132,7 +132,7 @@ def plot_mu_profiles_for_asymptotic_ratio(
 
 
 if __name__ == "__main__":
-    plot_mu_profiles_for_asymptotic_ratio(
+    plot_mu_profiles_for_asymptotic_ratios(
         initial_real_description_id=(
             args.initial_real_description_id
             if args.initial_real_description_id
@@ -140,5 +140,5 @@ if __name__ == "__main__":
         ),
         load_description=args.load_initial_description if args.load_initial_description else False,
         with_anelasticity=args.with_anelasticity if args.with_anelasticity else False,
-        figure_subpath_string=args.subpath if args.subpath else "mu_for_asymptotic_ratio",
+        figure_subpath_string=args.subpath if args.subpath else "mu_for_asymptotic_ratios",
     )

@@ -5,7 +5,7 @@
 
 import argparse
 
-from utils import Love_number_comparative_for_asymptotic_ratio
+from utils import Love_number_comparative_for_asymptotic_ratios
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--initial_real_description_id", type=str, help="Optional wanted ID for the real description")
@@ -15,7 +15,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 if __name__ == "__main__":
-    Love_number_comparative_for_asymptotic_ratio(
+    Love_number_comparative_for_asymptotic_ratios(
         initial_real_description_id=args.initial_real_description_id,
         asymptotic_ratios=[[1.0, 1.0], [0.5, 1.0], [0.2, 1.0], [0.1, 1.0], [0.05, 1.0]],
         load_initial_description=args.load_initial_description,

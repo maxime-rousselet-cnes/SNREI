@@ -20,11 +20,12 @@ from .formulas import (
 from .Love_number_loops import (
     BOOLEANS,
     SAMPLINGS,
-    Love_number_comparative_for_asymptotic_ratio,
+    Love_number_comparative_for_asymptotic_ratios,
     Love_number_comparative_for_models,
     Love_number_comparative_for_options,
     Love_number_comparative_for_sampling,
     gets_id_asymptotic_ratios,
+    id_from_model_names,
 )
 from .Love_numbers import (
     Love_numbers_from_models_to_result,
@@ -38,7 +39,7 @@ from .paths import (
     parameters_path,
     results_path,
 )
-from .signal import single_spatial_viscoelastic_signal, single_viscoelastic_signal
+from .signal import build_load_signal, signal_trend, viscoelastic_load_signal
 
 [
     BoundaryCondition,
@@ -59,11 +60,12 @@ from .signal import single_spatial_viscoelastic_signal, single_viscoelastic_sign
     frequencies_to_periods,
     BOOLEANS,
     SAMPLINGS,
-    Love_number_comparative_for_asymptotic_ratio,
+    Love_number_comparative_for_asymptotic_ratios,
     Love_number_comparative_for_models,
     Love_number_comparative_for_options,
     Love_number_comparative_for_sampling,
     gets_id_asymptotic_ratios,
+    id_from_model_names,
     Love_numbers_from_models_to_result,
     elastic_Love_numbers_computing,
     gets_run_id,
@@ -72,6 +74,7 @@ from .signal import single_spatial_viscoelastic_signal, single_viscoelastic_sign
     figures_path,
     parameters_path,
     results_path,
-    single_spatial_viscoelastic_signal,
-    single_viscoelastic_signal,
+    build_load_signal,
+    signal_trend,
+    viscoelastic_load_signal,
 ]

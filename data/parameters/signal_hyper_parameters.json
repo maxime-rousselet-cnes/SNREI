@@ -2,7 +2,7 @@
     "spline_time": 50,
     "zero_duration": 350,
     "anti_Gibbs_effect_factor": 2,
-    "signal": "ocean_charge",
+    "signal": "ocean_load",
     "weights_map": "mask",
     "n_max": 100,
     "use_anelasticity": true,

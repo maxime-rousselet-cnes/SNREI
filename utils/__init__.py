@@ -39,7 +39,12 @@ from .paths import (
     parameters_path,
     results_path,
 )
-from .signal import build_load_signal, signal_trend, viscoelastic_load_signal
+from .signal import (
+    build_load_signal,
+    signal_trend,
+    viscoelastic_harmonic_load_signal,
+    viscoelastic_load_signal,
+)
 
 [
     BoundaryCondition,
@@ -76,5 +81,6 @@ from .signal import build_load_signal, signal_trend, viscoelastic_load_signal
     results_path,
     build_load_signal,
     signal_trend,
+    viscoelastic_harmonic_load_signal,
     viscoelastic_load_signal,
 ]

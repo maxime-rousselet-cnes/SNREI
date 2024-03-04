@@ -1,11 +1,12 @@
 {
     "spline_time": 50,
     "zero_duration": 350,
-    "anti_Gibbs_effect_factor": 2,
+    "anti_Gibbs_effect_factor": 1,
     "signal": "ocean_load",
-    "weights_map": "mask",
+    "weights_map": "GRACE",
     "n_max": 100,
     "use_anelasticity": true,
     "use_attenuation": true,
-    "bounded_attenuation_functions": true
+    "bounded_attenuation_functions": true,
+    "GRACE": "TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER_ICE6G-D.csv"
 }

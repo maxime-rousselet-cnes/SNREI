@@ -58,7 +58,7 @@ def viscoelastic_load_trend_for_asymptotic_ratios(
     Saves the corresponding figures in the specified subfolder.
     """
     # Builds frequential signal.
-    dates, frequencies, frequencial_load_signal, _ = build_load_signal(
+    dates, elastic_load_signal, frequencies, frequencial_load_signal, _ = build_load_signal(
         signal_hyper_parameters=signal_hyper_parameters, get_harmonic_weights=False
     )
 
@@ -105,6 +105,7 @@ def viscoelastic_load_trend_for_asymptotic_ratios(
                 harmonic_weights=None,
                 real_description_id=real_description_id,
                 signal_hyper_parameters=signal_hyper_parameters,
+                elastic_load_signal=elastic_load_signal,
                 frequencies=frequencies,
                 frequencial_load_signal=frequencial_load_signal,
                 dates=dates,

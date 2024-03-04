@@ -134,6 +134,7 @@ class SignalHyperParameters(HyperParameters):
     # Parameters describing spacially-dependent signal.
     weights_map: str
     n_max: int
+    GRACE: str
 
     # Run parameters.
     use_anelasticity: bool  # Whether to use attenuation model or not.

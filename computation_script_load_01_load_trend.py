@@ -38,7 +38,7 @@ def viscoelastic_load_trend(
     Saves the corresponding figures in the specified subfolder.
     """
     # Builds frequential signal.
-    dates, frequencies, frequencial_load_signal, _ = build_load_signal(
+    dates, elastic_load_signal, frequencies, frequencial_load_signal, _ = build_load_signal(
         signal_hyper_parameters=signal_hyper_parameters, get_harmonic_weights=False
     )
 
@@ -47,6 +47,7 @@ def viscoelastic_load_trend(
         harmonic_weights=None,
         real_description_id=real_description_id,
         signal_hyper_parameters=signal_hyper_parameters,
+        elastic_load_signal=elastic_load_signal,
         frequencies=frequencies,
         frequencial_load_signal=frequencial_load_signal,
         dates=dates,
@@ -100,7 +101,7 @@ if __name__ == "__main__":
         real_description_id=(
             args.real_description_id
             if args.real_description_id
-            else "PREM_high-viscosity-asthenosphere-anelastic-lithosphere_Benjamin-variable-asymptotic_ratio0.1-1.0"
+            else "PREM_high-viscosity-asthenosphere-anelastic-lithosphere_Benjamin-variable-asymptotic_ratio1.0-1.0"
         ),
         figure_subpath_string=args.subpath if args.subpath else "load_signal",
     )

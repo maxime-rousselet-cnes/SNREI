@@ -12,10 +12,13 @@ from numpy import (
     flip,
     linspace,
     log2,
+    maximum,
+    minimum,
     ndarray,
     real,
     round,
     transpose,
+    unique,
     where,
     zeros,
 )
@@ -55,9 +58,18 @@ def extract_GRACE_trend(filename: str, path: Path = data_path.joinpath("trends_g
     """
     # Gets raw data.
     df = read_csv(filepath_or_buffer=path.joinpath(filename), skiprows=11, sep=";")
-    print(df)
-    # TODO.
-    return flip(ds.variables["landseamask"], axis=0).data
+    print(max(df["EWH"]))
+    res = maximum(
+        -5.0,
+        minimum(5.0, array(object=[[value for value in df["EWH"][df["lat"] == lat]] for lat in unique(ar=df["lat"])])[1:, 1:]),
+    )
+    import matplotlib.pyplot as plt
+
+    plt.figure()
+    plt.imshow(res)
+    plt.colorbar()
+    plt.show(block=False)
+    return res
 
 
 def build_harmonic_weights(
@@ -209,6 +221,20 @@ def signal_trend(
     elastic_load_signal_trend = (
         elastic_load_signal[trend_indices[-1]] - elastic_load_signal[trend_indices[0]]
     ) / last_years_for_trend
+
+    # TODO.
+    import matplotlib.pyplot as plt
+    from pyshtools.expand import MakeGridDH
+
+    plt.figure()
+    spatial_results = MakeGridDH(elastic_load_signal_trend, sampling=2)
+    plt.colorbar(
+        plt.imshow(spatial_results),
+        boundaries=linspace(
+            start=min([min(row) for row in spatial_results]), stop=max([max(row) for row in spatial_results]), num=10
+        ),
+    )
+    plt.show(block=False)
 
     return (
         path,

@@ -4,7 +4,7 @@
     "anti_Gibbs_effect_factor": 1,
     "signal": "ocean_load",
     "weights_map": "GRACE",
-    "n_max": 100,
+    "n_max": 200,
     "use_anelasticity": true,
     "use_attenuation": true,
     "bounded_attenuation_functions": true,

@@ -1,5 +1,6 @@
 data/descriptions
 data/results
+data/figures
 __pycache__
 */__pycache__
 */*/__pycache__

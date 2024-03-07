@@ -35,10 +35,14 @@ args = parser.parse_args()
 def plot_comparative_Love_numbers_for_asymptotic_ratios_for_descriptions(
     initial_real_description_id: str,
     figure_subpath_string: str,
-    asymptotic_ratios: list[list[int]] = [[1.0, 1.0], [0.5, 1.0], [0.2, 1.0], [0.1, 1.0], [0.05, 1.0]],
+    asymptotic_ratios: list[list[int]] = [
+        [1.0, 1.0],
+        [0.5, 1.0],
+        [0.1, 1.0],
+    ],  # [0.5, 1.0], [0.2, 1.0], [0.1, 1.0], [0.05, 1.0]],
     degrees_to_plot: list[int] = [2, 3, 4, 5, 10],
-    directions: list[Direction] = [Direction.radial],
-    boundary_conditions: list[BoundaryCondition] = [BoundaryCondition.potential],
+    directions: list[Direction] = [Direction.potential],
+    boundary_conditions: list[BoundaryCondition] = [BoundaryCondition.load],
     use_anelasticity: bool = True,
 ):
     """
@@ -91,7 +95,7 @@ def plot_comparative_Love_numbers_for_asymptotic_ratios_for_descriptions(
         for boundary_condition in boundary_conditions:
             symbol = SYMBOLS_PER_DIRECTION[direction.value] + "_n" + SYMBOLS_PER_BOUNDARY_CONDITION[boundary_condition.value]
             for zoom_in in BOOLEANS:
-                _, plots = plt.subplots(len(asymptotic_ratios), 2, figsize=(16, 10), sharex=True)
+                _, plots = plt.subplots(len(asymptotic_ratios), 2, figsize=(16, 9), sharex=True)
                 for plot_line, asymptotic_ratios_per_layer in enumerate(asymptotic_ratios):
                     for part in ["real", "imaginary"]:
                         # Gets corresponding data.
@@ -113,7 +117,7 @@ def plot_comparative_Love_numbers_for_asymptotic_ratios_for_descriptions(
                                 if part == "real"
                                 else imag(complex_result_values[i_degree])
                             ) / real(elastic_values[i_degree][0])
-                            plot.plot(
+                            plot.semilogx(
                                 T[max_frequency_index:min_frequency_index],
                                 result_values[max_frequency_index:min_frequency_index],
                                 label="n = " + str(degree),
@@ -123,7 +127,7 @@ def plot_comparative_Love_numbers_for_asymptotic_ratios_for_descriptions(
                         plot.legend(loc="upper left")
                         if plot_line == 0:
                             plot.set_title(part + " part")
-                        elif plot_line == 4:
+                        elif plot_line == len(asymptotic_ratios) - 1:
                             plot.set_xlabel("T (y)")
                             plot.set_xscale("log")
                         if part == "real":

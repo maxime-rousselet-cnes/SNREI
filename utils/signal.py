@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Optional
 
 import netCDF4
 from numpy import (
@@ -8,24 +8,31 @@ from numpy import (
     ceil,
     concatenate,
     conjugate,
+    cos,
     expand_dims,
     flip,
     linspace,
     log2,
-    maximum,
-    minimum,
+    mean,
     ndarray,
+    newaxis,
+    ones,
+    pi,
+    prod,
     real,
     round,
     transpose,
     unique,
+    vstack,
     where,
     zeros,
 )
+from numpy.linalg import pinv
 from pandas import read_csv
-from pyshtools.expand import SHExpandDH
+from pyshtools.expand import MakeGridDH, SHExpandDH
 from scipy import interpolate
 from scipy.fft import fft, fftfreq, ifft
+from tqdm import tqdm
 
 from .classes import BoundaryCondition, Direction, Result, SignalHyperParameters
 from .constants import SECONDS_PER_YEAR
@@ -38,9 +45,20 @@ def extract_ocean_load_data(path: Path = data_path) -> tuple[ndarray[float], nda
     """
     Opens Frederikse et al.'s file and formats its data. Mean load in equivalent water height with respect to time.
     """
-    with open(path.joinpath("dataFrederikse")) as file:
-        lines = array([[float(value) for value in line.rstrip().split("\t")] for line in list(file)[:-1]])
-    return lines[:, 0], lines[:, 1] - min(lines[:, 1])
+    # Gets raw data.
+    df = read_csv(filepath_or_buffer=path.joinpath("data_Frederikse").joinpath("global_basin_timeseries.csv"), sep=",")
+    dates = df["Unnamed: 0"].values
+    # Formats.
+    sum_values = array(
+        object=[float(item.split(",")[0] + "." + item.split(",")[1]) for item in df["Sum of contributors [mean]"].values],
+        dtype=float,
+    )
+    steric_values = array(
+        object=[float(item.split(",")[0] + "." + item.split(",")[1]) for item in df["Steric [mean]"].values],
+        dtype=float,
+    )
+    barystatic = sum_values - steric_values
+    return dates, barystatic - barystatic[0]
 
 
 def extract_land_ocean_mask(path: Path = data_path) -> ndarray:
@@ -52,31 +70,29 @@ def extract_land_ocean_mask(path: Path = data_path) -> ndarray:
     return flip(ds.variables["landseamask"], axis=0).data
 
 
-def extract_GRACE_trend(filename: str, path: Path = data_path.joinpath("trends_grace")) -> ndarray:
+def extract_GRACE_trends(filename: str, path: Path = data_path.joinpath("trends_GRACE")) -> ndarray:
     """
-    Opens and formats GRACE's CSV datafile.
+    Opens and formats GRACE trends CSV datafile.
     """
     # Gets raw data.
     df = read_csv(filepath_or_buffer=path.joinpath(filename), skiprows=11, sep=";")
-    print(max(df["EWH"]))
-    res = maximum(
-        -5.0,
-        minimum(5.0, array(object=[[value for value in df["EWH"][df["lat"] == lat]] for lat in unique(ar=df["lat"])])[1:, 1:]),
-    )
-    import matplotlib.pyplot as plt
-
-    plt.figure()
-    plt.imshow(res)
-    plt.colorbar()
-    plt.show(block=False)
-    return res
+    return flip(m=[[value for value in df["EWH"][df["lat"] == lat]] for lat in unique(ar=df["lat"])], axis=0)[1:, 1:]
 
 
-def build_harmonic_weights(
+def extract_ocean_mean_mask(filename: str, path: Path = data_path) -> ndarray:
+    """
+    Opens and formats ocean mask CSV datafile.
+    """
+    # Gets raw data.
+    df = read_csv(filepath_or_buffer=path.joinpath(filename), sep=",")
+    return flip(m=[[value for value in df["mask"][df["lat"] == lat]] for lat in unique(ar=df["lat"])], axis=0)[1:, 1:]
+
+
+def normalize_map(
     map: ndarray,
 ) -> ndarray:
     """
-    Sets global mean as zero and ocean mean as one by homothety.
+    Sets global mean as zero and max as one by homothety.
     """
     n_t = len(map) * len(map[0])
     sum_map = sum(sum(map))
@@ -84,21 +100,31 @@ def build_harmonic_weights(
     return map / (max_map - sum_map / (n_t)) + 1.0 / (1.0 - max_map * n_t / sum_map)
 
 
-def build_uniform_load_signal(
+def build_uniform_elastic_load_signal(
+    dates: ndarray[float],
     load: ndarray[float],
     signal_hyper_parameters: SignalHyperParameters,
-) -> tuple[ndarray[float], ndarray[float], float]:
+) -> tuple[ndarray[float], ndarray[float], float, float]:
     """
     Builds an artificial signal history that has mean value, antisymetry and no Gibbs effect.
     """
+    # Linearly extends the signal for last years.
+    trend_indices = dates >= signal_hyper_parameters.first_year_for_trend
+    extend_part_slope, extend_part_constant = signal_trend(
+        trend_dates=dates[trend_indices],
+        signal=load[trend_indices],
+    )
+    extend_dates = arange(dates[-1] + 1, signal_hyper_parameters.last_year_for_trend + 1)
+    extend_part = extend_part_slope * extend_dates + extend_part_constant
     # Creates cubic spline for antisymetry.
-    mean_slope = load[-1] / signal_hyper_parameters.spline_time
+    mean_slope = extend_part[-1] / signal_hyper_parameters.spline_time
     spline = lambda T: mean_slope / (2.0 * signal_hyper_parameters.spline_time**2.0) * T**3.0 - 3.0 * mean_slope / 2 * T
     # Builds signal history / Creates a constant step at zero value.
     extended_time_serie_past = concatenate(
         (
             zeros(shape=(signal_hyper_parameters.zero_duration)),
             load,
+            extend_part,
             spline(T=arange(start=-signal_hyper_parameters.spline_time, stop=0)),
         )
     )
@@ -117,145 +143,167 @@ def build_uniform_load_signal(
         dates,
         interpolate.splev(x=dates, tck=interpolate.splrep(x=extended_dates, y=extended_time_serie, k=3)),  # Signal.
         2.0 * half_signal_period / n_signal,  # Time step.
+        extend_part_slope,  # Trend.
     )
 
 
-def build_hermitian(signal: ndarray[complex]) -> ndarray[complex]:
+def re_sample_map(map: ndarray[float], n_max: int) -> ndarray[float]:
     """
-    For a given signal defined for positive values, builds the extended signal from it that has hermitian symetry.
+    Redefined a (latitude, longitude) map definition.
     """
-    return concatenate((conjugate(flip(m=signal)), signal))
+    return MakeGridDH(
+        SHExpandDH(
+            map,
+            sampling=2,
+            lmax_calc=min(n_max, (len(map) - 1) // 2),
+        ),
+        sampling=2,
+    )
 
 
-def build_load_signal(
+def build_elastic_load_signal(
     signal_hyper_parameters: SignalHyperParameters, get_harmonic_weights: bool = False
-) -> tuple[ndarray[float], ndarray[float], ndarray[float], ndarray[float], Optional[ndarray[float]]]:
+) -> tuple[ndarray[float], ndarray[float], tuple[float, ndarray[float], ndarray[complex], Optional[ndarray[float]]] | Path]:
     """
     Builds load history in frequential domain, eventually in frequential-harmonic domain.
     Returns:
-        for Frederikse et al.'s ocean mean load: mean frequential load history, described in space by static harmonic weights.
-        for SLR/GRACE load history: frequential-harmonic load history.
+        - dates
+        - frequencies
+        - For SLR/GRACE load history, a frequential-harmonic load history: i.e. path of the folder containing a function of
+        omega per harmonic in (.JSON) files.for Frederikse et al.'s ocean uniform load, a tuple of :
+            - temporal elastic signal trend
+            - a uniform temporal elastic load history
+            - a uniform frequential elastic load history
+            - static harmonic weights if needed.
     """
-    # Builds frequencial signal.
     if signal_hyper_parameters.signal == "ocean_load":
-        dates, time_domain_signal, time_step = build_uniform_load_signal(
-            load=extract_ocean_load_data()[1],
+        # Builds frequencial signal.
+        dates, load = extract_ocean_load_data()
+        dates, temporal_elastic_load_signal, time_step, elastic_trend = build_uniform_elastic_load_signal(
+            dates=dates,
+            load=load,
             signal_hyper_parameters=signal_hyper_parameters,
         )  # (y).
-        frequencial_load_signal = fft(x=time_domain_signal)
-        frequencies = fftfreq(n=len(frequencial_load_signal), d=time_step)
-        harmonic_weights = (
+        frequencial_elastic_load_signal = fft(x=temporal_elastic_load_signal)
+        frequencies = fftfreq(n=len(frequencial_elastic_load_signal), d=time_step)
+        spatial_weights = (
             None
             if not get_harmonic_weights
-            else (
-                build_harmonic_weights(map=extract_land_ocean_mask())
-                if signal_hyper_parameters.weights_map == "mask"
-                else extract_GRACE_trend(filename=signal_hyper_parameters.GRACE)
+            else re_sample_map(
+                map=(
+                    normalize_map(map=extract_land_ocean_mask())
+                    if signal_hyper_parameters.weights_map == "mask"
+                    else extract_GRACE_trends(filename=signal_hyper_parameters.GRACE)
+                ),
+                n_max=signal_hyper_parameters.n_max,
             )
         )
         # Eventually gets harmonics.
         return (
             dates,
-            time_domain_signal,
             frequencies,
-            frequencial_load_signal,
             (
-                None
-                if not get_harmonic_weights
-                else SHExpandDH(
-                    harmonic_weights, sampling=2, lmax_calc=min(signal_hyper_parameters.n_max, (len(harmonic_weights) - 1) // 2)
-                )
+                elastic_trend,
+                temporal_elastic_load_signal,
+                frequencial_elastic_load_signal,
+                (
+                    None
+                    if not get_harmonic_weights
+                    else SHExpandDH(
+                        spatial_weights,
+                        sampling=2,
+                        lmax_calc=min(signal_hyper_parameters.n_max, (len(spatial_weights) - 1) // 2),
+                    )
+                ),
             ),
         )
     else:
-        # TODO: Get GRACE's data?
+        # TODO: Get GRACE's data history ?
         pass
 
 
-def signal_trend(
-    signal_computing: Callable[
-        [Optional[ndarray[float]], str, SignalHyperParameters, ndarray[float], ndarray[complex], ndarray[float]],
-        tuple[Path, ndarray[int], ndarray[complex], ndarray[complex], ndarray[complex], Result],
-    ],
-    # Signal computing parameters.
-    harmonic_weights: Optional[ndarray[float]],
-    real_description_id: str,
+def build_hermitian(signal: ndarray[complex]) -> ndarray[complex]:
+    """
+    For a given signal defined for positive values, builds the corresponding extended signal that has hermitian symetry.
+    """
+    return concatenate((conjugate(flip(m=signal)), signal))
+
+
+def get_trend_dates(
+    dates: ndarray[float],
     signal_hyper_parameters: SignalHyperParameters,
-    elastic_load_signal: ndarray[float],
-    frequencies: ndarray[float],  # (y^-1).
-    frequencial_load_signal: ndarray[complex],
+) -> tuple[ndarray[float], ndarray[int]]:
+    """
+    Returns trend indices and trend dates.
+    """
+    shift_dates = dates + signal_hyper_parameters.spline_time + signal_hyper_parameters.last_year_for_trend
+    trend_indices = where(
+        (shift_dates <= signal_hyper_parameters.last_year_for_trend - 1)
+        * (shift_dates >= signal_hyper_parameters.first_year_for_trend)
+    )[0]
+    return trend_indices, shift_dates[trend_indices]
+
+
+def signal_trend(trend_dates: ndarray[float], signal: ndarray[float]) -> tuple[float, float]:
+    """
+    Returns signal's trend: mean slope and additive constant during last years (LSE).
+    """
+    # Assemble matrix A.
+    A = vstack(
+        [
+            trend_dates,
+            ones(len(trend_dates)),
+        ]
+    ).T
+    # Direct least square regression using pseudo-inverse.
+    return pinv(A).dot(signal[:, newaxis]).flatten()  # Turn the signal into a column vector.
+
+
+def signal_induced_trend_from_dates(
+    # Signal parameters.
+    elastic_trend: float,
+    signal_hyper_parameters: SignalHyperParameters,
+    elastic_signal: ndarray[float],  # One-dimensional.
+    signal: ndarray[float],  # May have multiple dimnesions. Temporal dimension should correspond to axis 0.
     dates: ndarray[float],
     # Trend parameters.
-    last_year: int = 2018,
-    last_years_for_trend: int = 15,
-) -> tuple[Path, ndarray[int], ndarray[float], ndarray[float], ndarray[float], ndarray[float]]:
+) -> tuple[ndarray[float], ndarray[float], ndarray[float], ndarray[float]]:
     """
     Gets some signal computing function result and computes its trend difference with elastic trend.
     """
     # Dates preprocessing.
-    shift_dates = dates + signal_hyper_parameters.spline_time + last_year
-    trend_indices = where((shift_dates <= last_year) * (shift_dates >= last_year - last_years_for_trend))[0]
-    elastic_load_signal_trend = (
-        elastic_load_signal[trend_indices[-1]] - elastic_load_signal[trend_indices[0]]
-    ) / last_years_for_trend
-
-    # Gets signal.
-    path, degrees, elastic_load_signal, load_signal, _, _ = signal_computing(
-        harmonic_weights,
-        real_description_id=real_description_id,
-        signal_hyper_parameters=signal_hyper_parameters,
-        frequencies=frequencies,
-        # Normalization coefficient. Needed for spatialized computations.
-        frequencial_load_signal=frequencial_load_signal
-        / (
-            1.0
-            if signal_hyper_parameters.weights_map == "mask" or not (harmonic_weights is None)
-            else elastic_load_signal_trend
-        ),
+    trend_indices, trend_dates = get_trend_dates(
         dates=dates,
+        signal_hyper_parameters=signal_hyper_parameters,
     )
 
     # Gets last years trend differences with elastic trend.
-    load_signal_last_years = load_signal[trend_indices] - array(object=[load_signal[trend_indices[0]]], dtype=float)
-
-    elastic_load_signal_trend = (
-        elastic_load_signal[trend_indices[-1]] - elastic_load_signal[trend_indices[0]]
-    ) / last_years_for_trend
-
-    # TODO.
-    import matplotlib.pyplot as plt
-    from pyshtools.expand import MakeGridDH
-
-    plt.figure()
-    spatial_results = MakeGridDH(elastic_load_signal_trend, sampling=2)
-    plt.colorbar(
-        plt.imshow(spatial_results),
-        boundaries=linspace(
-            start=min([min(row) for row in spatial_results]), stop=max([max(row) for row in spatial_results]), num=10
-        ),
-    )
-    plt.show(block=False)
+    signal_shape = signal.shape
+    signal.reshape((signal_shape[0], -1))
+    signal_trends = zeros(shape=(1) if len(signal_shape) == 1 else prod(a=signal_shape[1:]))
+    signal_origins = zeros(shape=signal_trends.shape)
+    # Eventually loops on components.
+    for i_component, signal_component in enumerate([signal] if len(signal_shape) == 1 else transpose(a=signal)):
+        anelastic_component_signal_trend, _ = signal_trend(trend_dates=trend_dates, signal=signal_component[trend_indices])
+        # Difference with elastic.
+        signal_trends[i_component] = anelastic_component_signal_trend - elastic_trend
+        signal_origins[i_component] = signal_component[trend_indices][0]
 
     return (
-        path,
-        degrees,
-        load_signal,
-        shift_dates[trend_indices],
-        load_signal_last_years,
-        load_signal_last_years[-1] / last_years_for_trend - elastic_load_signal_trend,  # Difference with elastic.
+        trend_dates,
+        elastic_signal[trend_indices] - elastic_signal[trend_indices][0],
+        signal[trend_indices] - array(object=signal_origins),
+        (signal_trends[0] if len(signal_shape) == 1 else signal_trends.reshape(signal_shape[1:])),
     )
 
 
-def viscoelastic_load_signal(
-    _: Optional[ndarray[float]],  # Un-used parameter for the function's description to be formatted.
+def interpolate_Love_numbers(
     real_description_id: str,
     signal_hyper_parameters: SignalHyperParameters,
     frequencies: ndarray[float],  # (y^-1).
-    frequencial_load_signal: ndarray[complex],
-    dates: ndarray[float],
-) -> tuple[Path, ndarray[int], ndarray[complex], ndarray[complex], ndarray[complex], Result]:
+) -> tuple[Result, Result, ndarray[int], Path]:
     """
-    Gets already computed Love numbers, computes viscoelastic load signal and save it in (.JSON) file.
+    Interpolates load Love numbers in frequency (h'n, l'n, 1 + k'n).
     """
     # Gets Love numbers.
     base_path = results_path.joinpath(real_description_id)
@@ -272,34 +320,57 @@ def viscoelastic_load_signal(
     anelastic_Love_numbers.load(name="anelastic_Love_numbers", path=path)
     Love_number_frequencies = SECONDS_PER_YEAR * array(load_base_model("frequencies", path=path))  # (y^-1).
 
-    # Interpolates Love numbers as hermitian signal.
+    # Interpolates Love numbers on signal frequencies as hermitian signal.
     symmetric_Love_number_frequencies = concatenate((-flip(m=Love_number_frequencies), Love_number_frequencies))
-    hermitian_Love_numbers = Result(
-        values={
-            direction: {
-                BoundaryCondition.load: [
-                    interpolate.interp1d(
-                        x=symmetric_Love_number_frequencies,
-                        y=build_hermitian(
-                            signal=(1.0 if direction == Direction.potential else 0.0)
-                            + (Love_numbers_for_degree / (degree if direction != Direction.radial else 1.0))
-                        ),
-                        kind="linear",
-                    )(x=frequencies)
-                    for Love_numbers_for_degree, degree in zip(
-                        anelastic_Love_numbers.values[direction][BoundaryCondition.load],
-                        degrees,
-                    )
-                ]
+    return (
+        Result(
+            values={
+                direction: {
+                    BoundaryCondition.load: [
+                        interpolate.interp1d(
+                            x=symmetric_Love_number_frequencies,
+                            y=build_hermitian(
+                                signal=(1.0 if direction == Direction.potential else 0.0)
+                                + (Love_numbers_for_degree / (degree if direction != Direction.radial else 1.0))
+                            ),
+                            kind="linear",
+                        )(x=frequencies)
+                        for Love_numbers_for_degree, degree in zip(
+                            anelastic_Love_numbers.values[direction][BoundaryCondition.load],
+                            degrees,
+                        )
+                    ]
+                }
+                for direction in Direction
             }
-            for direction in Direction
-        }
+        ),
+        elastic_Love_numbers,
+        degrees,
+        path,
     )
 
-    # Computes viscoelastic induced signal in frequencial domain.
+
+def anelastic_induced_load_signal(
+    real_description_id: str,
+    signal_hyper_parameters: SignalHyperParameters,
+    dates: ndarray[float],  # (y).
+    frequencies: ndarray[float],  # (y^-1).
+    frequencial_elastic_load_signal: ndarray[complex],
+) -> tuple[Path, ndarray[int], ndarray[float], ndarray[complex], Result]:
+    """
+    Gets already computed Love numbers, computes anelastic induced load signal per degree and save it in (.JSON) file.
+    """
+    # Interpolates Love numbers on signal frequencies as hermitian signal.
+    hermitian_Love_numbers, elastic_Love_numbers, degrees, path = interpolate_Love_numbers(
+        real_description_id=real_description_id,
+        signal_hyper_parameters=signal_hyper_parameters,
+        frequencies=frequencies,
+    )
+
+    # Computes anelastic induced signal in frequencial domain.
     frequencial_load_signal_per_degree = array(
         object=[
-            frequencial_load_signal * (1.0 + (elastic_k_for_degree[0] / degree)) / anelastic_coefficient
+            frequencial_elastic_load_signal * (1.0 + (elastic_k_for_degree[0] / degree)) / anelastic_coefficient
             for anelastic_coefficient, elastic_k_for_degree, degree in zip(
                 hermitian_Love_numbers.values[Direction.potential][BoundaryCondition.load],
                 elastic_Love_numbers.values[Direction.potential][BoundaryCondition.load],
@@ -309,8 +380,8 @@ def viscoelastic_load_signal(
         dtype=complex,
     )
 
-    # Computes viscoelastic induced signal in temporal domain.
-    load_signal_per_degree = array(
+    # Computes anelastic induced signal in temporal domain.
+    temporal_load_signal_per_degree = array(
         object=[
             real(ifft(x=frequencial_load_signal_for_degree))
             for frequencial_load_signal_for_degree in frequencial_load_signal_per_degree
@@ -318,79 +389,150 @@ def viscoelastic_load_signal(
         dtype=float,
     )
 
-    # Saves.
+    # Saves needed information.
     save_base_model(obj=dates, name="signal_dates", path=path)
     save_base_model(obj=frequencies, name="signal_frequencies", path=path)
     save_base_model(obj={"imag": frequencial_load_signal_per_degree.imag}, name="frequencial_load_signal_per_degree", path=path)
-    save_base_model(obj=load_signal_per_degree, name="load_signal_per_degree", path=path)
+    save_base_model(obj=temporal_load_signal_per_degree, name="temporal_load_signal_per_degree", path=path)
 
     return (
         path,
         degrees,
-        real(ifft(x=frequencial_load_signal)),
-        transpose(a=load_signal_per_degree),
-        transpose(a=frequencial_load_signal_per_degree),
-        hermitian_Love_numbers,
+        temporal_load_signal_per_degree,
+        frequencial_load_signal_per_degree,
+        hermitian_Love_numbers,  # May needed when this function is called before surface deformation computing.
     )
 
 
-def viscoelastic_harmonic_load_signal(
+def interpolate_on_all_degrees(
+    load_signal_per_degree: ndarray[complex], degrees: ndarray[int], all_degrees: ndarray[int]
+) -> ndarray[complex]:
+    """
+    Interpolate a 2-D (degrees, frequencies/time) signal on its first dimension (degrees).
+    """
+    return array(
+        object=[
+            interpolate.splev(x=all_degrees, tck=interpolate.splrep(x=degrees, y=load_signal_for_time, k=3), ext=0.0)
+            for load_signal_for_time in transpose(a=load_signal_per_degree)
+        ],
+        dtype=float,
+    )
+
+
+def build_harmonic_name(i_order_sign: int, i_degree: int, i_order: int) -> str:
+    """
+    Builds a conventional name for a harmonic given its 3 indices.
+    """
+    return ("C" if i_order_sign == 0 else "S") + "_" + str(i_degree) + "_" + str(i_order)
+
+
+def ocean_mean(harmonic_weights: ndarray[float], ocean_mask: str, n_max: int) -> float:
+    """
+    Computes mean value over ocean surface. Uses a given mask.
+    """
+    grid = MakeGridDH(harmonic_weights, sampling=2)
+    dS = expand_dims(a=cos(linspace(start=-pi / 2, stop=pi / 2, num=len(grid))), axis=1)
+    ocean_mask = re_sample_map(
+        map=extract_ocean_mean_mask(filename=ocean_mask),
+        n_max=n_max,
+    )
+    return sum(sum(grid * ocean_mask * dS)) / sum(sum(ocean_mask * dS))
+
+
+def anelastic_harmonic_induced_load_signal(
     harmonic_weights: Optional[ndarray[float]],
     real_description_id: str,
     signal_hyper_parameters: SignalHyperParameters,
-    frequencies: ndarray[float],  # (y^-1).
-    frequencial_load_signal: ndarray[complex],
     dates: ndarray[float],
-) -> tuple[Path, ndarray[int], ndarray[complex], ndarray[complex], Result]:
+    frequencies: ndarray[float],  # (y^-1).
+    frequencial_elastic_normalized_load_signal: ndarray[complex],
+) -> tuple[Path, ndarray[int], Path, Path, ndarray[float], Result]:
     """
-    Computes the spatially dependent viscoelastic induced harmonic load and saves it in a (.JSON) file.
+    Computes the spatially dependent anelastic induced harmonic load and saves it in a (.JSON) file.
     """
-
-    # Gets Love numbers, computes viscoelastic induced load signal and saves.
     if signal_hyper_parameters.signal == "ocean_load":
-        path, degrees, elastic_load_signal, load_signal, frequencial_load_signal, hermitian_Love_numbers = (
-            viscoelastic_load_signal(
-                None,
-                real_description_id=real_description_id,
-                signal_hyper_parameters=signal_hyper_parameters,
-                frequencies=frequencies,
-                frequencial_load_signal=frequencial_load_signal,
-                dates=dates,
+
+        # Gets Love numbers, computes anelastic induced load signal and saves.
+        (
+            path,
+            degrees,
+            temporal_normalized_load_signal_per_degree,
+            frequencial_normalized_load_signal_per_degree,
+            hermitian_Love_numbers,
+        ) = anelastic_induced_load_signal(
+            real_description_id=real_description_id,
+            signal_hyper_parameters=signal_hyper_parameters,
+            dates=dates,
+            frequencies=frequencies,
+            frequencial_elastic_load_signal=frequencial_elastic_normalized_load_signal,
+        )
+
+        # Preprocesses.
+        all_degrees = arange(stop=len(harmonic_weights[0]))
+        harmonic_frequencial_subpath = path.joinpath("anelastic_harmonic_induced_frequencial_load_signal")
+        harmonic_temporal_subpath = path.joinpath("anelastic_harmonic_induced_temporal_load_signal")
+        harmonic_trends = zeros(shape=harmonic_weights.shape)
+        trend_indices, trend_dates = get_trend_dates(dates=dates, signal_hyper_parameters=signal_hyper_parameters)
+
+        # Interpolates in degrees, for each frequency.
+        frequencial_load_signals = interpolate_on_all_degrees(
+            load_signal_per_degree=frequencial_normalized_load_signal_per_degree.imag, degrees=degrees, all_degrees=all_degrees
+        )
+        temporal_load_signals = interpolate_on_all_degrees(
+            load_signal_per_degree=temporal_normalized_load_signal_per_degree, degrees=degrees, all_degrees=all_degrees
+        )
+
+        # Loops on harmonics:
+        for i_order_sign, weights_per_degree in enumerate(harmonic_weights):
+            for i_degree, weights_per_order in tqdm(
+                total=len(weights_per_degree) - i_order_sign,
+                desc="C" if i_order_sign == 0 else "S",
+                iterable=zip(range(i_order_sign, len(weights_per_degree)), weights_per_degree[i_order_sign:]),
+            ):  # Because S_n0 does not exist.
+                for i_order, harmonic_weight in zip(
+                    range(i_order_sign, i_degree + 1), weights_per_order[i_order_sign : i_degree + 1]
+                ):
+                    harmonic_name = build_harmonic_name(i_order_sign=i_order_sign, i_degree=i_degree, i_order=i_order)
+                    # Computes result.
+                    harmonic_frequencial_load_signal = frequencial_load_signals[:, i_degree] * harmonic_weight
+                    harmonic_temporal_load_signal = temporal_load_signals[:, i_degree] * harmonic_weight
+                    # Saves in (.JSON) file.
+                    save_base_model(
+                        obj=harmonic_frequencial_load_signal,
+                        name=harmonic_name,
+                        path=harmonic_frequencial_subpath,
+                    )
+                    save_base_model(
+                        obj=harmonic_temporal_load_signal,
+                        name=harmonic_name,
+                        path=harmonic_temporal_subpath,
+                    )
+                    # Compute harmonic trend.
+                    harmonic_trends[i_order_sign, i_degree, i_order] = signal_trend(
+                        trend_dates=trend_dates, signal=harmonic_temporal_load_signal[trend_indices]
+                    )[0]
+
+        print(
+            ocean_mean(
+                harmonic_weights=harmonic_weights,
+                ocean_mask=signal_hyper_parameters.ocean_mask,
+                n_max=signal_hyper_parameters.n_max,
             )
         )
-
-        # Interpolates in degrees, for each time step.
-        all_degrees = arange(stop=len(harmonic_weights[0]))
-        load_signal_for_all_degrees = array(
-            object=[
-                [
-                    expand_dims(
-                        a=interpolate.splev(
-                            x=all_degrees, tck=interpolate.splrep(x=degrees, y=load_signal_for_time, k=3), ext=0.0
-                        ),
-                        axis=1,
-                    )
-                ]
-                for load_signal_for_time in load_signal
-            ],
-            dtype=float,
+        print(
+            ocean_mean(
+                harmonic_weights=harmonic_trends,
+                ocean_mask=signal_hyper_parameters.ocean_mask,
+                n_max=signal_hyper_parameters.n_max,
+            )
         )
-
-        # Computes result.
-        harmonic_elastic_load_signal = expand_dims(a=elastic_load_signal, axis=(1, 2, 3)) * array(
-            object=[harmonic_weights], dtype=float
-        )
-        harmonic_load_signal = load_signal_for_all_degrees * array(object=[harmonic_weights], dtype=float)
-
-        # Saves in (.JSON) file.
-        save_base_model(obj=harmonic_load_signal, name="viscoelastic_induced_harmonic_load_signal", path=path)
 
         return (
             path,
             degrees,
-            harmonic_elastic_load_signal,
-            harmonic_load_signal,
-            frequencial_load_signal,
+            harmonic_temporal_subpath,
+            harmonic_frequencial_subpath,
+            harmonic_trends,
             hermitian_Love_numbers,
         )
     else:  # TODO: manage GRACE's full data. harmonic_weights = None.

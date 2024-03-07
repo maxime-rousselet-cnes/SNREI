@@ -40,8 +40,12 @@ def plot_mu_profiles_for_asymptotic_ratios(
     load_description: bool,
     with_anelasticity: bool,
     figure_subpath_string: str,
-    asymptotic_ratio_values: list[list[float]] = [[1.0, 1.0], [0.5, 1.0], [0.2, 1.0], [0.1, 1.0], [0.05, 1.0]],
-    period_values: list[float] = [18.6, 100, 1000, 10000],
+    asymptotic_ratio_values: list[list[float]] = [
+        [1.0, 1.0],
+        [0.5, 1.0],
+        [0.1, 1.0],
+    ],  # , [0.2, 1.0], [0.1, 1.0], [0.05, 1.0]],
+    period_values: list[float] = [1, 18.6, 100],
 ):
     """
     Generates figures of real and imaginary parts of mu for different models.

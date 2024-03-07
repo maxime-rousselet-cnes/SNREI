@@ -4,9 +4,12 @@
     "anti_Gibbs_effect_factor": 1,
     "signal": "ocean_load",
     "weights_map": "GRACE",
-    "n_max": 200,
+    "n_max": 90,
+    "GRACE": "TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER_ICE6G-D.csv",
+    "ocean_mask": "ocean_mask_buffer_coast_300km_eq_removed_0_360.csv",
+    "first_year_for_trend": 2003,
+    "last_year_for_trend": 2024,
     "use_anelasticity": true,
     "use_attenuation": true,
-    "bounded_attenuation_functions": true,
-    "GRACE": "TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER_ICE6G-D.csv"
+    "bounded_attenuation_functions": true
 }

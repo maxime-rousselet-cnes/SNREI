@@ -121,7 +121,7 @@ def load_Love_numbers_hyper_parameters() -> LoveNumbersHyperParameters:
 
 class SignalHyperParameters(HyperParameters):
     """
-    Describes the parameters needed for to compute some viscoelastic induced signal using elastic induced signal and Love
+    Describes the parameters needed for to compute some anelastic induced signal using elastic induced signal and Love
     numbers.
     """
 
@@ -134,7 +134,12 @@ class SignalHyperParameters(HyperParameters):
     # Parameters describing spacially-dependent signal.
     weights_map: str
     n_max: int
-    GRACE: str
+    GRACE: Optional[str]
+    ocean_mask: Optional[str]
+
+    # Trend parameters.
+    first_year_for_trend: int
+    last_year_for_trend: int
 
     # Run parameters.
     use_anelasticity: bool  # Whether to use attenuation model or not.

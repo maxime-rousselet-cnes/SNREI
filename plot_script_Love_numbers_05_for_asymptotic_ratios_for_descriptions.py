@@ -94,7 +94,7 @@ def plot_comparative_Love_numbers_for_asymptotic_ratios_for_descriptions(
             symbol = SYMBOLS_PER_DIRECTION[direction.value] + "_n" + SYMBOLS_PER_BOUNDARY_CONDITION[boundary_condition.value]
             for part in ["real", "imaginary"]:
                 for zoom_in in BOOLEANS:
-                    _, plots = plt.subplots(len(asymptotic_ratios), len(real_description_ids), figsize=(16, 10), sharex=True)
+                    _, plots = plt.subplots(len(asymptotic_ratios), len(real_description_ids), figsize=(16, 9), sharex=True)
                     for plot_line, asymptotic_ratios_per_layer in enumerate(asymptotic_ratios):
                         for real_description_id in real_description_ids:
                             # Gets corresponding data.

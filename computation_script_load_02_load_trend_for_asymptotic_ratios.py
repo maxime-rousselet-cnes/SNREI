@@ -1,10 +1,10 @@
-# Computes viscoelastic-modified load signal by iterating on:
+# Computes anelastic-modified load signal by iterating on:
 #   - models: A real description is used per triplet of:
 #       - 'elasticity_model_name'
 #       - 'anelasticity_model_name'
 #       - 'attenuation_model_name'
 #   - asymptotic_ratios, when the options allow it.
-# Gets already computed Love numbers, builds load signal from data, computes viscoelastic induced load signal and saves it.
+# Gets already computed Love numbers, builds load signal from data, computes anelastic induced load signal and saves it.
 # Saves the corresponding figures in the specified subfolder.
 
 import argparse
@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 
 from utils import (
     SignalHyperParameters,
+    anelastic_load_signal,
     build_load_signal,
     figures_path,
     gets_id_asymptotic_ratios,
@@ -24,8 +25,9 @@ from utils import (
     parameters_path,
     real_description_from_parameters,
     signal_trend,
-    viscoelastic_load_signal,
 )
+
+# TODO.
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--initial_real_description_id", type=str, help="Optional wanted ID for the real description")
@@ -33,28 +35,26 @@ parser.add_argument("--subpath", type=str, help="wanted path to save figure")
 args = parser.parse_args()
 
 
-def viscoelastic_load_trend_for_asymptotic_ratios(
+def anelastic_load_trend_for_asymptotic_ratios(
     initial_real_description_id: str,
     figure_subpath_string: str,
     asymptotic_ratios: list[list[float]],
     elasticity_model_names: Optional[list[str]] = None,
     anelasticity_model_names: Optional[list[str]] = None,
     attenuation_model_names: Optional[list[str]] = None,
-    last_year: int = 2018,
-    last_years_for_trend: int = 15,
     signal_hyper_parameters: SignalHyperParameters = load_base_model(
         name="signal_hyper_parameters", path=parameters_path, base_model_type=SignalHyperParameters
     ),
     degrees_to_plot: list[int] = [1, 2, 3, 5, 10, 20],
 ) -> None:
     """
-    Computes viscoelastic-modified load signal by iterating on:
+    Computes anelastic-modified load signal by iterating on:
         - models: A real description is used per triplet of:
             - 'elasticity_model_name'
             - 'anelasticity_model_name'
             - 'attenuation_model_name'
         - asymptotic_ratios, when the options allow it.
-    Gets already computed Love numbers, builds load signal from data, computes viscoelastic induced load signal and saves it.
+    Gets already computed Love numbers, builds load signal from data, computes anelastic induced load signal and saves it.
     Saves the corresponding figures in the specified subfolder.
     """
     # Builds frequential signal.
@@ -99,9 +99,9 @@ def viscoelastic_load_trend_for_asymptotic_ratios(
                 asymptotic_ratios_per_layer=asymptotic_ratios_per_layer,
             )
 
-            # Gets viscoelastic induced signal.
+            # Gets anelastic induced signal.
             _, degrees, load_signal, last_years_dates, load_signal_last_years, load_signal_trends = signal_trend(
-                signal_computing=viscoelastic_load_signal,
+                signal_computing=anelastic_load_signal,
                 harmonic_weights=None,
                 real_description_id=real_description_id,
                 signal_hyper_parameters=signal_hyper_parameters,
@@ -119,7 +119,7 @@ def viscoelastic_load_trend_for_asymptotic_ratios(
 
             # Results.
             degrees_indices = [list(degrees).index(degree) for degree in degrees_to_plot]
-            plt.figure(figsize=(16, 10))
+            plt.figure(figsize=(16, 9))
             for i_degree, degree in zip(degrees_indices, degrees_to_plot):
                 plt.plot(
                     dates,
@@ -129,13 +129,13 @@ def viscoelastic_load_trend_for_asymptotic_ratios(
             plt.legend()
             plt.xlabel("time (y)")
             plt.grid()
-            plt.title("viscoelastic induced load signal")
+            plt.title("anelastic induced load signal")
             plt.legend()
-            plt.savefig(figure_subpath.joinpath("viscoelastic_induced_load_signal.png"))
+            plt.savefig(figure_subpath.joinpath("anelastic_induced_load_signal.png"))
             plt.close()
 
             # Trend since last_year - last_years_for_trend.
-            plt.figure(figsize=(16, 10))
+            plt.figure(figsize=(16, 9))
             for i_degree, degree in zip(degrees_indices, degrees_to_plot):
                 plt.plot(
                     last_years_dates,
@@ -148,14 +148,14 @@ def viscoelastic_load_trend_for_asymptotic_ratios(
             plt.legend()
             plt.xlabel("time (y)")
             plt.grid()
-            plt.title("viscoelastic induced load signal - trend since " + str(last_year - last_years_for_trend))
+            plt.title("anelastic induced load signal - trend since " + str(last_year - last_years_for_trend))
             plt.legend()
-            plt.savefig(figure_subpath.joinpath("viscoelastic_induced_load_signal_trend.png"))
+            plt.savefig(figure_subpath.joinpath("anelastic_induced_load_signal_trend.png"))
             plt.close()
 
 
 if __name__ == "__main__":
-    viscoelastic_load_trend_for_asymptotic_ratios(
+    anelastic_load_trend_for_asymptotic_ratios(
         initial_real_description_id=(
             args.initial_real_description_id
             if args.initial_real_description_id

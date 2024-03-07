@@ -40,10 +40,11 @@ from .paths import (
     results_path,
 )
 from .signal import (
-    build_load_signal,
-    signal_trend,
-    viscoelastic_harmonic_load_signal,
-    viscoelastic_load_signal,
+    anelastic_harmonic_induced_load_signal,
+    anelastic_induced_load_signal,
+    build_elastic_load_signal,
+    extract_ocean_mean_mask,
+    signal_induced_trend_from_dates,
 )
 
 [
@@ -79,8 +80,9 @@ from .signal import (
     figures_path,
     parameters_path,
     results_path,
-    build_load_signal,
-    signal_trend,
-    viscoelastic_harmonic_load_signal,
-    viscoelastic_load_signal,
+    anelastic_harmonic_induced_load_signal,
+    anelastic_induced_load_signal,
+    build_elastic_load_signal,
+    extract_ocean_mean_mask,
+    signal_induced_trend_from_dates,
 ]

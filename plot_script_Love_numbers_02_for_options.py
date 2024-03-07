@@ -79,7 +79,7 @@ def plot_comparative_Love_numbers_for_options(
         for boundary_condition in boundary_conditions:
             symbol = SYMBOLS_PER_DIRECTION[direction.value] + "_n" + SYMBOLS_PER_BOUNDARY_CONDITION[boundary_condition.value]
             for zoom_in in BOOLEANS:
-                _, plots = plt.subplots(5, 2, figsize=(16, 10), sharex=True)
+                _, plots = plt.subplots(5, 2, figsize=(16, 9), sharex=True)
                 plot_line = 0
                 for use_anelasticity, bounded_attenuation_functions, use_attenuation in options_list:
                     if (not use_attenuation) and (bounded_attenuation_functions or not use_anelasticity):

@@ -19,8 +19,8 @@ from utils import (
     SignalHyperParameters,
     anelastic_harmonic_induced_load_signal,
     build_elastic_load_signal,
-    extract_ocean_mean_mask,
     figures_path,
+    format_ocean_mask,
     load_base_model,
     parameters_path,
 )
@@ -38,6 +38,7 @@ def plot_harmonics_on_natural_projection(
     title: str,
     figure_subpath: Path,
     name: str,
+    n_max: int,
     num: int = 10,
     ocean_mask_filename: Optional[str] = None,
     v_min: Optional[int] = None,
@@ -56,8 +57,7 @@ def plot_harmonics_on_natural_projection(
     plt.title(title, fontsize=20)
     ax.set_global()
     spatial_result = round(
-        a=MakeGridDH(harmonics, sampling=2)
-        * (1.0 if ocean_mask_filename is None else extract_ocean_mean_mask(filename=ocean_mask_filename)),
+        a=MakeGridDH(harmonics, sampling=2) * format_ocean_mask(ocean_mask_filename=ocean_mask_filename, n_max=n_max),
         decimals=3,
     )
     contour = ax.pcolormesh(
@@ -129,6 +129,7 @@ def anelastic_induced_harmonic_load_trend(
             harmonics=harmonic_weights,
             title=signal_hyper_parameters.weights_map,
             figure_subpath=figure_subpath,
+            n_max=signal_hyper_parameters.n_max,
             name=signal_hyper_parameters.weights_map + ("_saturated" if saturation else ""),
             ocean_mask_filename=signal_hyper_parameters.ocean_mask,
             v_min=v_min,
@@ -139,6 +140,7 @@ def anelastic_induced_harmonic_load_trend(
             harmonics=harmonic_trends,
             title="anelastic induced loads : trends since " + str(signal_hyper_parameters.first_year_for_trend),
             figure_subpath=figure_subpath,
+            n_max=signal_hyper_parameters.n_max,
             name=signal_hyper_parameters.weights_map
             + "_"
             + signal_hyper_parameters.signal
@@ -154,6 +156,7 @@ def anelastic_induced_harmonic_load_trend(
             title="anelastic induced loads differences with elastic : trends since "
             + str(signal_hyper_parameters.first_year_for_trend),
             figure_subpath=figure_subpath,
+            n_max=signal_hyper_parameters.n_max,
             name=signal_hyper_parameters.weights_map
             + "_"
             + signal_hyper_parameters.signal
@@ -170,7 +173,7 @@ if __name__ == "__main__":
         real_description_id=(
             args.real_description_id
             if args.real_description_id
-            else "PREM_high-viscosity-asthenosphere-elastic-lithosphere_Benjamin-variable-asymptotic_ratio1.0-1.0"
+            else "PREM_low-viscosity-asthenosphere-elastic-lithosphere_Benjamin-variable-asymptotic_ratio0.2-1.0"
         ),
         figure_subpath_string=args.subpath if args.subpath else "spatial_load_signal",
     )

@@ -135,7 +135,7 @@ class SignalHyperParameters(HyperParameters):
     weights_map: str
     n_max: int
     GRACE: Optional[str]
-    ocean_mask: Optional[str]
+    ocean_mask: Optional[str]  # "ocean_mask_buffer_coast_300km_eq_removed_0_360.csv"
 
     # Trend parameters.
     first_year_for_trend: int

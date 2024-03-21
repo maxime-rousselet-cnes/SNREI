@@ -426,17 +426,34 @@ def build_harmonic_name(i_order_sign: int, i_degree: int, i_order: int) -> str:
     return ("C" if i_order_sign == 0 else "S") + "_" + str(i_degree) + "_" + str(i_order)
 
 
-def ocean_mean(harmonic_weights: ndarray[float], ocean_mask: str, n_max: int) -> float:
+def format_ocean_mask(ocean_mask_filename: str, n_max: int) -> ndarray[float]:
+    """
+    Gets the wanted ocean mask and adjusts it.
+    """
+    if ocean_mask_filename is None:
+        return 1.0
+    else:
+        if ocean_mask_filename.split(".")[-1] == "csv":
+            ocean_mask = extract_ocean_mean_mask(filename=ocean_mask_filename)
+        else:
+            ocean_mask = extract_land_ocean_mask() / 100
+        return round(
+            a=re_sample_map(
+                map=ocean_mask,
+                n_max=n_max - 1,
+            )
+        )
+
+
+# TODO. Compute differenly to consider GRACE's solution filtering effect on continents.
+def ocean_mean(harmonic_weights: ndarray[float], ocean_mask_filename: str, n_max: int) -> float:
     """
     Computes mean value over ocean surface. Uses a given mask.
     """
     grid = MakeGridDH(harmonic_weights, sampling=2)
     dS = expand_dims(a=cos(linspace(start=-pi / 2, stop=pi / 2, num=len(grid))), axis=1)
-    ocean_mask = re_sample_map(
-        map=extract_ocean_mean_mask(filename=ocean_mask),
-        n_max=n_max,
-    )
-    return sum(sum(grid * ocean_mask * dS)) / sum(sum(ocean_mask * dS))
+    resampled_ocean_mask = format_ocean_mask(ocean_mask_filename=ocean_mask_filename, n_max=n_max)
+    return sum(sum(grid * resampled_ocean_mask * dS)) / sum(sum(resampled_ocean_mask * dS))
 
 
 def anelastic_harmonic_induced_load_signal(
@@ -512,20 +529,15 @@ def anelastic_harmonic_induced_load_signal(
                         trend_dates=trend_dates, signal=harmonic_temporal_load_signal[trend_indices]
                     )[0]
 
-        print(
-            ocean_mean(
-                harmonic_weights=harmonic_weights,
-                ocean_mask=signal_hyper_parameters.ocean_mask,
-                n_max=signal_hyper_parameters.n_max,
+        for harmonic_map, name in zip([harmonic_weights, harmonic_trends], ["input", "viscoelastic"]):
+            print(
+                ocean_mean(
+                    harmonic_weights=harmonic_map,
+                    ocean_mask_filename=signal_hyper_parameters.ocean_mask,
+                    n_max=signal_hyper_parameters.n_max,
+                ),
+                name + " ocean mean",
             )
-        )
-        print(
-            ocean_mean(
-                harmonic_weights=harmonic_trends,
-                ocean_mask=signal_hyper_parameters.ocean_mask,
-                n_max=signal_hyper_parameters.n_max,
-            )
-        )
 
         return (
             path,

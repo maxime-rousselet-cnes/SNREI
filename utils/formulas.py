@@ -74,6 +74,26 @@ def omega_cut_computing(mu: ndarray, eta: ndarray) -> ndarray[complex]:
         return nan_to_num(x=mu / eta, nan=0.0)
 
 
+def build_cutting_omegas(variables: dict[str, ndarray[complex]], mu_variable_name: str) -> dict[str, ndarray[complex]]:
+    """
+    Builds a dictionary containing cut frequencies.
+    """
+    return {
+        "omega_cut_m": omega_cut_computing(
+            mu=variables[mu_variable_name] * (1.0 - variables["asymptotic_attenuation"]),
+            eta=variables["eta_m"],
+        ),
+        "omega_cut_k": omega_cut_computing(
+            mu=variables["mu_k"] * (1.0 - variables["asymptotic_attenuation"]),
+            eta=variables["eta_k"],
+        ),
+        "omega_cut_b": omega_cut_computing(
+            mu=variables[mu_variable_name] * (1.0 - variables["asymptotic_attenuation"]),
+            eta=variables["eta_k"],
+        ),
+    }
+
+
 def m_prime_computing(omega_cut_m: ndarray, omega_j: complex) -> ndarray[complex]:
     """
     Computes m_prime transfert function value given the Maxwell's cut pulsation omega_cut_m, and pulsation value omega.

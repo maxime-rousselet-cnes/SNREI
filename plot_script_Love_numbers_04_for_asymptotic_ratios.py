@@ -37,8 +37,7 @@ def plot_comparative_Love_numbers_for_asymptotic_ratios_for_descriptions(
     figure_subpath_string: str,
     asymptotic_ratios: list[list[int]] = [
         [1.0, 1.0],
-        [0.5, 1.0],
-        [0.1, 1.0],
+        [0.2, 1.0],
     ],  # [0.5, 1.0], [0.2, 1.0], [0.1, 1.0], [0.05, 1.0]],
     degrees_to_plot: list[int] = [2, 3, 4, 5, 10],
     directions: list[Direction] = [Direction.potential],
@@ -142,7 +141,7 @@ if __name__ == "__main__":
         initial_real_description_id=(
             args.initial_real_description_id
             if args.initial_real_description_id
-            else "PREM_high-viscosity-asthenosphere-elastic-lithosphere_Benjamin-variable-asymptotic_ratio"
+            else "PREM_low-viscosity-asthenosphere-elastic-lithosphere_Benjamin-variable-asymptotic_ratio"
         ),
         use_anelasticity=args.with_anelasticity if args.with_anelasticity else False,
         figure_subpath_string=args.subpath if args.subpath else "Love_numbers_for_asymptotic_ratios",

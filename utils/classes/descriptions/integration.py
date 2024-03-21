@@ -6,6 +6,7 @@ from scipy.integrate import OdeSolution
 
 from ...formulas import (
     b_computing,
+    build_cutting_omegas,
     delta_mu_computing,
     f_attenuation_computing,
     lambda_computing,
@@ -127,12 +128,14 @@ class Integration(Description):
                             Qmu=variables["Qmu"],
                             f=f,
                         )
-                        complex_lambda = variables["lambda_0"] - 2.0 / 3.0 * delta_mu
-                        complex_mu = variables["mu_0"] + delta_mu
+                        variables["lambda"] = variables["lambda_0"] - 2.0 / 3.0 * delta_mu
+                        variables["mu"] = variables["mu_0"] + delta_mu
+                        # Overwrites real cut frequency variables with complex modified values.
+                        variables.update(build_cutting_omegas(variables=variables, mu_variable_name="mu"))
                     else:
                         # No attenuation: mu = mu_0 and lambda = lambda_0.
-                        complex_mu = array(variables["mu_0"], dtype=complex)
-                        complex_lambda = array(variables["lambda_0"], dtype=complex)
+                        variables["lambda"] = array(variables["lambda_0"], dtype=complex)
+                        variables["mu"] = array(variables["mu_0"], dtype=complex)
 
                     # Anelasticity.
                     if use_anelasticity:
@@ -143,21 +146,21 @@ class Integration(Description):
                             omega_cut_b=variables["omega_cut_b"],
                             omega_j=self.omega_j,
                         )
-                        complex_lambda = lambda_computing(
-                            mu_complex=complex_mu,
-                            lambda_complex=complex_lambda,
+                        variables["lambda"] = lambda_computing(
+                            mu_complex=variables["mu"],
+                            lambda_complex=variables["lambda"],
                             m_prime=m_prime,
                             b=b,
                         )
-                        complex_mu = mu_computing(mu_complex=complex_mu, m_prime=m_prime, b=b)
+                        variables["mu"] = mu_computing(mu_complex=variables["mu"], m_prime=m_prime, b=b)
 
                     # Updates.
                     description_layer.splines.update(
                         {
-                            "lambda_real": interpolate.splrep(x=variables["x"], y=complex_lambda.real),
-                            "lambda_imag": interpolate.splrep(x=variables["x"], y=complex_lambda.imag),
-                            "mu_real": interpolate.splrep(x=variables["x"], y=complex_mu.real),
-                            "mu_imag": interpolate.splrep(x=variables["x"], y=complex_mu.imag),
+                            "lambda_real": interpolate.splrep(x=variables["x"], y=variables["lambda"].real),
+                            "lambda_imag": interpolate.splrep(x=variables["x"], y=variables["lambda"].imag),
+                            "mu_real": interpolate.splrep(x=variables["x"], y=variables["mu"].real),
+                            "mu_imag": interpolate.splrep(x=variables["x"], y=variables["mu"].imag),
                         },
                     )
 

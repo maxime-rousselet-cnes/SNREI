@@ -6,6 +6,7 @@ from scipy import interpolate
 from ...constants import SECONDS_PER_YEAR, Earth_radius
 from ...formulas import (
     b_computing,
+    build_cutting_omegas,
     find_tau_M,
     m_prime_computing,
     mu_computing,
@@ -150,7 +151,7 @@ class RealDescription(Description):
                 model_filename=(
                     anelasticity_model_from_name
                     if anelasticity_model_from_name
-                    else "high-viscosity-asthenosphere-elastic-lithosphere"
+                    else "low-viscosity-asthenosphere-elastic-lithosphere"
                 ),
                 load_description=False,
                 save=save,
@@ -349,22 +350,7 @@ class RealDescription(Description):
                 }
             )
             # New explicit variables (needed) for lambda and mu complex computings.
-            variable_values.update(
-                {
-                    "omega_cut_m": omega_cut_computing(
-                        mu=variable_values["mu_0"] * (1.0 - variable_values["asymptotic_attenuation"]),
-                        eta=variable_values["eta_m"],
-                    ),
-                    "omega_cut_k": omega_cut_computing(
-                        mu=variable_values["mu_k"] * (1.0 - variable_values["asymptotic_attenuation"]),
-                        eta=variable_values["eta_k"],
-                    ),
-                    "omega_cut_b": omega_cut_computing(
-                        mu=variable_values["mu_0"] * (1.0 - variable_values["asymptotic_attenuation"]),
-                        eta=variable_values["eta_k"],
-                    ),
-                }
-            )
+            variable_values.update(build_cutting_omegas(variables=variable_values, mu_variable_name="mu_0"))
             # Computes mu_1 = Re(mu(1 Hz) for attenuation preprocessing.
             variable_values.update(
                 {

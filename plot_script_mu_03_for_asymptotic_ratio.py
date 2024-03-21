@@ -42,10 +42,9 @@ def plot_mu_profiles_for_asymptotic_ratios(
     figure_subpath_string: str,
     asymptotic_ratio_values: list[list[float]] = [
         [1.0, 1.0],
-        [0.5, 1.0],
-        [0.1, 1.0],
+        [0.2, 1.0],
     ],  # , [0.2, 1.0], [0.1, 1.0], [0.05, 1.0]],
-    period_values: list[float] = [1, 18.6, 100],
+    period_values: list[float] = [1, 18.6, 100, 1000],
 ):
     """
     Generates figures of real and imaginary parts of mu for different models.
@@ -140,7 +139,7 @@ if __name__ == "__main__":
         initial_real_description_id=(
             args.initial_real_description_id
             if args.initial_real_description_id
-            else "PREM_high-viscosity-asthenosphere-elastic-lithosphere_Benjamin"
+            else "PREM_low-viscosity-asthenosphere-elastic-lithosphere_Benjamin"
         ),
         load_description=args.load_initial_description if args.load_initial_description else False,
         with_anelasticity=args.with_anelasticity if args.with_anelasticity else False,

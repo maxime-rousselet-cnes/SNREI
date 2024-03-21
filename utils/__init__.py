@@ -43,7 +43,7 @@ from .signal import (
     anelastic_harmonic_induced_load_signal,
     anelastic_induced_load_signal,
     build_elastic_load_signal,
-    extract_ocean_mean_mask,
+    format_ocean_mask,
     signal_induced_trend_from_dates,
 )
 
@@ -83,6 +83,6 @@ from .signal import (
     anelastic_harmonic_induced_load_signal,
     anelastic_induced_load_signal,
     build_elastic_load_signal,
-    extract_ocean_mean_mask,
+    format_ocean_mask,
     signal_induced_trend_from_dates,
 ]

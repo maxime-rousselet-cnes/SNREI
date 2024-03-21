@@ -15,12 +15,9 @@ Historic:
     rewrite integration such as if there is a non null high_frequency_elastic_ratio variable_value, tau_M variable_value is overwritten. Needs:
         write find_tau_M (high_frequency_elastic_ratio) -> OK
 
-Urgent:
-
-        already made 1 to 3. TODO from 4.
-        Tfinverse(Tf(omega)(*1/kel(l))/(1+kvis(omega,l))) -> trend GRACE / Ocean mask
-
-    
+TODO:
+    correct script load 03
+    do script load 04 loop on ratios
     Inscription cours TESS dernière minute
     Look at Alex's article (CNES mail)
     README.md infography for code documentation
@@ -28,11 +25,7 @@ Urgent:
     LaTeX disponible figures
 
 later:
-    forgot the 3 in Lamba_0 expression in LaTeX
     Vectorize and implement minimal computing policy for:
         integration.py: y_system_integration method and subfunctions
         surface_solutiuons.py
         system_definitions.py
-
-To talk about 14/02:
-    - discuss on the needed bounded f_r and f_i (depends on T)

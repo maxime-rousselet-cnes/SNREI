@@ -6,7 +6,7 @@
     "weights_map": "GRACE",
     "n_max": 90,
     "GRACE": "TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER_ICE6G-D.csv",
-    "ocean_mask": "ocean_mask_buffer_coast_300km_eq_removed_0_360.csv",
+    "ocean_mask": "",
     "first_year_for_trend": 2003,
     "last_year_for_trend": 2024,
     "use_anelasticity": true,

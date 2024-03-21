@@ -17,12 +17,12 @@ args = parser.parse_args()
 if __name__ == "__main__":
     Love_number_comparative_for_asymptotic_ratios(
         initial_real_description_id=args.initial_real_description_id,
-        asymptotic_ratios=[[1.0, 1.0], [0.5, 1.0], [0.2, 1.0], [0.1, 1.0], [0.05, 1.0]],
+        asymptotic_ratios=[
+            [1.0, 1.0],
+            [0.2, 1.0],
+        ],  # [[1.0, 1.0], [0.5, 1.0], [0.2, 1.0], [0.1, 1.0], [0.05, 1.0]],
         load_initial_description=args.load_initial_description,
         anelasticity_model_names=[
-            "high-viscosity-asthenosphere-anelastic-lithosphere",
-            "low-viscosity-asthenosphere-anelastic-lithosphere",
-            "high-viscosity-asthenosphere-elastic-lithosphere",
             "low-viscosity-asthenosphere-elastic-lithosphere",
         ],
     )

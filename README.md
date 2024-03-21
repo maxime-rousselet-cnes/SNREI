@@ -8,4 +8,4 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install foobar.
 pip install foobar
 '''
 
-$n = \frac{1}{\epsilon}$
+$n = \displaystyle\frac{1}{\epsilon}$

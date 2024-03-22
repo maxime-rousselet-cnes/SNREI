@@ -111,15 +111,30 @@ def id_from_model_names(
     attenuation_model_name: str,
 ) -> str:
     """
-    Generates an ID for a real description given the name of the used model files.
+    Generates an ID for a real description given the name of the used model files, if needed.
     """
     return (
         id
         if (elasticity_model_name == real_description.elasticity_model_name)
         and (anelasticity_model_name == real_description.anelasticity_model_name)
         and (attenuation_model_name == real_description.attenuation_model_name)
-        else "_".join((elasticity_model_name, anelasticity_model_name, attenuation_model_name))
+        else id_from_model_names_string(
+            elasticity_model_name=elasticity_model_name,
+            anelasticity_model_name=anelasticity_model_name,
+            attenuation_model_name=attenuation_model_name,
+        )
     )
+
+
+def id_from_model_names_string(
+    elasticity_model_name: str,
+    anelasticity_model_name: str,
+    attenuation_model_name: str,
+) -> str:
+    """
+    Generates an ID for a real description given the name of the used model files.
+    """
+    return "_".join((elasticity_model_name, anelasticity_model_name, attenuation_model_name))
 
 
 def Love_number_comparative_for_models(

@@ -35,8 +35,9 @@ def plot_comparative_Love_numbers_for_options(
     real_description_id: str,
     figure_subpath_string: str,
     degrees_to_plot: list[int] = [2, 3, 4, 5, 10],
-    directions: list[Direction] = [Direction.radial],
-    boundary_conditions: list[BoundaryCondition] = [BoundaryCondition.potential],
+    directions: list[Direction] = [Direction.potential],
+    boundary_conditions: list[BoundaryCondition] = [BoundaryCondition.load],
+    all_options: bool = False,
 ):
     """
     Generates comparative figures of Love numbers for different options.
@@ -57,6 +58,8 @@ def plot_comparative_Love_numbers_for_options(
     for use_anelasticity, bounded_attenuation_functions, use_attenuation in options_list:
         if (not use_attenuation) and (bounded_attenuation_functions or not use_anelasticity):
             continue
+        if not all_options and not bounded_attenuation_functions:
+            continue
         subpath = path.joinpath("runs").joinpath(
             gets_run_id(
                 use_anelasticity=use_anelasticity,
@@ -73,16 +76,18 @@ def plot_comparative_Love_numbers_for_options(
     elastic_results.load(name="elastic_Love_numbers", path=path)
     degrees: list[int] = load_base_model(name="degrees", path=path)
     degrees_indices = [degrees.index(degree) for degree in degrees_to_plot]
-
+    n_plot_lines = 5 if all_options else 2
     # Plots Love numbers.
     for direction in directions:
         for boundary_condition in boundary_conditions:
             symbol = SYMBOLS_PER_DIRECTION[direction.value] + "_n" + SYMBOLS_PER_BOUNDARY_CONDITION[boundary_condition.value]
             for zoom_in in BOOLEANS:
-                _, plots = plt.subplots(5, 2, figsize=(16, 9), sharex=True)
+                _, plots = plt.subplots(n_plot_lines, 2, figsize=(16, 9), sharex=True)
                 plot_line = 0
                 for use_anelasticity, bounded_attenuation_functions, use_attenuation in options_list:
                     if (not use_attenuation) and (bounded_attenuation_functions or not use_anelasticity):
+                        continue
+                    if not all_options and not bounded_attenuation_functions:
                         continue
                     # Gets corresponding data.
                     complex_result_values = results[use_anelasticity, bounded_attenuation_functions, use_attenuation].values[
@@ -112,14 +117,14 @@ def plot_comparative_Love_numbers_for_options(
                         plot.legend(loc="upper left")
                         if plot_line == 0:
                             plot.set_title(part + " part")
-                        elif plot_line == 4:
+                        elif plot_line == n_plot_lines - 1:
                             plot.set_xlabel("T (y)")
                             plot.set_xscale("log")
                         if part == "real":
                             plot.set_ylabel(
                                 " ".join(
                                     (
-                                        "Maxwell" if use_anelasticity else "",
+                                        "long-term viscosity" if use_anelasticity else "",
                                         "bounded" if bounded_attenuation_functions else "",
                                         "att." if use_attenuation else "",
                                     )
@@ -136,7 +141,8 @@ if __name__ == "__main__":
         real_description_id=(
             args.real_description_id
             if args.real_description_id
-            else "PREM_high-viscosity-asthenosphere-elastic-lithosphere_Benjamin"
+            else "PREM_low-viscosity-asthenosphere-elastic-lithosphere_Benjamin-variable-asymptotic_ratio0.2-1.0"
         ),
         figure_subpath_string=args.subpath if args.subpath else "Love_numbers_for_options",
+        all_options=False,
     )

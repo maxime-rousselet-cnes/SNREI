@@ -26,6 +26,7 @@ from .Love_number_loops import (
     Love_number_comparative_for_sampling,
     gets_id_asymptotic_ratios,
     id_from_model_names,
+    id_from_model_names_string,
 )
 from .Love_numbers import (
     Love_numbers_from_models_to_result,
@@ -72,6 +73,7 @@ from .signal import (
     Love_number_comparative_for_sampling,
     gets_id_asymptotic_ratios,
     id_from_model_names,
+    id_from_model_names_string,
     Love_numbers_from_models_to_result,
     elastic_Love_numbers_computing,
     gets_run_id,

@@ -124,18 +124,19 @@ class Integration(Description):
                         )
                         # Adds delta mu, computed using f_r and f_i.
                         delta_mu = delta_mu_computing(
-                            mu_0=variables["mu_1"],
+                            mu_0=variables["mu_0"],
                             Qmu=variables["Qmu"],
                             f=f,
                         )
                         variables["lambda"] = variables["lambda_0"] - 2.0 / 3.0 * delta_mu
                         variables["mu"] = variables["mu_0"] + delta_mu
-                        # Overwrites real cut frequency variables with complex modified values.
-                        variables.update(build_cutting_omegas(variables=variables, mu_variable_name="mu"))
                     else:
                         # No attenuation: mu = mu_0 and lambda = lambda_0.
                         variables["lambda"] = array(variables["lambda_0"], dtype=complex)
                         variables["mu"] = array(variables["mu_0"], dtype=complex)
+
+                    # Complex cut frequency variables.
+                    variables.update(build_cutting_omegas(variables=variables))
 
                     # Anelasticity.
                     if use_anelasticity:
@@ -292,17 +293,17 @@ class Integration(Description):
                 integration_start = integration_stop
 
             # ICB Boundary conditions.
-            Yicb = solid_to_fluid(
-                Y1=Y1.real,
-                Y2=Y2.real,
-                Y3=Y3.real,
-                x=integration_stop,
-                first_fluid_layer=self.description_layers[self.below_ICB_layers],
-                piG=self.piG,
-            )
+            if self.below_ICB_layers > 0:
+                Y = solid_to_fluid(
+                    Y1=Y1.real,
+                    Y2=Y2.real,
+                    Y3=Y3.real,
+                    x=integration_stop,
+                    first_fluid_layer=self.description_layers[self.below_ICB_layers],
+                    piG=self.piG,
+                )
 
             # Integrates in the Outer-Core.
-            Y = Yicb
             for n_layer in range(self.below_ICB_layers, self.below_CMB_layers):
                 integration_stop = self.description_layers[n_layer].x_sup
                 Y, _ = self.integration(
@@ -318,12 +319,14 @@ class Integration(Description):
                 integration_start = integration_stop
 
             # CMB Boundary conditions.
-            Y1cmb, Y2cmb, Y3cmb = fluid_to_solid(
-                Yf1=Y,
-                x=integration_stop,
-                last_fluid_layer=self.description_layers[self.below_CMB_layers - 1],
-                piG=self.piG,
-            )
+            if self.below_CMB_layers > 0:
+                Y1cmb, Y2cmb, Y3cmb = fluid_to_solid(
+                    Yf1=Y,
+                    x=integration_stop,
+                    last_fluid_layer=self.description_layers[self.below_CMB_layers - 1],
+                    piG=self.piG,
+                )
+                Y1, Y2, Y3 = Y1cmb, Y2cmb, Y3cmb
             n_start_layer = self.below_CMB_layers
 
         else:
@@ -356,8 +359,9 @@ class Integration(Description):
                 Y2cmb = Y[1, :].flatten()
                 Y3cmb = Y[2, :].flatten()
 
+            Y1, Y2, Y3 = Y1cmb, Y2cmb, Y3cmb
+
         # Integrates from the CMB to the surface.
-        Y1, Y2, Y3 = Y1cmb, Y2cmb, Y3cmb
         for n_layer in range(n_start_layer, len(self.description_layers)):
             integration_start = self.description_layers[n_layer].x_inf
             integration_stop = self.description_layers[n_layer].x_sup

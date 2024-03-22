@@ -40,8 +40,8 @@ def plot_comparative_Love_numbers_for_asymptotic_ratios_for_descriptions(
         [0.2, 1.0],
     ],  # [0.5, 1.0], [0.2, 1.0], [0.1, 1.0], [0.05, 1.0]],
     degrees_to_plot: list[int] = [2, 3, 4, 5, 10],
-    directions: list[Direction] = [Direction.potential],
-    boundary_conditions: list[BoundaryCondition] = [BoundaryCondition.load],
+    directions: list[Direction] = [Direction.radial, Direction.potential],
+    boundary_conditions: list[BoundaryCondition] = [BoundaryCondition.load, BoundaryCondition.potential],
     use_anelasticity: bool = True,
 ):
     """

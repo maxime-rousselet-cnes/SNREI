@@ -146,6 +146,8 @@ if __name__ == "__main__":
         real_description_ids=[
             "PREM_high-viscosity-asthenosphere-elastic-lithosphere_Benjamin-variable-asymptotic_ratio",
             "PREM_low-viscosity-asthenosphere-elastic-lithosphere_Benjamin-variable-asymptotic_ratio",
+            "PREM_high-viscosity-asthenosphere-anelastic-lithosphere_Benjamin-variable-asymptotic_ratio",
+            "low-viscosity-asthenosphere-anelastic-lithosphere_Benjamin-variable-asymptotic_ratio",
         ],
         use_anelasticity=args.with_anelasticity if args.with_anelasticity else False,
         figure_subpath_string=args.subpath if args.subpath else "Love_numbers_for_asymptotic_ratios_for_descriptions",

@@ -101,7 +101,7 @@ def anelastic_induced_harmonic_load_trend(
 
     # Computes anelastic induced harmonic load signal.
     (
-        _,
+        path,
         _,
         _,
         _,
@@ -117,7 +117,7 @@ def anelastic_induced_harmonic_load_trend(
     )
 
     # Saves the figures.
-    figure_subpath = figures_path.joinpath(figure_subpath_string).joinpath(real_description_id)
+    figure_subpath = figures_path.joinpath(figure_subpath_string).joinpath(real_description_id).joinpath(path.name)
     figure_subpath.mkdir(parents=True, exist_ok=True)
 
     # Results.
@@ -128,7 +128,7 @@ def anelastic_induced_harmonic_load_trend(
         plot_harmonics_on_natural_projection(
             harmonics=harmonic_weights,
             title=signal_hyper_parameters.weights_map,
-            figure_subpath=figure_subpath,
+            figure_subpath=figure_subpath.parent.parent,
             n_max=signal_hyper_parameters.n_max,
             name=signal_hyper_parameters.weights_map + ("_saturated" if saturation else ""),
             ocean_mask_filename=signal_hyper_parameters.ocean_mask,

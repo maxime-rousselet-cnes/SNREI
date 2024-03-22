@@ -74,21 +74,21 @@ def omega_cut_computing(mu: ndarray, eta: ndarray) -> ndarray[complex]:
         return nan_to_num(x=mu / eta, nan=0.0)
 
 
-def build_cutting_omegas(variables: dict[str, ndarray[complex]], mu_variable_name: str) -> dict[str, ndarray[complex]]:
+def build_cutting_omegas(variables: dict[str, ndarray[complex]]) -> dict[str, ndarray[complex]]:
     """
     Builds a dictionary containing cut frequencies.
     """
     return {
         "omega_cut_m": omega_cut_computing(
-            mu=variables[mu_variable_name] * (1.0 - variables["asymptotic_attenuation"]),
+            mu=variables["mu"],
             eta=variables["eta_m"],
         ),
         "omega_cut_k": omega_cut_computing(
-            mu=variables["mu_k"] * (1.0 - variables["asymptotic_attenuation"]),
+            mu=variables["mu_k"],
             eta=variables["eta_k"],
         ),
         "omega_cut_b": omega_cut_computing(
-            mu=variables[mu_variable_name] * (1.0 - variables["asymptotic_attenuation"]),
+            mu=variables["mu"],
             eta=variables["eta_k"],
         ),
     }
@@ -197,7 +197,7 @@ def delta_mu_computing(mu_0: ndarray, Qmu: ndarray, f: ndarray[complex]) -> ndar
 
 def find_tau_M(omega_m: float, alpha: float, asymptotic_attenuation: float, Qmu: float) -> float:
     """
-    Uses Newton's method to find tau_M such as f_r(omega -> Inf, tau_M) = asymptotic_attenuation * Qmu, equivalent to set
+    Uses asymptotic equation to find tau_M such as f_r(omega -> Inf, tau_M) = asymptotic_attenuation * Qmu, equivalent to set
     mu(omega -> Inf) = asymptotic_ratio * mu_0.
     """
     with errstate(invalid="ignore"):

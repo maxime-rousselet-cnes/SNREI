@@ -8,7 +8,6 @@ Historic:
     plot mu(r) -> OK
     comparative plots for h, k, k'... -> OK
     comparative_for sampling with realistic omega band and script 06 that calls script function 02 and plot 07 with better inputs for fewer figures -> OK
-
     redo script_09 such as the compared models are: -> OK
         elastic/anelastic/attenuated/anelastic & attenuated/anelastic with Asthenosphere/attenuated with bounded functions/anelastic & attenuated with bounded functions
         <=> everything but pass attenuation when Asthenosphere/pass bounded when not attenuation/pass Asthenosphere when not anelastic
@@ -16,10 +15,11 @@ Historic:
         write find_tau_M (high_frequency_elastic_ratio) -> OK
 
 TODO:
+    automatic below_icb/cmb_layers with real_description splitted layer names in real real_description
+    pass zoom_in limits as parameters in plot functions instead of hard code
+    Add loop with/without anelasticity in plot Love 4
     correct script load 03
-    do script load 04 loop on ratios
-    Inscription cours TESS dernière minute
-    Look at Alex's article (CNES mail)
+    do script load 04 loop on ratios from scipt load 2
     README.md infography for code documentation
     select plots / plots_Love_numbers
     LaTeX disponible figures

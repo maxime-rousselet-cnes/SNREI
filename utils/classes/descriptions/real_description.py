@@ -4,15 +4,7 @@ from numpy import Inf, array, ndarray, pi, round
 from scipy import interpolate
 
 from ...constants import SECONDS_PER_YEAR, Earth_radius
-from ...formulas import (
-    b_computing,
-    build_cutting_omegas,
-    find_tau_M,
-    m_prime_computing,
-    mu_computing,
-    mu_k_computing,
-    omega_cut_computing,
-)
+from ...formulas import build_cutting_omegas, find_tau_M, mu_k_computing
 from ...paths import (
     anelasticity_descriptions_path,
     attenuation_descriptions_path,
@@ -347,25 +339,6 @@ class RealDescription(Description):
                     "omega_m": layer.evaluate(x=x, variable="omega_m"),
                     "tau_M": layer.evaluate(x=x, variable="tau_M"),
                     "asymptotic_attenuation": layer.evaluate(x=x, variable="asymptotic_attenuation"),
-                }
-            )
-            # New explicit variables (needed) for lambda and mu complex computings.
-            variable_values.update(build_cutting_omegas(variables=variable_values, mu_variable_name="mu_0"))
-            # Computes mu_1 = Re(mu(1 Hz) for attenuation preprocessing.
-            variable_values.update(
-                {
-                    "mu_1": mu_computing(
-                        mu_complex=variable_values["mu_0"],
-                        m_prime=m_prime_computing(
-                            omega_cut_m=variable_values["omega_cut_m"], omega_j=2 * pi / self.frequency_unit
-                        ),
-                        b=b_computing(
-                            omega_cut_m=variable_values["omega_cut_m"],
-                            omega_cut_k=variable_values["omega_cut_k"],
-                            omega_cut_b=variable_values["omega_cut_b"],
-                            omega_j=2.0 * pi / self.frequency_unit,
-                        ),
-                    )
                 }
             )
             # Eventually finds tau_M profile that constrains mu(omega -> Inf) = asymptotic_ratio * mu_0:

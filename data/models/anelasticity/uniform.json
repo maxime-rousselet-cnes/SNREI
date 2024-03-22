@@ -1,0 +1,55 @@
+{
+    "layer_names": [
+        ""
+    ],
+    "r_limits": [
+        0.0,
+        6371000.0
+    ],
+    "variable_names": [
+        "eta_m",
+        "eta_k",
+        "mu_K1",
+        "c"
+    ],
+    "crust_values": {
+        "eta_m": null,
+        "eta_k": null,
+        "mu_K1": null,
+        "c": null
+    },
+    "polynomials": {
+        "eta_m": [
+            [
+                3e21,
+                0.0,
+                0.0,
+                0.0
+            ]
+        ],
+        "eta_k": [
+            [
+                "Inf",
+                0.0,
+                0.0,
+                0.0
+            ]
+        ],
+        "mu_K1": [
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ]
+        ],
+        "c": [
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ]
+        ]
+    }
+}

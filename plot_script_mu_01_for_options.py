@@ -33,7 +33,7 @@ def plot_mu_profiles_for_options(
     period_values: list[float] = [18.6, 100.0, 1000.0],
 ):
     """
-    Generates figures of mu_1/Q_0, and real and imaginary parts of mu for several period values.
+    Generates figures of mu_0/Q_0, and real and imaginary parts of mu for several period values.
     """
     # Initializes.
     Love_numbers_hyper_parameters = load_Love_numbers_hyper_parameters()
@@ -86,7 +86,7 @@ def plot_mu_profiles_for_options(
             variable_values = real_description.variable_values_per_layer[k_layer]
             x = linspace(start=layer.x_inf, stop=layer.x_sup, num=real_description.profile_precision)
             plot.semilogx(
-                variable_values["mu_1"] / variable_values["Qmu"] * real_description.elasticity_unit,
+                variable_values["mu_0"] / variable_values["Qmu"] * real_description.elasticity_unit,
                 (1.0 - x) * real_description.radius_unit / 1e3,
                 color=(
                     1.0 if use_anelasticity else 0.0,

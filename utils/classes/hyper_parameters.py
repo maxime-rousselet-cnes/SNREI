@@ -59,7 +59,7 @@ class LoveNumbersHyperParameters(HyperParameters):
     Describes the parameters needed for Love Numbers(n, frequency) computing algorithm.
     """
 
-    # Adaptative step (on frequency) algorithm parameters.
+    # Adaptive step (on frequency) algorithm parameters.
     frequency_min: float  # log10(Low frequency limit (Hz)).
     frequency_max: float  # log10(High frequency limit (Hz)).
     n_frequency_0: int  # Minimal number of computed frequencies per degree.

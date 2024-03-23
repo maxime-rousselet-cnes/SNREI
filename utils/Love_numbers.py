@@ -92,7 +92,7 @@ def anelastic_Love_number_computing_per_degree_function(
         ]
     )
 
-    # Processes for frequencies. Adaptative step for precise curvature.
+    # Processes for frequencies. Adaptive step for precise curvature.
     log_frequency_values, Love_numbers = precise_curvature(
         x_initial_values=log_frequency_initial_values,
         f=Love_number_computing_parallel,

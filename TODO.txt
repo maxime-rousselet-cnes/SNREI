@@ -23,9 +23,11 @@ TODO:
     README.md infography for code documentation
     select plots / plots_Love_numbers
     LaTeX disponible figures
+    verify all plot script descriptions
 
 later:
     Vectorize and implement minimal computing policy for:
         integration.py: y_system_integration method and subfunctions
         surface_solutiuons.py
         system_definitions.py
+    refactoring: description/runs nomenclature in figures too.

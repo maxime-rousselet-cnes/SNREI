@@ -130,6 +130,10 @@ def plot_comparative_Love_numbers_for_options_same_graph(
 
 if __name__ == "__main__":
     plot_comparative_Love_numbers_for_options_same_graph(
-        real_description_id=(args.real_description_id if args.real_description_id else "PREM_uniform_uniform"),
+        real_description_id=(
+            args.real_description_id
+            if args.real_description_id
+            else "PREM_low-viscosity-asthenosphere-elastic-lithosphere_Benjamin-variable-asymptotic_ratio1.0-1.0"
+        ),
         figure_subpath_string=args.subpath if args.subpath else "Love_numbers_for_options_same_graph",
     )

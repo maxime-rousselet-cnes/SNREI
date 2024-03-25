@@ -35,12 +35,7 @@ def solid_system(
             layer.evaluate(x=x, variable="mu_real", derivative_order=1)
             + layer.evaluate(x=x, variable="mu_imag", derivative_order=1) * 1.0j
         )
-        cross_term = lndi * mndi_prime - mndi * lndi_prime
-        frist_order_term = lndi_prime + 2 * mndi_prime
-        with errstate(divide="ignore"):
-            log_derivative_term = nan_to_num(x=mndi_prime / mndi, nan=0.0)
-    else:
-        cross_term, frist_order_term, log_derivative_term = 0.0, 0.0, 0.0
+        # TODO: discuss on inhomogeneity consequences.
 
     n1 = n * (n + 1.0)
     bndi = 1.0 / (lndi + 2.0 * mndi)
@@ -56,9 +51,9 @@ def solid_system(
     c15 = 0.0
     c16 = 0.0
 
-    c21 = (-4.0 * gndi * rndi / x) + (2.0 * dndi / (x**2)) - 4.0 * bndi * cross_term / x + dyn_term
-    c22 = bndi * frist_order_term - 4.0 * mndi * bndi / x
-    c23 = n1 * (rndi * gndi / x + 2 * bndi * cross_term / x - dndi / (x**2))
+    c21 = (-4.0 * gndi * rndi / x) + (2.0 * dndi / (x**2)) + dyn_term
+    c22 = -4.0 * mndi * bndi / x
+    c23 = n1 * (rndi * gndi / x - dndi / (x**2))
     c24 = n1 / x
     c25 = 0.0
     c26 = -rndi
@@ -73,7 +68,7 @@ def solid_system(
     c41 = rndi * gndi / x - dndi / (x**2)
     c42 = -lndi * bndi / x
     c43 = endi / (x**2) + dyn_term
-    c44 = -3.0 / x + log_derivative_term
+    c44 = -3.0 / x
     c45 = -rndi / x
     c46 = 0.0
 

@@ -30,7 +30,7 @@ def plot_mu_profiles_for_options(
     real_description_id: str,
     load_description: bool,
     figure_subpath_string: str,
-    period_values: list[float] = [18.6, 100.0, 1000.0],
+    period_values: list[float] = [10, 100, 1000, 10000],
 ):
     """
     Generates figures of mu_0/Q_0, and real and imaginary parts of mu for several period values.
@@ -110,7 +110,7 @@ def plot_mu_profiles_for_options(
 
     # Plots mu_real and mu_imag.
     for part in ["real", "imag"]:
-        _, plots = plt.subplots(1, len(frequencies), figsize=(16, 12), sharex=True)
+        _, plots = plt.subplots(1, len(frequencies), figsize=(18.3, 9), sharex=True)
         # Iterates on frequencies.
         for frequency, period, plot in zip(frequencies, period_values, plots):
             # Iterates on layers.
@@ -119,12 +119,14 @@ def plot_mu_profiles_for_options(
                 for use_anelasticity, use_attenuation, bounded_attenuation_functions in options_list:
                     if (not use_attenuation) and bounded_attenuation_functions:
                         continue
+                    if use_attenuation and not bounded_attenuation_functions:
+                        continue
                     base_label = (
                         "elastic"
                         if (not use_anelasticity and not use_attenuation)
-                        else ("with anelasticity " if use_anelasticity else "")
+                        else ("long-term anelasticity " if use_anelasticity else "")
                         + (
-                            "with " + ("bounded " if bounded_attenuation_functions else "") + "attenuation"
+                            "transient regime"  # ("bounded " if bounded_attenuation_functions else "") + "attenuation"
                             if use_attenuation
                             else ""
                         )
@@ -148,9 +150,10 @@ def plot_mu_profiles_for_options(
                         ),
                         label=base_label,
                     )
-                if k_layer == 2:
+                if k_layer == 2 and frequency == frequencies[0]:
                     plot.legend(loc="lower left")
             plot.set_xlabel("$\mu_{" + part + "}$ (Pa)")
+            plot.set_xscale("log")
             plot.set_ylabel("Depth (km)")
             plot.invert_yaxis()
             plot.grid()
@@ -164,7 +167,7 @@ if __name__ == "__main__":
         real_description_id=(
             args.real_description_id
             if args.real_description_id
-            else "PREM_high-viscosity-asthenosphere-elastic-lithosphere_Benjamin"
+            else "PREM_low-viscosity-asthenosphere-elastic-lithosphere_Benjamin-variable-asymptotic_ratio0.2-1.0"
         ),
         load_description=args.load_description if args.load_description else False,
         figure_subpath_string=args.subpath if args.subpath else "mu_for_options",

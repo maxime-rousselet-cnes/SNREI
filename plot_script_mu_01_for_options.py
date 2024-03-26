@@ -30,7 +30,7 @@ def plot_mu_profiles_for_options(
     real_description_id: str,
     load_description: bool,
     figure_subpath_string: str,
-    period_values: list[float] = [10, 100, 1000, 10000],
+    period_values: list[float] = [10, 100, 1000],
 ):
     """
     Generates figures of mu_0/Q_0, and real and imaginary parts of mu for several period values.
@@ -153,7 +153,7 @@ def plot_mu_profiles_for_options(
                 if k_layer == 2 and frequency == frequencies[0]:
                     plot.legend(loc="lower left")
             plot.set_xlabel("$\mu_{" + part + "}$ (Pa)")
-            plot.set_xscale("log")
+            # plot.set_xscale("log")
             plot.set_ylabel("Depth (km)")
             plot.invert_yaxis()
             plot.grid()

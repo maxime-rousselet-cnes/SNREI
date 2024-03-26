@@ -94,7 +94,7 @@ def build_cutting_omegas(variables: dict[str, ndarray[complex]]) -> dict[str, nd
     }
 
 
-def m_prime_computing(omega_cut_m: ndarray, omega_j: complex) -> ndarray[complex]:
+def m_prime_computing(omega_cut_m: ndarray[complex], omega_j: complex) -> ndarray[complex]:
     """
     Computes m_prime transfert function value given the Maxwell's cut pulsation omega_cut_m, and pulsation value omega.
     """

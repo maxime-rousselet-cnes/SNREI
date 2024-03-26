@@ -1,10 +1,10 @@
 from typing import Optional
 
-from numpy import Inf, array, ndarray, pi, round
+from numpy import Inf, array, ndarray, round
 from scipy import interpolate
 
 from ...constants import SECONDS_PER_YEAR, Earth_radius
-from ...formulas import build_cutting_omegas, find_tau_M, mu_k_computing
+from ...formulas import find_tau_M, mu_k_computing
 from ...paths import (
     anelasticity_descriptions_path,
     attenuation_descriptions_path,

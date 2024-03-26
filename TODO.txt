@@ -8,6 +8,7 @@ TODO:
     select plots / plots_Love_numbers
     LaTeX disponible figures
     verify all plot script descriptions
+    verify if the same real_description is passed for every degree for initial frequencies.
 
 later:
     Vectorize and implement minimal computing policy for:

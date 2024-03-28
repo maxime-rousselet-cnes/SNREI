@@ -146,7 +146,6 @@ def f_attenuation_computing(
     computes the attenuation function f using parameters omega_m and alpha.
     The omega_m and frequency parameters are unitless frequencies.
     """
-    omega_0 = 1.0 / frequency_unit  # (Unitless frequency).
     if bounded_attenuation_functions:
         tau = lambda tau_log: exp(tau_log)
         Y = lambda tau_log, alpha: (tau(tau_log=tau_log) ** alpha)
@@ -171,6 +170,7 @@ def f_attenuation_computing(
             )
     else:
         high_frequency_domain: ndarray[bool] = frequency >= omega_m_tab
+        omega_0 = 1.0 / frequency_unit  # (Unitless frequency).
         with errstate(invalid="ignore", divide="ignore"):
             return nan_to_num(  # Alpha or omega_m may be equal to 0.0, meaning no attenuation should be taken into account.
                 x=((2.0 / pi) * log(frequency / omega_0) + 1.0j) * high_frequency_domain

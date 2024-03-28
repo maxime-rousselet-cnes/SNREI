@@ -22,7 +22,5 @@ if __name__ == "__main__":
             [0.2, 1.0],
         ],  # [[1.0, 1.0], [0.5, 1.0], [0.2, 1.0], [0.1, 1.0], [0.05, 1.0]],
         load_initial_description=args.load_initial_description,
-        anelasticity_model_names=[
-            "low-viscosity-asthenosphere-elastic-lithosphere",
-        ],
+        anelasticity_model_names=["Peltier-asthenosphere-elastic-lithosphere", "Burgers-asthenosphere-elastic-lithosphere"],
     )

@@ -1,3 +1,5 @@
+CURRENTLY:
+    Running for Q312 oand Q30. Check curbs with 3rd pannel
 TODO:
     automatic below_icb/cmb_layers with real_description splitted layer names in real real_description
     pass zoom_in limits as parameters in plot functions instead of hard code

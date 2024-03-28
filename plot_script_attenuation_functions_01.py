@@ -25,14 +25,18 @@ from utils import (
 )
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--attenuation_model", type=str, help="wanted ID for the real description to load")
+parser.add_argument("--elasticity", type=str, help="Optional wanted ID for the elasticity model to use")
+parser.add_argument("--anelasticity", type=str, help="Optional wanted ID for the anelasticity model to use")
+parser.add_argument("--attenuation", type=str, help="Optional wanted ID for the attenuation model to use")
 parser.add_argument("--load_description", action="store_true", help="Option to tell if the description should be loaded")
 parser.add_argument("--subpath", type=str, help="wanted sub-path to save figures")
 args = parser.parse_args()
 
 
 def plot_attenuation_functions(
-    attenuation_model_name: str,
+    elasticity_model_from_name: str,
+    anelasticity_model_from_name: str,
+    attenuation_model_from_name: str,
     figure_subpath_string: str,
     tau_M_years_values: dict[int, list[float]] = {0: [1.0 / 12, 1.0, 5.0, 20.0, 100.0, 500.0, 1000.0]},
     asymptotic_ratio_values: dict[int, list[float]] = {0: [1.0, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01]},
@@ -50,13 +54,16 @@ def plot_attenuation_functions(
         Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
         real_description_id=None,
         load_description=False,
-        attenuation_model_from_name=attenuation_model_name,
+        elasticity_model_from_name=elasticity_model_from_name,
+        anelasticity_model_from_name=anelasticity_model_from_name,
+        attenuation_model_from_name=attenuation_model_from_name,
         save=False,
     )
     attenuation_model: Model = load_base_model(
         name=initial_real_description.attenuation_model_name, path=attenuation_models_path, base_model_type=Model
     )
-    temp_name_attenuation_model = initial_real_description.attenuation_model_name + "-variable-tau_M"
+    temp_tau_M_name_attenuation_model = initial_real_description.attenuation_model_name + "-variable-tau_M"
+    temp_ratio_name_attenuation_model = initial_real_description.attenuation_model_name + "-variable-asymptotic_ratio"
     path = figures_path.joinpath(figure_subpath_string).joinpath(initial_real_description.attenuation_model_name)
     T_tab = 10 ** linspace(
         0,
@@ -93,7 +100,7 @@ def plot_attenuation_functions(
         plt.xscale("log")
         plt.xlabel("Period (s)")
         plt.savefig(subpath.joinpath("unbounded_attenuation_functions.png"))
-        plt.show()
+        plt.show(block=False)
 
         # Iterates on tau_M values.
         _, plots = plt.subplots(2, 1, sharex=True, figsize=(8, 11))
@@ -102,12 +109,14 @@ def plot_attenuation_functions(
             tau_M = 1.0 / frequencies_to_periods(frequencies=tau_M_years)
             attenuation_model.polynomials["tau_M"][k_layer][0] = tau_M_years
             attenuation_model.polynomials["asymptotic_attenuation"][k_layer][0] = 0.0
-            save_base_model(obj=attenuation_model, name=temp_name_attenuation_model, path=attenuation_models_path)
+            save_base_model(obj=attenuation_model, name=temp_tau_M_name_attenuation_model, path=attenuation_models_path)
             real_description = real_description_from_parameters(
                 Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
                 real_description_id=None,
                 load_description=False,
-                attenuation_model_from_name=temp_name_attenuation_model,
+                elasticity_model_from_name=elasticity_model_from_name,
+                anelasticity_model_from_name=anelasticity_model_from_name,
+                attenuation_model_from_name=temp_tau_M_name_attenuation_model,
                 save=False,
             )
 
@@ -138,7 +147,7 @@ def plot_attenuation_functions(
         plt.xscale("log")
         plt.legend()
         plt.savefig(subpath.joinpath("bounded_attenuation_functions_for_tau_M.png"))
-        plt.show()
+        plt.show(block=False)
 
         # Iterates on asymptotic_ratio values.
         _, plots = plt.subplots(2, 1, sharex=True, figsize=(12, 15))
@@ -146,12 +155,14 @@ def plot_attenuation_functions(
             # Modifies tau_M value in model.
             attenuation_model.polynomials["tau_M"][k_layer][0] = 0.0
             attenuation_model.polynomials["asymptotic_attenuation"][k_layer][0] = 1.0 - asymptotic_ratio
-            save_base_model(obj=attenuation_model, name=temp_name_attenuation_model, path=attenuation_models_path)
+            save_base_model(obj=attenuation_model, name=temp_ratio_name_attenuation_model, path=attenuation_models_path)
             real_description = real_description_from_parameters(
                 Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
                 real_description_id=None,
                 load_description=False,
-                attenuation_model_from_name=temp_name_attenuation_model,
+                elasticity_model_from_name=elasticity_model_from_name,
+                anelasticity_model_from_name=anelasticity_model_from_name,
+                attenuation_model_from_name=temp_ratio_name_attenuation_model,
                 save=False,
             )
 
@@ -164,6 +175,14 @@ def plot_attenuation_functions(
                 k_layer=k_layer_real_description,
             )
 
+            tau_M = round(
+                a=real_description.description_layers[k_layer_real_description].evaluate(
+                    x=attenuation_model.r_limits[k_layer] / real_description.radius_unit,
+                    variable="tau_M",
+                )
+                * real_description.period_unit,
+                decimals=2,
+            )
             plots[0].plot(T_tab, f_r)
             plots[1].plot(
                 T_tab,
@@ -171,22 +190,15 @@ def plot_attenuation_functions(
                 label="$\\mu_\\infty / \\mu_0=$"
                 + str(asymptotic_ratio)
                 + " : $\\tau _M=$"
-                + str(
-                    round(
-                        a=real_description.description_layers[k_layer_real_description].evaluate(
-                            x=attenuation_model.r_limits[k_layer_real_description] / real_description.radius_unit,
-                            variable="tau_M",
-                        )
-                        / SECONDS_PER_YEAR
-                        * real_description.period_unit,
-                        decimals=2,
-                    )
-                )
+                + str(tau_M / SECONDS_PER_YEAR)
                 + " (y)",
             )
 
         plots[0].plot(T_tab, f_r_unbounded)
         plots[1].plot(T_tab, f_i_unbounded, label="unbounded")
+
+        plots[0].scatter([tau_M] * 15, linspace(start=min(f_r), stop=max(f_r), num=15), s=5)
+        plots[1].scatter([tau_M] * 15, linspace(start=min(f_i), stop=max(f_i), num=15), s=5)
 
         plots[0].set_ylabel("$f_r$")
         plots[0].grid()
@@ -227,6 +239,8 @@ def get_attenuation_function(
 
 if __name__ == "__main__":
     plot_attenuation_functions(
-        attenuation_model_name=args.attenuation_model if args.attenuation_model else "Benjamin",
+        elasticity_model_from_name=args.elasticity,
+        anelasticity_model_from_name=args.anelasticity,
+        attenuation_model_from_name=args.attenuation,
         figure_subpath_string=args.subpath if args.subpath else "attenuation_functions",
     )

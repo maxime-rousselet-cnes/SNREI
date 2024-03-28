@@ -9,7 +9,7 @@
     "ocean_mask": "",
     "first_year_for_trend": 2003,
     "last_year_for_trend": 2024,
-    "use_anelasticity": false,
+    "use_anelasticity": true,
     "use_attenuation": true,
     "bounded_attenuation_functions": true
 }

@@ -75,7 +75,7 @@ def plot_comparative_Love_numbers_for_options_same_graph(
         for boundary_condition in boundary_conditions:
             symbol = SYMBOLS_PER_DIRECTION[direction.value] + "_n" + SYMBOLS_PER_BOUNDARY_CONDITION[boundary_condition.value]
             for zoom_in in BOOLEANS:
-                _, plots = plt.subplots(1, 2, figsize=(16, 9), sharex=True)
+                _, plots = plt.subplots(2, 1, figsize=(16, 9), sharex=True)
                 for part in ["real", "imaginary"]:
                     for i_degree, degree in zip(degrees_indices, degrees_to_plot):
                         for use_anelasticity, use_attenuation in options_list:
@@ -133,7 +133,7 @@ if __name__ == "__main__":
         real_description_id=(
             args.real_description_id
             if args.real_description_id
-            else "PREM_low-viscosity-asthenosphere-elastic-lithosphere_Benjamin-variable-asymptotic_ratio1.0-1.0"
+            else "PREM_Peltier-asthenosphere-elastic-lithosphere_Benjamin-variable-asymptotic_ratio0.2-1.0"
         ),
         figure_subpath_string=args.subpath if args.subpath else "Love_numbers_for_options_same_graph",
     )

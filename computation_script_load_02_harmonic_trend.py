@@ -170,11 +170,7 @@ def anelastic_induced_harmonic_load_trend(
 
 if __name__ == "__main__":
     anelastic_induced_harmonic_load_trend(
-        real_description_id=(
-            args.real_description_id
-            if args.real_description_id
-            else "PREM_Peltier-asthenosphere-elastic-lithosphere_Benjamin-variable-asymptotic_ratio0.2-1.0"
-        ),
+        real_description_id=(args.real_description_id if args.real_description_id else "test"),
         figure_subpath_string=args.subpath if args.subpath else "spatial_load_signal",
     )
 

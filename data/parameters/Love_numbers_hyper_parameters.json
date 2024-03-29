@@ -1,7 +1,7 @@
 {
     "frequency_min": 1e-12,
     "frequency_max": 1e-05,
-    "n_frequency_0": 50,
+    "n_frequency_0": 30,
     "max_tol": 0.1,
     "decimals": 2,
     "real_description_parameters": "real_description_parameters",

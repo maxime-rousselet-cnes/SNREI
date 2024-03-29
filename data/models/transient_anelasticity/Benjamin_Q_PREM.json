@@ -1,0 +1,118 @@
+{
+    "layer_names": [
+        "LOWER MANTLE",
+        "TRANSITION_ZONE",
+        "LVZ",
+        "LID",
+        "CRUST"
+    ],
+    "r_limits": [
+        3480000.0,
+        6151000.0,
+        6291000.0,
+        6346600.0,
+        5701000.0,
+        6371000.0
+    ],
+    "variable_names": [
+        "Q_mu",
+        "omega_m",
+        "alpha",
+        "tau_M",
+        "asymptotic_attenuation"
+    ],
+    "crust_values": {
+        "Q_mu": null,
+        "omega_m": null,
+        "alpha": null,
+        "tau_M": null,
+        "asymptotic_attenuation": null
+    },
+    "polynomials": {
+        "Qmu": [
+            [
+                312
+            ],
+            [
+                143
+            ],
+            [
+                80
+            ],
+            [
+                600
+            ],
+            [
+                600
+            ]
+        ],
+        "omega_m": [
+            [
+                0.000309
+            ],
+            [
+                0.000309
+            ],
+            [
+                0.000309
+            ],
+            [
+                0.000309
+            ],
+            [
+                0.0
+            ]
+        ],
+        "alpha": [
+            [
+                0.25
+            ],
+            [
+                0.25
+            ],
+            [
+                0.25
+            ],
+            [
+                0.25
+            ],
+            [
+                0.0
+            ]
+        ],
+        "tau_M": [
+            [
+                0.0
+            ],
+            [
+                0.0
+            ],
+            [
+                0.0
+            ],
+            [
+                0.0
+            ],
+            [
+                0.0
+            ]
+        ],
+        "asymptotic_attenuation": [
+            [
+                0.0
+            ],
+            [
+                0.0
+            ],
+            [
+                0.0
+            ],
+            [
+                0.0
+            ],
+            [
+                0.0
+            ]
+        ]
+    }
+}

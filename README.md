@@ -2,10 +2,10 @@
 
 ## Installation
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install foobar.
+# TODO
 
-'''bash
-pip install foobar
-'''
+## Equations
+
+# TODO
 
 $n = \displaystyle\frac{1}{\epsilon}$

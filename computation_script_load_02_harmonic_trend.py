@@ -57,7 +57,8 @@ def plot_harmonics_on_natural_projection(
     plt.title(title, fontsize=20)
     ax.set_global()
     spatial_result = round(
-        a=MakeGridDH(harmonics, sampling=2) * format_ocean_mask(ocean_mask_filename=ocean_mask_filename, n_max=n_max),
+        a=MakeGridDH(harmonics, sampling=2)
+        * format_ocean_mask(ocean_mask_filename=ocean_mask_filename, n_max=min(n_max, len(harmonics[0]))),
         decimals=3,
     )
     contour = ax.pcolormesh(

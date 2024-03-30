@@ -35,8 +35,8 @@ def plot_comparative_Love_numbers_for_options_same_graph(
     real_description_id: str,
     figure_subpath_string: str,
     bounded_attenuation_functions: bool = True,
-    degrees_to_plot: list[int] = [2, 10],
-    directions: list[Direction] = [Direction.potential],
+    degrees_to_plot: list[int] = [2, 20],
+    directions: list[Direction] = [Direction.potential, Direction.radial, Direction.tangential],
     boundary_conditions: list[BoundaryCondition] = [BoundaryCondition.load],
 ):
     """
@@ -133,7 +133,7 @@ if __name__ == "__main__":
         real_description_id=(
             args.real_description_id
             if args.real_description_id
-            else "PREM_Peltier-asthenosphere-elastic-lithosphere_Benjamin-variable-asymptotic_ratio0.2-1.0"
+            else "PREM_Burgers-asthenosphere-elastic-lithosphere_Benjamin-variable-asymptotic_ratio0.2-1.0"
         ),
         figure_subpath_string=args.subpath if args.subpath else "Love_numbers_for_options_same_graph",
     )

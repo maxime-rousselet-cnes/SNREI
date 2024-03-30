@@ -1,0 +1,6 @@
+from .attenuation_description import AttenuationDescription
+from .elasticity_description import ElasticityDescription
+from .integration import Integration
+from .real_description import RealDescription, real_description_from_parameters
+
+[AttenuationDescription, ElasticityDescription, Integration, RealDescription, real_description_from_parameters]

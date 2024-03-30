@@ -61,13 +61,68 @@ def extract_ocean_load_data(path: Path = data_path) -> tuple[ndarray[float], nda
     return dates, barystatic - barystatic[0]
 
 
+def erase_area(
+    map: ndarray[float],
+    lat: ndarray[float],
+    lon: ndarray[float],
+    min_latitude: float,
+    max_latitude: float,
+    min_longitude: float,
+    max_longitude: float,
+):
+    """
+    ERASES a rectangle area on a (latitude, longitude) map.
+    """
+    return map * (
+        1
+        - expand_dims(a=flip(m=(lat > min_latitude) * (lat < max_latitude), axis=0), axis=1)
+        * expand_dims(a=(lon > (min_longitude % 360)) * (lon < (max_longitude % 360)), axis=0)
+    )
+
+
 def extract_land_ocean_mask(path: Path = data_path) -> ndarray:
     """
     Opens NASA's nc file for land/sea mask and formats its data.
     """
     # Gets raw data.
     ds = netCDF4.Dataset(path.joinpath("IMERG_land_sea_mask.nc"))
-    return flip(ds.variables["landseamask"], axis=0).data
+    map = flip(m=ds.variables["landseamask"], axis=0).data
+
+    # reject big lakes.
+    lat = array(object=[latitude for latitude in ds.variables["lat"]])
+    lon = array(object=[longitude for longitude in ds.variables["lon"]])
+    # Lake Superior.
+    map = erase_area(
+        map=map,
+        lat=lat,
+        lon=lon,
+        min_latitude=41.375963,
+        max_latitude=50.582521,
+        min_longitude=-93.748270,
+        max_longitude=-75.225322,
+    )
+    # Lake Victoria.
+    map = erase_area(
+        map=map,
+        lat=lat,
+        lon=lon,
+        min_latitude=-2.809322,
+        max_latitude=0.836983,
+        min_longitude=31.207700,
+        max_longitude=34.530942,
+    )
+    # Caspian Sea.
+    map = erase_area(
+        map=map,
+        lat=lat,
+        lon=lon,
+        min_latitude=35.569650,
+        max_latitude=47.844035,
+        min_longitude=44.303403,
+        max_longitude=60.937192,
+    )
+
+    return map
 
 
 def extract_GRACE_trends(filename: str, path: Path = data_path.joinpath("trends_GRACE")) -> ndarray:
@@ -75,7 +130,7 @@ def extract_GRACE_trends(filename: str, path: Path = data_path.joinpath("trends_
     Opens and formats GRACE trends CSV datafile.
     """
     # Gets raw data.
-    df = read_csv(filepath_or_buffer=path.joinpath(filename), skiprows=11, sep=";")
+    df = read_csv(filepath_or_buffer=path.joinpath(filename), skiprows=3 if filename.split(".")[-1] == "xyz" else 11, sep=";")
     return flip(m=[[value for value in df["EWH"][df["lat"] == lat]] for lat in unique(ar=df["lat"])], axis=0)[1:, 1:]
 
 
@@ -212,7 +267,7 @@ def build_elastic_load_signal(
                     else SHExpandDH(
                         spatial_weights,
                         sampling=2,
-                        lmax_calc=min(signal_hyper_parameters.n_max, (len(spatial_weights) - 1) // 2),
+                        lmax_calc=min(signal_hyper_parameters.n_max - 1, (len(spatial_weights) - 1) // 2),
                     )
                 ),
             ),
@@ -452,8 +507,8 @@ def ocean_mean(harmonic_weights: ndarray[float], ocean_mask_filename: str, n_max
     """
     grid = MakeGridDH(harmonic_weights, sampling=2)
     dS = expand_dims(a=cos(linspace(start=-pi / 2, stop=pi / 2, num=len(grid))), axis=1)
-    resampled_ocean_mask = format_ocean_mask(ocean_mask_filename=ocean_mask_filename, n_max=n_max)
-    return sum(sum(grid * resampled_ocean_mask * dS)) / sum(sum(resampled_ocean_mask * dS))
+    resampled_ocean_mask = format_ocean_mask(ocean_mask_filename=ocean_mask_filename, n_max=min(n_max, len(grid) // 2))
+    return mean(mean(grid * resampled_ocean_mask * dS))
 
 
 def anelastic_harmonic_induced_load_signal(

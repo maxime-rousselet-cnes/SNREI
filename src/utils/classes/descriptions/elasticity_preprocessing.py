@@ -5,8 +5,8 @@ from numpy import pi, sqrt
 from scipy import interpolate
 
 from ...constants import G
-from ...formulas import g_0_computing, lambda_0_computing, mu_0_computing
 from ...paths import elasticity_descriptions_path, elasticity_models_path
+from ...rheological_formulas import g_0_computing, lambda_0_computing, mu_0_computing
 from .description import Description
 
 

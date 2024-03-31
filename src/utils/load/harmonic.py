@@ -34,11 +34,11 @@ from scipy import interpolate
 from scipy.fft import fft, fftfreq, ifft
 from tqdm import tqdm
 
-from .classes import BoundaryCondition, Direction, Result, SignalHyperParameters
-from .constants import SECONDS_PER_YEAR
-from .database import load_base_model, save_base_model
-from .Love_numbers import gets_run_id
-from .paths import data_path, results_path
+from ..classes import BoundaryCondition, Direction, Result, SignalHyperParameters
+from ..constants import SECONDS_PER_YEAR
+from ..database import load_base_model, save_base_model
+from ..Love_numbers import gets_run_id
+from ..paths import data_path, results_path
 
 
 def extract_ocean_load_data(path: Path = data_path) -> tuple[ndarray[float], ndarray[float]]:

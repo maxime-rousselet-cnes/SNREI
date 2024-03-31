@@ -4,13 +4,13 @@ from numpy import Inf, array, ndarray, round
 from scipy import interpolate
 
 from ...constants import SECONDS_PER_YEAR, Earth_radius
-from ...formulas import find_tau_M, mu_k_computing
 from ...paths import (
     anelasticity_descriptions_path,
     attenuation_descriptions_path,
     elasticity_descriptions_path,
     real_descriptions_path,
 )
+from ...rheological_formulas import find_tau_M, mu_k_computing
 from ..description_layer import DescriptionLayer
 from ..hyper_parameters import LoveNumbersHyperParameters
 from ..spline import Spline

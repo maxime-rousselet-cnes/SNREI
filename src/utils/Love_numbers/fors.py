@@ -9,8 +9,8 @@ from .classes import (
     real_description_from_parameters,
 )
 from .database import load_base_model, save_base_model
-from .Love_numbers import Love_numbers_from_models_to_result, gets_run_id
 from .paths import attenuation_models_path
+from .single import Love_numbers_from_models_to_result, gets_run_id
 
 BOOLEANS = [True, False]
 SAMPLINGS = {"low": 10, "mid": 100, "high": 1000}

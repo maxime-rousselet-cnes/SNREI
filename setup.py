@@ -13,7 +13,6 @@ setup(
         "netCDF4",
         "scipy",
         "shutil",
-        "argparse",
         "itertools",
         "json",
         "pathlib",

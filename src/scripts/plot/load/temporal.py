@@ -1,8 +1,5 @@
-# Computes anelastic-modified load signal for a given description and options.
-# Gets already computed Love numbers, builds load signal from data, computes anelastic induced load signal and saves it.
-# Saves the corresponding figures in the specified subfolder.
+# TODO: separate computing from plot.
 
-import argparse
 
 import matplotlib.pyplot as plt
 from numpy import transpose
@@ -17,15 +14,10 @@ from utils import (
     signal_induced_trend_from_dates,
 )
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--real_description_id", type=str, help="Optional wanted ID for the real description")
-parser.add_argument("--subpath", type=str, help="wanted path to save figure")
-args = parser.parse_args()
-
 
 def anelastic_induced_load_trend(
     real_description_id: str,
-    figure_subpath_string: str,
+    figure_subpath_string: str = "load/trend",
     signal_hyper_parameters: SignalHyperParameters = load_base_model(
         name="signal_hyper_parameters", path=parameters_path, base_model_type=SignalHyperParameters
     ),

@@ -4,7 +4,7 @@ from numpy import Inf, array, errstate, ndarray, pi, shape, where, zeros
 from scipy import integrate, interpolate
 from scipy.integrate import OdeSolution
 
-from ...formulas import (
+from ...rheological_formulas import (
     b_computing,
     build_cutting_omegas,
     delta_mu_computing,

@@ -5,8 +5,7 @@ TODO:
     automatic below_icb/cmb_layers with real_description splitted layer names in real real_description
     pass zoom_in limits as parameters in plot functions instead of hard code
     Add loop with/without anelasticity in plot Love 4
-    correct script load 03
-    do script load 04 loop on ratios from scipt load 2
+    do load scripts looping on descriptions
     README.md infography for code documentation
     select plots / plots_Love_numbers
     LaTeX disponible figures

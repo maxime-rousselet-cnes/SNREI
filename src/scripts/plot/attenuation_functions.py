@@ -1,246 +1,161 @@
-# Creates figures for attenuation functions f_r and f_i.
-#
-# Generates 3 figures per layer of interest:
-#   - unbounded f_r and f_i.
-#   - bounded f_r and f_i for different tau_M values
-#   - bounded f_r and f_i for different asymptotic_ratio values.
-
-import argparse
-
 import matplotlib.pyplot as plt
 from numpy import linspace, log10, ndarray, round
 
-from utils import (
+from ...utils import (
     SECONDS_PER_YEAR,
     Integration,
     Model,
+    ModelPart,
     RealDescription,
-    attenuation_models_path,
+    RunHyperParameters,
+    create_model_variation,
     figures_path,
+    find_tau_M,
     frequencies_to_periods,
     load_base_model,
     load_Love_numbers_hyper_parameters,
-    real_description_from_parameters,
-    save_base_model,
+    models_path,
 )
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--elasticity", type=str, help="Optional wanted ID for the elasticity model to use")
-parser.add_argument("--anelasticity", type=str, help="Optional wanted ID for the anelasticity model to use")
-parser.add_argument("--attenuation", type=str, help="Optional wanted ID for the attenuation model to use")
-parser.add_argument("--load_description", action="store_true", help="Option to tell if the description should be loaded")
-parser.add_argument("--subpath", type=str, help="wanted sub-path to save figures")
-args = parser.parse_args()
+
+def period_abscissa_values(n_points_period: int, tau_M_years_values: list[float]) -> ndarray[float]:
+    """
+    Creates an array of period values (s) convenient for bounded attenuation functions plotting.
+    """
+    return 10 ** linspace(
+        0,
+        2 + log10(SECONDS_PER_YEAR * max(tau_M_years_values)),
+        n_points_period,
+    )
 
 
 def plot_attenuation_functions(
-    elasticity_model_from_name: str,
-    anelasticity_model_from_name: str,
-    attenuation_model_from_name: str,
-    figure_subpath_string: str,
-    tau_M_years_values: dict[int, list[float]] = {0: [1.0 / 12, 1.0, 5.0, 20.0, 100.0, 500.0, 1000.0]},
-    asymptotic_ratio_values: dict[int, list[float]] = {0: [1.0, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01]},
+    short_term_anelasticity_model_name: str,
+    figure_subpath_string: str = "attanuation_functions",
+    tau_M_years_values: dict[int, list[float]] = [1.0 / 12, 1.0, 5.0, 20.0, 100.0, 500.0, 1000.0],
+    asymptotic_mu_ratio_values: dict[int, list[float]] = [1.0, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01],
+    n_points_period: int = 50,
+    above_CMB_layer_index: int = 0,
 ):
     """
-    Generates plots of attenuation functions f_r and f_i. A figure for unbounded attenuation functions, a second one for
-    bounded attenuation functions with given tau_M values and a third one for bounded attenuation functions with given
-    asymptotic_ratio values.
+    Generates plots of attenuation functions f_r and f_i for a given short-term anelasticity model.
+    2 figures are generated:
+        - a figure that includes a curb per tau_M value.
+        - a figure that includes a curb per asymptotic_mu_ratio value.
+    Each figure includes real/imaginary part and unbounded version of attenuation functions f_i and f_r.
     """
     # Initializes.
     Love_numbers_hyper_parameters = load_Love_numbers_hyper_parameters()
-    Love_numbers_hyper_parameters.use_attenuation = True
-    Love_numbers_hyper_parameters.bounded_attenuation_functions = False
-    initial_real_description = real_description_from_parameters(
-        Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
-        real_description_id=None,
-        load_description=False,
-        elasticity_model_from_name=elasticity_model_from_name,
-        anelasticity_model_from_name=anelasticity_model_from_name,
-        attenuation_model_from_name=attenuation_model_from_name,
-        save=False,
+    Love_numbers_hyper_parameters.run_hyper_parameters.use_short_term_anelasticity = True
+    figures_subpath = figures_path.joinpath(figure_subpath_string).joinpath(short_term_anelasticity_model_name)
+    short_term_anelasticity_model: Model = load_base_model(
+        name=short_term_anelasticity_model_name, path=models_path[ModelPart.short_term_anelasticity], base_model_type=Model
     )
-    attenuation_model: Model = load_base_model(
-        name=initial_real_description.attenuation_model_name, path=attenuation_models_path, base_model_type=Model
-    )
-    temp_tau_M_name_attenuation_model = initial_real_description.attenuation_model_name + "-variable-tau_M"
-    temp_ratio_name_attenuation_model = initial_real_description.attenuation_model_name + "-variable-asymptotic_ratio"
-    path = figures_path.joinpath(figure_subpath_string).joinpath(initial_real_description.attenuation_model_name)
-    T_tab = 10 ** linspace(
-        0,
-        2
-        + log10(
-            SECONDS_PER_YEAR * max([max(tau_M_years_list_values) for _, tau_M_years_list_values in tau_M_years_values.items()])
+    tau_M_years = {
+        "tau_M": tau_M_years_values,
+        "asymptotic_mu_ratio": [
+            find_tau_M(
+                omega_m=short_term_anelasticity_model.polynomials["omega_m"][above_CMB_layer_index][0],
+                alpha=short_term_anelasticity_model.polynomials["alpha"][above_CMB_layer_index][0],
+                asymptotic_mu_ratio=asymptotic_mu_ratio,
+                Q_mu=short_term_anelasticity_model.polynomials["Q_mu"][above_CMB_layer_index][0],
+            )
+            for asymptotic_mu_ratio in asymptotic_mu_ratio_values
+        ],
+    }
+    periods = {
+        "tau_M": period_abscissa_values(n_points_period=n_points_period, tau_M_years_values=tau_M_years_values),
+        "asymptotic_mu_ratio": period_abscissa_values(
+            n_points_period=n_points_period,
+            tau_M_years_values=tau_M_years["asymptotic_mu_ratio"],
         ),
-        100,
-    )  # (s).
+    }  # (s).
 
-    # Iterates on layers on interest.
-    for k_layer, tau_M_years_list_values in tau_M_years_values.items():
-        # Creates directory for layer.
-        layer_name = attenuation_model.layer_names[k_layer]
-        subpath = path.joinpath(layer_name)
-        subpath.mkdir(parents=True, exist_ok=True)
-        k_layer_real_description = [
-            description_layer.name.split(sep="-")[-1] for description_layer in initial_real_description.description_layers
-        ].index(layer_name)
-
-        # Gets unbounded f.
-        f_r_unbounded, f_i_unbounded = get_attenuation_function(
-            T_tab=T_tab,
-            real_description=initial_real_description,
-            use_anelasticity=Love_numbers_hyper_parameters.use_anelasticity,
-            bounded_attenuation_functions=False,
-            k_layer=k_layer_real_description,
-        )
-
-        # Plots unbounded f.
-        plt.plot(T_tab, f_r_unbounded, label="$f_r$")
-        plt.plot(T_tab, f_i_unbounded, label="$f_i$")
-        plt.legend()
-        plt.xscale("log")
-        plt.xlabel("Period (s)")
-        plt.savefig(subpath.joinpath("unbounded_attenuation_functions.png"))
-        plt.show(block=False)
-
+    # Loops on constrained variable.
+    for variable, constrained_values in zip(["tau_M", "asymptotic_mu_ratio"], [tau_M_years_values, asymptotic_mu_ratio_values]):
         # Iterates on tau_M values.
         _, plots = plt.subplots(2, 1, sharex=True, figsize=(8, 11))
-        for tau_M_years in tau_M_years_list_values:
+        Love_numbers_hyper_parameters.run_hyper_parameters.use_bounded_attenuation_functions = True
+        for tau_M_years, variable_value in zip(tau_M_years[variable], constrained_values):
             # Modifies tau_M value in model.
-            tau_M = 1.0 / frequencies_to_periods(frequencies=tau_M_years)
-            attenuation_model.polynomials["tau_M"][k_layer][0] = tau_M_years
-            attenuation_model.polynomials["asymptotic_attenuation"][k_layer][0] = 0.0
-            save_base_model(obj=attenuation_model, name=temp_tau_M_name_attenuation_model, path=attenuation_models_path)
-            real_description = real_description_from_parameters(
-                Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
-                real_description_id=None,
-                load_description=False,
-                elasticity_model_from_name=elasticity_model_from_name,
-                anelasticity_model_from_name=anelasticity_model_from_name,
-                attenuation_model_from_name=temp_tau_M_name_attenuation_model,
+            create_model_variation(
+                model_part=ModelPart.short_term_anelasticity,
+                model_base_name=short_term_anelasticity_model_name,
+                parameter_names=[variable],
+                parameter_values_per_layer=[[[variable_value]] * len(short_term_anelasticity_model.layer_names)],
+            )
+            real_description = RealDescription(
+                real_description_parameters=Love_numbers_hyper_parameters.real_description_parameters,
+                short_term_anelasticity_model_name=short_term_anelasticity_model_name,
                 save=False,
             )
-
             # Gets bounded f.
             f_r, f_i = get_attenuation_function(
-                T_tab=T_tab,
+                periods=periods[variable],
                 real_description=real_description,
-                use_anelasticity=Love_numbers_hyper_parameters.use_anelasticity,
-                bounded_attenuation_functions=True,
-                k_layer=k_layer_real_description,
+                run_hyper_parameters=Love_numbers_hyper_parameters.run_hyper_parameters,
+                above_CMB_layer_index=above_CMB_layer_index,
             )
-
-            plots[0].plot(T_tab, f_r)
-            plots[1].plot(T_tab, f_i, label="$\\tau _M=$" + str(round(a=tau_M_years, decimals=4)) + " (y)")
-            plots[0].scatter([tau_M] * 15, linspace(start=min(f_r), stop=max(f_r), num=15), s=5)
-            plots[1].scatter([tau_M] * 15, linspace(start=min(f_i), stop=max(f_i), num=15), s=5)
-
-        plots[0].plot(T_tab, f_r_unbounded)
-        plots[1].plot(T_tab, f_i_unbounded, label="unbounded")
-
-        plots[0].set_ylabel("$f_r$")
-        plots[0].grid()
-
-        plots[1].set_ylabel("$f_i$")
-        plots[1].grid()
-
-        plt.xlabel("Period (s)")
-        plt.xscale("log")
-        plt.legend()
-        plt.savefig(subpath.joinpath("bounded_attenuation_functions_for_tau_M.png"))
-        plt.show(block=False)
-
-        # Iterates on asymptotic_ratio values.
-        _, plots = plt.subplots(2, 1, sharex=True, figsize=(12, 15))
-        for asymptotic_ratio in asymptotic_ratio_values[k_layer]:
-            # Modifies tau_M value in model.
-            attenuation_model.polynomials["tau_M"][k_layer][0] = 0.0
-            attenuation_model.polynomials["asymptotic_attenuation"][k_layer][0] = 1.0 - asymptotic_ratio
-            save_base_model(obj=attenuation_model, name=temp_ratio_name_attenuation_model, path=attenuation_models_path)
-            real_description = real_description_from_parameters(
-                Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
-                real_description_id=None,
-                load_description=False,
-                elasticity_model_from_name=elasticity_model_from_name,
-                anelasticity_model_from_name=anelasticity_model_from_name,
-                attenuation_model_from_name=temp_ratio_name_attenuation_model,
-                save=False,
-            )
-
-            # Gets bounded f.
-            f_r, f_i = get_attenuation_function(
-                T_tab=T_tab,
-                real_description=real_description,
-                use_anelasticity=Love_numbers_hyper_parameters.use_anelasticity,
-                bounded_attenuation_functions=True,
-                k_layer=k_layer_real_description,
-            )
-
-            tau_M = round(
-                a=real_description.description_layers[k_layer_real_description].evaluate(
-                    x=attenuation_model.r_limits[k_layer] / real_description.radius_unit,
-                    variable="tau_M",
-                )
-                * real_description.period_unit,
-                decimals=2,
-            )
-            plots[0].plot(T_tab, f_r)
+            # Plots.
+            tau_M_seconds = 1.0 / frequencies_to_periods(frequencies=tau_M_years)
+            plots[0].plot(periods[variable], f_r)
             plots[1].plot(
-                T_tab,
+                periods[variable],
                 f_i,
-                label="$\\mu_\\infty / \\mu_0=$"
-                + str(asymptotic_ratio)
-                + " : $\\tau _M=$"
-                + str(tau_M / SECONDS_PER_YEAR)
+                label=("" if variable == "tau_M" else "$\\mu(\\omega=0)/\\mu_0=$" + str(round(a=variable_value, decimals=4)))
+                + "$\\tau _M=$"
+                + str(round(a=tau_M_years, decimals=4))
                 + " (y)",
             )
-
-        plots[0].plot(T_tab, f_r_unbounded)
-        plots[1].plot(T_tab, f_i_unbounded, label="unbounded")
-
-        plots[0].scatter([tau_M] * 15, linspace(start=min(f_r), stop=max(f_r), num=15), s=5)
-        plots[1].scatter([tau_M] * 15, linspace(start=min(f_i), stop=max(f_i), num=15), s=5)
-
+            plots[0].scatter([tau_M_seconds] * 15, linspace(start=min(f_r), stop=max(f_r), num=15), s=5)
+            plots[1].scatter([tau_M_seconds] * 15, linspace(start=min(f_i), stop=max(f_i), num=15), s=5)
+        # Gets unbounded f.
+        Love_numbers_hyper_parameters.run_hyper_parameters.use_bounded_attenuation_functions = False
+        f_r_unbounded, f_i_unbounded = get_attenuation_function(
+            periods=periods[variable],
+            real_description=real_description,
+            run_hyper_parameters=Love_numbers_hyper_parameters.run_hyper_parameters,
+            above_CMB_layer_index=above_CMB_layer_index,
+        )
+        plots[0].plot(periods[variable], f_r_unbounded)
+        plots[1].plot(periods[variable], f_i_unbounded, label="unbounded")
+        # Layout.
         plots[0].set_ylabel("$f_r$")
         plots[0].grid()
-
         plots[1].set_ylabel("$f_i$")
         plots[1].grid()
-
         plt.xlabel("Period (s)")
         plt.xscale("log")
         plt.legend()
-        plt.savefig(subpath.joinpath("bounded_attenuation_functions_for_ratio.png"))
-        plt.show()
+        plt.savefig(figures_subpath.joinpath("attenuation_functions_for_" + variable + ".png"))
+        plt.clf()
 
 
 def get_attenuation_function(
-    T_tab: ndarray, real_description: RealDescription, use_anelasticity: bool, bounded_attenuation_functions: bool, k_layer: int
+    periods: ndarray, real_description: RealDescription, run_hyper_parameters: RunHyperParameters, above_CMB_layer_index: int
 ) -> tuple[ndarray, ndarray]:
     """
     Evaluates attenuation functions of a given description at every frequency of a given list.
     """
     f_r, f_i = [], []
-    for T_value in T_tab:
+    for T_value in periods:
         integration = Integration(
             real_description=real_description,
             log_frequency=log10(real_description.period_unit / T_value),
-            use_anelasticity=use_anelasticity,
-            use_attenuation=True,
-            bounded_attenuation_functions=bounded_attenuation_functions,
+            use_long_term_anelasticity=run_hyper_parameters.use_long_term_anelasticity,
+            use_short_term_anelasticity=True,
+            use_bounded_attenuation_functions=run_hyper_parameters.use_bounded_attenuation_functions,
         )
         f_r += [
-            integration.description_layers[k_layer].evaluate(x=integration.description_layers[k_layer].x_inf, variable="f_r")
+            integration.description_layers[real_description.below_CMB_layers + above_CMB_layer_index].evaluate(
+                x=integration.description_layers[real_description.below_CMB_layers + above_CMB_layer_index].x_inf,
+                variable="f_r",
+            )
         ]
         f_i += [
-            integration.description_layers[k_layer].evaluate(x=integration.description_layers[k_layer].x_inf, variable="f_i")
+            integration.description_layers[real_description.below_CMB_layers + above_CMB_layer_index].evaluate(
+                x=integration.description_layers[real_description.below_CMB_layers + above_CMB_layer_index].x_inf,
+                variable="f_i",
+            )
         ]
     return f_r, f_i
-
-
-if __name__ == "__main__":
-    plot_attenuation_functions(
-        elasticity_model_from_name=args.elasticity,
-        anelasticity_model_from_name=args.anelasticity,
-        attenuation_model_from_name=args.attenuation,
-        figure_subpath_string=args.subpath if args.subpath else "attenuation_functions",
-    )

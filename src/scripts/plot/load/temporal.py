@@ -1,110 +1,115 @@
-# TODO: separate computing from plot.
-
-
 import matplotlib.pyplot as plt
-from numpy import transpose
+from numpy import ndarray, real
+from scipy.fft import ifft
 
-from utils import (
-    SignalHyperParameters,
-    anelastic_induced_load_signal,
-    build_elastic_load_signal,
+from ....utils import (
+    OPTIONS,
+    LoadSignalHyperParameters,
+    RunHyperParameters,
     figures_path,
+    get_run_folder_name,
+    get_trend_dates,
     load_base_model,
-    parameters_path,
-    signal_induced_trend_from_dates,
+    load_load_signal_hyper_parameters,
+    results_path,
+    signal_trend,
 )
 
 
-def anelastic_induced_load_trend(
-    real_description_id: str,
-    figure_subpath_string: str = "load/trend",
-    signal_hyper_parameters: SignalHyperParameters = load_base_model(
-        name="signal_hyper_parameters", path=parameters_path, base_model_type=SignalHyperParameters
-    ),
-    degrees_to_plot: list[int] = [2, 3, 5, 10, 20],
+def plot_anelastic_induced_load_per_degree_per_description_per_options(
+    real_description_ids: list[str],
+    load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
+    options: list[RunHyperParameters] = OPTIONS,
+    degrees_to_plot: list[int] = [2, 3, 4, 10, 20],
 ) -> None:
     """
-    Computes anelastic-modified load signal for a given description and options.
-    Gets already computed Love numbers, builds load signal from data, computes anelastic induced load signal and saves it.
-    Saves the corresponding figures in the specified subfolder.
+    Generates figures showing the anelastic induced load signal trend per degree for given descriptions and options:
+        - Gets already computed anelastic induced load signals per degree.
+        - Computes trends.
+        - Generates and saves figures in the specified subfolder.
     """
-    # Builds frequential signal.
-    dates, frequencies, (elastic_trend, temporal_elastic_load_signal, frequencial_elastic_load_signal, _) = (
-        build_elastic_load_signal(signal_hyper_parameters=signal_hyper_parameters, get_harmonic_weights=False)
-    )
+    # Loops on descriptions.
+    for real_description_id in real_description_ids:
+        # Loops on options.
+        for run_hyper_parameters in options:
+            load_signal_hyper_parameters.run_hyper_parameters = run_hyper_parameters
+            # Gets already computed anelastic induced load signal per degree.
+            run_folder_name = (
+                get_run_folder_name(real_description_id=real_description_id, run_id=run_hyper_parameters.run_id())
+                + "/load/"
+                + load_signal_hyper_parameters.ocean_load_Frederikse
+            )
+            result_subpath = results_path.joinpath(run_folder_name)
+            dates = load_base_model(name="dates", path=result_subpath)
+            elastic_load_signal_trend = load_base_model(name="elastic_load_signal_trend", path=result_subpath)
+            elastic_load_signal = load_base_model(name="elastic_load_signal", path=result_subpath)
+            anelastic_frequencial_load_signal_per_degree: dict[int, dict[str, ndarray[float]]] = {
+                degree: load_base_model(
+                    name=str(degree), path=result_subpath.joinpath("anelastic_induced_frequencial_load_per_degree")
+                )
+                for degree in degrees_to_plot
+            }
+            trend_indices, trend_dates = get_trend_dates(dates=dates, load_signal_hyper_parameters=load_signal_hyper_parameters)
+            # Computes trends.
+            anelastic_temporal_load_signal_per_degree = {
+                degree: real(ifft(x=anelastic_frequencial_load_signal)) * elastic_load_signal_trend
+                for degree, anelastic_frequencial_load_signal in anelastic_frequencial_load_signal_per_degree.items()
+            }
+            anelastic_load_signal_trend_per_degree = {
+                degree: signal_trend(trend_dates=trend_dates, signal=anelastic_temporal_load_signal[trend_indices])[0]
+                for degree, anelastic_temporal_load_signal in anelastic_temporal_load_signal_per_degree.items()
+            }
 
-    # Computes anelastic induced load signal.
-    (_, degrees, temporal_load_signal_per_degree, _, _) = anelastic_induced_load_signal(
-        real_description_id=real_description_id,
-        signal_hyper_parameters=signal_hyper_parameters,
-        dates=dates,
-        frequencies=frequencies,
-        frequencial_elastic_load_signal=frequencial_elastic_load_signal,
-    )
+            # Saves the figures.
+            figure_subpath = figures_path.joinpath(run_folder_name)
+            figure_subpath.mkdir(parents=True, exist_ok=True)
 
-    # Gets trends.
-    (
-        trend_dates,
-        elastic_signal,
-        signals,
-        signal_trends,
-    ) = signal_induced_trend_from_dates(
-        elastic_trend=elastic_trend,
-        signal_hyper_parameters=signal_hyper_parameters,
-        elastic_signal=temporal_elastic_load_signal,
-        signal=transpose(a=temporal_load_signal_per_degree),
-        dates=dates,
-    )
+            # Whole signal.
+            plt.figure(figsize=(16, 9))
+            plt.plot(dates, elastic_load_signal, label="elastic")
+            for degree in degrees_to_plot:
+                plt.plot(
+                    dates,
+                    anelastic_temporal_load_signal_per_degree[degree],
+                    label="degree " + str(degree),
+                )
+            plt.legend()
+            plt.xlabel("time (y)")
+            plt.grid()
+            plt.title("anelastic induced load signal per degree")
+            plt.legend()
+            plt.savefig(figure_subpath.joinpath("anelastic_induced_load_signal_per_degree.png"))
+            plt.clf()
 
-    # Saves the figures.
-    figure_subpath = figures_path.joinpath(figure_subpath_string).joinpath(real_description_id)
-    figure_subpath.mkdir(parents=True, exist_ok=True)
-    degrees_indices = [list(degrees).index(degree) for degree in degrees_to_plot]
-
-    # Whole signal.
-    plt.figure(figsize=(16, 9))
-    plt.plot(dates, temporal_elastic_load_signal, label="elastic")
-    for i_degree, degree in zip(degrees_indices, degrees_to_plot):
-        plt.plot(
-            dates,
-            temporal_load_signal_per_degree[i_degree],
-            label="degree " + str(degree),
-        )
-    plt.legend()
-    plt.xlabel("time (y)")
-    plt.grid()
-    plt.title("anelastic induced load signal")
-    plt.legend()
-    plt.savefig(figure_subpath.joinpath("anelastic_induced_load_signal.png"))
-    plt.show(block=False)
-
-    # Trend since first_year_for_trend.
-    plt.figure(figsize=(16, 9))
-    plt.plot(trend_dates, elastic_signal, label="elastic : trend = " + str(round(number=elastic_trend, ndigits=5)) + "(mm/y)")
-    for i_degree, degree in zip(degrees_indices, degrees_to_plot):
-        plt.plot(
-            trend_dates,
-            signals[:, i_degree],
-            label=("degree " + str(degree))
-            + " : trend difference with elastic = "
-            + str(round(number=signal_trends[i_degree], ndigits=5))
-            + "(mm/y)",
-        )
-    plt.legend()
-    plt.xlabel("time (y)")
-    plt.grid()
-    plt.title("anelastic induced load signal : trend since " + str(signal_hyper_parameters.first_year_for_trend))
-    plt.legend()
-    plt.savefig(figure_subpath.joinpath("anelastic_induced_load_signal_trend.png"))
-    plt.show()
-
-
-if __name__ == "__main__":
-    anelastic_induced_load_trend(
-        real_description_id=(
-            args.real_description_id
-            if args.real_description_id
-            else "PREM_low-viscosity-asthenosphere-elastic-lithosphere_Benjamin-variable-asymptotic_ratio1.0-1.0"
-        ),
-        figure_subpath_string=args.subpath if args.subpath else "load_signal",
-    )
+            # Trend since first_year_for_trend.
+            plt.figure(figsize=(16, 9))
+            plt.plot(
+                trend_dates,
+                elastic_load_signal[trend_indices],
+                label="elastic : trend = " + str(round(number=elastic_load_signal_trend, ndigits=5)) + "(mm/y)",
+            )
+            for degree in degrees_to_plot:
+                plt.plot(
+                    trend_dates,
+                    anelastic_temporal_load_signal_per_degree[degree][trend_indices],
+                    label=("degree " + str(degree))
+                    + " : trend difference with elastic = "
+                    + str(round(number=anelastic_load_signal_trend_per_degree[degree], ndigits=5))
+                    + "(mm/y)",
+                )
+            plt.legend()
+            plt.xlabel("time (y)")
+            plt.grid()
+            plt.title(
+                "anelastic induced load signal per degree: trend since "
+                + str(load_signal_hyper_parameters.first_year_for_trend)
+            )
+            plt.legend()
+            plt.savefig(
+                figure_subpath.joinpath(
+                    "anelastic_induced_load_signal_per_degree_trend_since"
+                    + str(load_signal_hyper_parameters.first_year_for_trend)
+                    + ".png"
+                )
+            )
+            plt.clf()

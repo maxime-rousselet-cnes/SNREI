@@ -1,178 +1,140 @@
-# Computes anelastic-modified harmonic load signal for a given description and options.
-# Gets already computed Love numbers, builds load signal from data, computes anelastic induced harmonic load signal and
-# saves it.
-# Saves the corresponding figures (spatial domain) in the specified subfolder.
+from numpy import real, zeros
+from scipy.fft import ifft
 
-import argparse
-from pathlib import Path
-from typing import Optional
-
-import matplotlib.pyplot as plt
-from cartopy import crs
-from matplotlib import ticker
-from matplotlib.colors import SymLogNorm, TwoSlopeNorm
-from numpy import linspace, ndarray, round
-from pyshtools.expand import MakeGridDH
-
-from utils import (
-    BOOLEANS,
-    SignalHyperParameters,
-    anelastic_harmonic_induced_load_signal,
-    build_elastic_load_signal,
+from ....utils import (
+    OPTIONS,
+    LoadSignalHyperParameters,
+    RunHyperParameters,
     figures_path,
     format_ocean_mask,
+    get_run_folder_name,
+    get_trend_dates,
     load_base_model,
-    parameters_path,
+    load_load_signal_hyper_parameters,
+    ocean_mean,
+    results_path,
+    save_base_model,
+    signal_trend,
 )
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--real_description_id", type=str, help="Optional wanted ID for the real description")
-parser.add_argument("--subpath", type=str, help="wanted path to save figure")
-args = parser.parse_args()
-
-from numpy import linspace, maximum, minimum
+from ..utils import plot_harmonics_on_natural_projection
 
 
-def plot_harmonics_on_natural_projection(
-    harmonics: ndarray[float],
-    title: str,
-    figure_subpath: Path,
-    name: str,
-    n_max: int,
-    num: int = 10,
-    ocean_mask_filename: Optional[str] = None,
-    v_min: Optional[int] = None,
-    v_max: Optional[int] = None,
-    label: str = "cm/y",
+def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
+    real_description_ids: list[str],
+    load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
+    options: list[RunHyperParameters] = OPTIONS,
+    min_saturation: float = -5.0,
+    max_saturation: float = 5.0,
+    num_colormesh_bins: int = 10,
 ) -> None:
     """
-    Creates a world map figure of the given harmonics. Eventually exclude areas with a given mask. Eventually saturates the
-    color scale.
+    Generates figures showing the anelastic induced spatial load signal trend for given descriptions and options:
+        - Gets already computed anelastic induced harmonic frequencial load signals.
+        - Compute spatial trends.
+        - Generates and saves figures in the specified subfolder.
     """
+    # Loops on descriptions.
+    for real_description_id in real_description_ids:
+        # Loops on options.
+        for run_hyper_parameters in options:
+            load_signal_hyper_parameters.run_hyper_parameters = run_hyper_parameters
 
-    fig = plt.figure(
-        figsize=(16, 9),
-    )
-    ax = fig.add_subplot(1, 1, 1, projection=crs.Robinson(central_longitude=180))
-    plt.title(title, fontsize=20)
-    ax.set_global()
-    spatial_result = round(
-        a=MakeGridDH(harmonics, sampling=2)
-        * format_ocean_mask(ocean_mask_filename=ocean_mask_filename, n_max=min(n_max, len(harmonics[0]))),
-        decimals=3,
-    )
-    contour = ax.pcolormesh(
-        linspace(start=0, stop=360, num=len(spatial_result[0])),
-        linspace(start=90, stop=-90, num=len(spatial_result)),
-        spatial_result if v_min is None else maximum(v_min, minimum(v_max, spatial_result)),
-        transform=crs.PlateCarree(),
-        cmap="RdBu_r",
-        # levels=num,
-        norm=SymLogNorm(vcenter=0),  # TwoSlopeNorm(vcenter=0),
-    )
-    ax.coastlines()
-    cbar = plt.colorbar(contour, ax=ax, orientation="horizontal", fraction=0.07)
-    tick_locator = ticker.MaxNLocator(nbins=num)
-    cbar.locator = tick_locator
-    cbar.update_ticks()
-    cbar.ax.tick_params(labelsize=14)
-    cbar.set_label(label=label, size=16)
-    plt.savefig(figure_subpath.joinpath(name))
-    plt.show(block=False)
-    plt.close()
+            # Gets already computed anelastic induced harmonic load signal.
+            run_folder_name = (
+                get_run_folder_name(real_description_id=real_description_id, run_id=run_hyper_parameters.run_id())
+                + "/load/"
+                + load_signal_hyper_parameters.ocean_load_Frederikse
+            )
+            result_subpath = results_path.joinpath(run_folder_name)
+            dates = load_base_model(name="dates", path=result_subpath)
+            trend_indices, trend_dates = get_trend_dates(dates=dates, load_signal_hyper_parameters=load_signal_hyper_parameters)
+            load_signal_harmonic_trends = {
+                "elastic": zeros(shape=(2, load_signal_hyper_parameters.n_max, load_signal_hyper_parameters.n_max)),
+                "anelastic": zeros(shape=(2, load_signal_hyper_parameters.n_max, load_signal_hyper_parameters.n_max)),
+            }
+            for earth_model in ["elastic", "anelastic"]:
+                # Loops on harmonics:
+                for coefficient in ["C", "S"]:
+                    start_index = 0 if coefficient == "C" else 1
+                    for degree in range(start_index, load_signal_hyper_parameters.n_max + 1):
+                        for order in range(start_index, degree + 1):
+                            harmonic_frequencial_load_signal = load_base_model(
+                                name="_".join((coefficient, degree, order)),
+                                path=result_subpath.joinpath(earth_model + "_harmonic_frequencial_load_signal"),
+                            )
+                            # Computes harmonic trend.
+                            load_signal_harmonic_trends[earth_model][start_index][degree][order] = signal_trend(
+                                trend_dates=trend_dates,
+                                signal=real(
+                                    ifft(
+                                        x=harmonic_frequencial_load_signal["real"]
+                                        + 1.0j * harmonic_frequencial_load_signal["imag"]
+                                    )
+                                )[trend_indices],
+                            )[0]
 
+            # Preprocesses ocean mask.
+            ocean_mask = format_ocean_mask(
+                ocean_mask_filename=load_signal_hyper_parameters.ocean_mask, n_max=load_signal_hyper_parameters.n_max
+            )
+            # Saves ocean rise mean trend.
+            ocean_means = {
+                earth_model: ocean_mean(harmonics=load_signal_harmonic_trends[earth_model], ocean_mask=ocean_mask)
+                for earth_model in ["elastic", "anelastic"]
+            }
+            save_base_model(
+                obj=ocean_means,
+                name="ocean_rise_mean_trend",
+                path=result_subpath,
+            )
 
-def anelastic_induced_harmonic_load_trend(
-    real_description_id: str,
-    figure_subpath_string: str,
-    signal_hyper_parameters: SignalHyperParameters = load_base_model(
-        name="signal_hyper_parameters", path=parameters_path, base_model_type=SignalHyperParameters
-    ),
-) -> None:
-    """
-    Computes anelastic-modified harmonic load signal for a given description and options.
-    Gets already computed Love numbers, builds load signal from data, computes anelastic induced harmonic load signal and
-    saves it.
-    Saves the corresponding figures (spatial domain) in the specified subfolder.
-    """
-    # Builds frequential signal.
-    dates, frequencies, (elastic_trend, _, frequencial_elastic_load_signal, harmonic_weights) = build_elastic_load_signal(
-        signal_hyper_parameters=signal_hyper_parameters, get_harmonic_weights=True
-    )
+            # Saves the figures.
+            figure_subpath = figures_path.joinpath(run_folder_name)
+            figure_subpath.mkdir(parents=True, exist_ok=True)
 
-    # Computes anelastic induced harmonic load signal.
-    (
-        path,
-        _,
-        _,
-        _,
-        harmonic_trends,
-        _,
-    ) = anelastic_harmonic_induced_load_signal(
-        harmonic_weights=harmonic_weights,
-        real_description_id=real_description_id,
-        signal_hyper_parameters=signal_hyper_parameters,
-        dates=dates,
-        frequencies=frequencies,
-        frequencial_elastic_normalized_load_signal=frequencial_elastic_load_signal / elastic_trend,
-    )
+            # Input elastic spatial load signal trend.
+            plot_harmonics_on_natural_projection(
+                harmonics=load_signal_harmonic_trends["elastic"],
+                figure_subpath=figure_subpath,
+                name=load_signal_hyper_parameters.weights_map + "_load_signal_trend",
+                title=load_signal_hyper_parameters.weights_map + " load signal trend",
+                label="(cm/y): ocean mean = " + str(ocean_means["elastic"]),
+                ocean_mask_filename=load_signal_hyper_parameters.ocean_mask,
+                min_saturation=min_saturation,
+                max_saturation=max_saturation,
+                num_colormesh_bins=num_colormesh_bins,
+            )
 
-    # Saves the figures.
-    figure_subpath = figures_path.joinpath(figure_subpath_string).joinpath(real_description_id).joinpath(path.name)
-    figure_subpath.mkdir(parents=True, exist_ok=True)
+            # Output anelastic spatial load signal trend.
+            plot_harmonics_on_natural_projection(
+                harmonics=load_signal_harmonic_trends["anelastic"],
+                figure_subpath=figure_subpath,
+                name=load_signal_hyper_parameters.weights_map
+                + "_anelastic_induced_load_signal_trend_since_"
+                + str(load_signal_hyper_parameters.first_year_for_trend),
+                title=load_signal_hyper_parameters.weights_map
+                + " anelastic induced load signal trend since "
+                + str(load_signal_hyper_parameters.first_year_for_trend),
+                label="(cm/y): ocean mean = " + str(ocean_means["anelastic"]),
+                ocean_mask_filename=load_signal_hyper_parameters.ocean_mask,
+                min_saturation=min_saturation,
+                max_saturation=max_saturation,
+                num_colormesh_bins=num_colormesh_bins,
+            )
 
-    # Results.
-    for saturation in BOOLEANS:
-        v_min = None if not saturation else -5.0
-        v_max = None if not saturation else 5.0
-        # Inputs.
-        plot_harmonics_on_natural_projection(
-            harmonics=harmonic_weights,
-            title=signal_hyper_parameters.weights_map,
-            figure_subpath=figure_subpath.parent.parent,
-            n_max=signal_hyper_parameters.n_max,
-            name=signal_hyper_parameters.weights_map + ("_saturated" if saturation else ""),
-            ocean_mask_filename=signal_hyper_parameters.ocean_mask,
-            v_min=v_min,
-            v_max=v_max,
-        )
-        # Output.
-        plot_harmonics_on_natural_projection(
-            harmonics=harmonic_trends,
-            title="anelastic induced loads : trends since " + str(signal_hyper_parameters.first_year_for_trend),
-            figure_subpath=figure_subpath,
-            n_max=signal_hyper_parameters.n_max,
-            name=signal_hyper_parameters.weights_map
-            + "_"
-            + signal_hyper_parameters.signal
-            + "_trend_anelastic"
-            + ("_saturated" if saturation else ""),
-            ocean_mask_filename=signal_hyper_parameters.ocean_mask,
-            v_min=v_min,
-            v_max=v_max,
-        )
-        # Difference.
-        plot_harmonics_on_natural_projection(
-            harmonics=harmonic_trends - harmonic_weights,
-            title="anelastic induced loads differences with elastic : trends since "
-            + str(signal_hyper_parameters.first_year_for_trend),
-            figure_subpath=figure_subpath,
-            n_max=signal_hyper_parameters.n_max,
-            name=signal_hyper_parameters.weights_map
-            + "_"
-            + signal_hyper_parameters.signal
-            + "_trend_diff_with_elastic"
-            + ("_saturated" if saturation else ""),
-            ocean_mask_filename=signal_hyper_parameters.ocean_mask,
-            v_min=v_min,
-            v_max=v_max,
-        )
-
-
-if __name__ == "__main__":
-    anelastic_induced_harmonic_load_trend(
-        real_description_id=(args.real_description_id if args.real_description_id else "test"),
-        figure_subpath_string=args.subpath if args.subpath else "spatial_load_signal",
-    )
-
-    # TODO. 04: loop on it.
+            # Differences between elastic and anelastic spatial load signal trend.
+            plot_harmonics_on_natural_projection(
+                harmonics=load_signal_harmonic_trends["anelastic"] - load_signal_harmonic_trends["elastic"],
+                figure_subpath=figure_subpath,
+                name=load_signal_hyper_parameters.weights_map
+                + "_anelastic_induced_load_signal_trend_difference_with_elastic_since_"
+                + str(load_signal_hyper_parameters.first_year_for_trend),
+                title=load_signal_hyper_parameters.weights_map
+                + " anelastic induced load signal trend difference with elastic since "
+                + str(load_signal_hyper_parameters.first_year_for_trend),
+                label="(cm/y): ocean mean = " + str(ocean_means["anelastic"] - ocean_means["elastic"]),
+                ocean_mask_filename=load_signal_hyper_parameters.ocean_mask,
+                min_saturation=min_saturation,
+                max_saturation=max_saturation,
+                num_colormesh_bins=num_colormesh_bins,
+            )

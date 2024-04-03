@@ -54,6 +54,16 @@ class RealDescriptionParameters(HyperParameters):
     below_CMB_layers: Optional[int]  # Should be > below_ICB_layers.
 
 
+class RunHyperParameters(HyperParameters):
+    """
+    Describes a run's options.
+    """
+
+    use_long_term_anelasticity: bool  # Whether to use long term anelasticity model or not.
+    use_short_term_anelasticity: bool  # Whether to use short term anelasticity model or not.
+    use_bounded_attenuation_functions: bool  # Whether to use the bounded version of attenuation functions or not.
+
+
 class LoveNumbersHyperParameters(HyperParameters):
     """
     Describes the parameters needed for Love Numbers(n, frequency) computing algorithm.
@@ -71,16 +81,19 @@ class LoveNumbersHyperParameters(HyperParameters):
     y_system_hyper_parameters: Optional[str] | YSystemHyperParameters  # For the Y_i system integration algorithm.
     degree_steps: Optional[str] | list[int]  # Love numbers are computed every degree_steps[i] between...
     degree_thresholds: Optional[str] | list[int]  # ... degree_thresholds[i] and degree_thresholds[i + 1].
-
-    # Run parameters.
-    use_anelasticity: bool  # Whether to use attenuation model or not.
-    use_attenuation: bool  # Whether to use attenuation model or not.
-    bounded_attenuation_functions: bool  # Whether to use bounded version of attenuation functions or not.
+    run_hyper_parameters: Optional[str] | RunHyperParameters  # Run parameters.
 
     def load(self) -> None:
         """
         Loads the lower level parameter fields from file names.
         """
+        #  Parameters for the run.
+        if not isinstance(self.run_hyper_parameters, RunHyperParameters):
+            self.run_hyper_parameters = load_base_model(
+                name=self.run_hyper_parameters if self.run_hyper_parameters else "run_hyper_parameters",
+                base_model_type=RunHyperParameters,
+                path=parameters_path,
+            )
         #  Parameters for the Y_i system integration algorithm.
         if not isinstance(self.y_system_hyper_parameters, YSystemHyperParameters):
             self.y_system_hyper_parameters = load_base_model(
@@ -108,18 +121,20 @@ class LoveNumbersHyperParameters(HyperParameters):
             )
 
 
-def load_Love_numbers_hyper_parameters() -> LoveNumbersHyperParameters:
+def load_Love_numbers_hyper_parameters(name: Optional[str] = None) -> LoveNumbersHyperParameters:
     """
     Routine that gets Love numbers hyper parameters from (.JSON) file.
     """
     Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_base_model(
-        name="Love_numbers_hyper_parameters", path=parameters_path, base_model_type=LoveNumbersHyperParameters
+        name=name if not name is None else "Love_numbers_hyper_parameters",
+        path=parameters_path,
+        base_model_type=LoveNumbersHyperParameters,
     )
     Love_numbers_hyper_parameters.load()
     return Love_numbers_hyper_parameters
 
 
-class SignalHyperParameters(HyperParameters):
+class LoadSignalHyperParameters(HyperParameters):
     """
     Describes the parameters needed for to compute some anelastic induced signal using elastic induced signal and Love
     numbers.
@@ -142,6 +157,29 @@ class SignalHyperParameters(HyperParameters):
     last_year_for_trend: int
 
     # Run parameters.
-    use_anelasticity: bool  # Whether to use attenuation model or not.
-    use_attenuation: bool  # Whether to use attenuation model or not.
-    bounded_attenuation_functions: bool  # Whether to use bounded version of attenuation functions or not.
+    run_hyper_parameters: Optional[str] | RunHyperParameters
+
+    def load(self) -> None:
+        """
+        Loads the lower level parameter fields from file names.
+        """
+        #  Parameters for the run.
+        if not isinstance(self.run_hyper_parameters, RunHyperParameters):
+            self.y_system_hyper_parameters = load_base_model(
+                name=self.run_hyper_parameters if self.run_hyper_parameters else "run_hyper_parameters",
+                base_model_type=RunHyperParameters,
+                path=parameters_path,
+            )
+
+
+def load_load_signal_hyper_parameters(name: Optional[str] = None) -> LoadSignalHyperParameters:
+    """
+    Routine that gets Love numbers hyper parameters from (.JSON) file.
+    """
+    load_signal_hyper_parameters: LoadSignalHyperParameters = load_base_model(
+        name=name if not name is None else "load_signal_hyper_parameters",
+        path=parameters_path,
+        base_model_type=LoadSignalHyperParameters,
+    )
+    load_signal_hyper_parameters.load()
+    return load_signal_hyper_parameters

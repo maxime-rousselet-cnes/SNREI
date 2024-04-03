@@ -64,3 +64,10 @@ def generate_degrees_list(
         ],
         dtype=int,
     ).tolist()
+
+
+def get_run_folder_name(real_description_id: str, run_id: str) -> str:
+    """
+    Builds a folder id with real description id and run id.
+    """
+    return "/".join(real_description_id, "runs", run_id)

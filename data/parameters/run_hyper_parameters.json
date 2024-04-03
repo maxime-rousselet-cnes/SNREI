@@ -1,0 +1,5 @@
+{
+    "use_long_term_anelasticity": true,
+    "use_short_term_anelasticity": true,
+    "use_bounded_attenuation_functions": true
+}

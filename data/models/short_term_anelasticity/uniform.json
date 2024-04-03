@@ -36,9 +36,9 @@
                 0.0
             ]
         ],
-        "asymptotic_attenuation": [
+        "asymptotic_mu_ratio": [
             [
-                0.8
+                0.2
             ]
         ]
     }

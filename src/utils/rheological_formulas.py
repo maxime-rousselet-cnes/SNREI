@@ -195,14 +195,13 @@ def delta_mu_computing(mu_0: ndarray, Qmu: ndarray, f: ndarray[complex]) -> ndar
         )
 
 
-def find_tau_M(omega_m: float, alpha: float, asymptotic_attenuation: float, Qmu: float) -> float:
+def find_tau_M(omega_m: float, alpha: float, asymptotic_mu_ratio: float, Q_mu: float) -> float:
     """
-    Uses asymptotic equation to find tau_M such as f_r(omega -> Inf, tau_M) = asymptotic_attenuation * Qmu, equivalent to set
-    mu(omega -> Inf) = asymptotic_ratio * mu_0.
+    Uses asymptotic equation to find tau_M such as
     """
     with errstate(invalid="ignore"):
         return (
             0.0
-            if round(number=asymptotic_attenuation, ndigits=8) == 0.0 or alpha == 0.0
-            else (alpha * asymptotic_attenuation * Qmu + omega_m ** (-alpha)) ** (1.0 / alpha)
+            if round(number=asymptotic_mu_ratio, ndigits=8) == 1.0 or alpha == 0.0
+            else (alpha * (1.0 - asymptotic_mu_ratio) * Q_mu + omega_m ** (-alpha)) ** (1.0 / alpha)
         )

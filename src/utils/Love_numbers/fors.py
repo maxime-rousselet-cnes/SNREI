@@ -1,215 +1,56 @@
 from itertools import product
+from os import symlink
 from typing import Optional
 
-from .classes import (
+from numpy import unique
+
+from ..classes import (
     LoveNumbersHyperParameters,
     Model,
-    RealDescription,
+    ModelPart,
+    RunHyperParameters,
     load_Love_numbers_hyper_parameters,
-    real_description_from_parameters,
+    real_description_id_from_model_names,
 )
-from .database import load_base_model, save_base_model
-from .paths import attenuation_models_path
-from .single import Love_numbers_from_models_to_result, gets_run_id
-
-BOOLEANS = [True, False]
-SAMPLINGS = {"low": 10, "mid": 100, "high": 1000}
+from ..constants import BOOLEANS, OPTIONS
+from ..database import load_base_model, save_base_model
+from ..paths import models_path, results_path
+from .single import Love_numbers_from_models_for_options
 
 
-def Love_number_comparative_for_options(
-    real_description_id: str,
-    load_description: Optional[bool],
-    elasticity_model_from_name: Optional[str] = None,
-    anelasticity_model_from_name: Optional[str] = None,
-    attenuation_model_from_name: Optional[str] = None,
-    Love_numbers_hyper_parameters: Optional[LoveNumbersHyperParameters] = None,
-) -> None:
-    """
-    Computes anelastic Love numbers by iterating on run options: uses long term anelasticity or attenuation or both,
-    with/without bounded functions when it is possible.
-    """
-    # Loads hyper parameters.
-    if not Love_numbers_hyper_parameters:
-        Love_numbers_hyper_parameters = load_Love_numbers_hyper_parameters()
-
-    # Eventually builds description.
-    real_description = real_description_from_parameters(
-        Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
-        real_description_id=real_description_id,
-        load_description=load_description,
-        elasticity_model_from_name=elasticity_model_from_name,
-        anelasticity_model_from_name=anelasticity_model_from_name,
-        attenuation_model_from_name=attenuation_model_from_name,
-    )
-
-    # Loops on boolean options.
-    for use_anelasticity, use_attenuation, bounded_attenuation_functions in product(BOOLEANS, BOOLEANS, BOOLEANS):
-        if use_anelasticity or use_attenuation:
-            Love_numbers_hyper_parameters.use_anelasticity = use_anelasticity
-            Love_numbers_hyper_parameters.use_attenuation = use_attenuation
-            Love_numbers_hyper_parameters.bounded_attenuation_functions = bounded_attenuation_functions
-            Love_numbers_from_models_to_result(
-                real_description_id=real_description.id,
-                load_description=True,
-                Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
-            )
-
-
-def Love_number_comparative_for_sampling(
-    initial_real_description_id: str,
-    load_initial_description: Optional[bool] = None,
-    profile_precisions: dict[str, int] = SAMPLINGS,
-    n_splines_bases: dict[str, int] = SAMPLINGS,
-    # Sets boolean options to worst case in terms of variations with frequency.
-    use_anelasticity: bool = True,
-    use_attenuation: bool = True,
-) -> None:
-    """
-    Computes anelastic Love numbers by iterating on description sampling parameters.
-    """
-    # Loads hyper parameters.
-    Love_numbers_hyper_parameters = load_Love_numbers_hyper_parameters()
-
-    # Eventually builds description.
-    initial_real_description = real_description_from_parameters(
-        Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
-        real_description_id=initial_real_description_id,
-        load_description=load_initial_description,
-        save=False,
-    )
-
-    Love_numbers_hyper_parameters.use_anelasticity = use_anelasticity
-    Love_numbers_hyper_parameters.use_attenuation = use_attenuation
-    run_id = gets_run_id(
-        use_anelasticity=Love_numbers_hyper_parameters.use_anelasticity,
-        bounded_attenuation_functions=Love_numbers_hyper_parameters.bounded_attenuation_functions,
-        use_attenuation=Love_numbers_hyper_parameters.use_attenuation,
-    )
-
-    # Iterates on sampling parameters.
-    for (profile_precision_name_part, profile_precision), (n_splines_base_name_part, n_splines_base) in product(
-        profile_precisions.items(), n_splines_bases.items()
-    ):
-        Love_numbers_hyper_parameters.real_description_parameters.profile_precision = profile_precision
-        Love_numbers_hyper_parameters.real_description_parameters.n_splines_base = n_splines_base
-        Love_numbers_from_models_to_result(
-            real_description_id=profile_precision_name_part + "_p_" + n_splines_base_name_part + "_ns",
-            run_id=run_id,
-            load_description=False,
-            elasticity_model_from_name=initial_real_description.elasticity_model_name,
-            anelasticity_model_from_name=initial_real_description.anelasticity_model_name,
-            attenuation_model_from_name=initial_real_description.attenuation_model_name,
-            Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
-        )
-
-
-def id_from_model_names(
-    id: str,
-    real_description: RealDescription,
-    elasticity_model_name: str,
-    anelasticity_model_name: str,
-    attenuation_model_name: str,
+def create_model_variation(
+    model_part: ModelPart,
+    model_base_name: Optional[str],
+    parameter_names: list[str],
+    parameter_values_per_layer: list[list[list[float]]],
 ) -> str:
     """
-    Generates an ID for a real description given the name of the used model files, if needed.
+    Gets an initial model file and creates a new version of it by modifying the specified parameters with specified polynomials
+    per layer.
     """
-    return (
-        id
-        if (elasticity_model_name == real_description.elasticity_model_name)
-        and (anelasticity_model_name == real_description.anelasticity_model_name)
-        and (attenuation_model_name == real_description.attenuation_model_name)
-        else id_from_model_names_string(
-            elasticity_model_name=elasticity_model_name,
-            anelasticity_model_name=anelasticity_model_name,
-            attenuation_model_name=attenuation_model_name,
-        )
+    model: Model = load_base_model(name=model_base_name, path=models_path[model_part], base_model_type=Model)
+    for parameter_name, parameter_values_per_layer in zip(parameter_names, parameter_values_per_layer):
+        model.polynomials[parameter_name] = parameter_values_per_layer
+    save_base_model(
+        obj=model,
+        name="___".join(
+            "__".join([parameter_name] + ["_".join(parameter_values) for parameter_values in parameter_values_per_layer])
+            for parameter_name, parameter_values_per_layer in zip(parameter_names, parameter_values_per_layer)
+        ),
+        path=models_path[model_part].joinpath(model_base_name),
     )
 
 
-def id_from_model_names_string(
-    elasticity_model_name: str,
-    anelasticity_model_name: str,
-    attenuation_model_name: str,
-) -> str:
-    """
-    Generates an ID for a real description given the name of the used model files.
-    """
-    return "_".join((elasticity_model_name, anelasticity_model_name, attenuation_model_name))
-
-
-def Love_number_comparative_for_models(
-    initial_real_description_id: str,
-    load_initial_description: Optional[bool] = None,
-    elasticity_model_names: Optional[list[str]] = None,
-    anelasticity_model_names: Optional[list[str]] = None,
-    attenuation_model_names: Optional[list[str]] = None,
-) -> None:
-    """
-    Computes anelastic Love numbers by iterating on:
-        - run options: uses long term anelasticity or attenuation or both, with/without bounded functions when it is possible.
-        - models: A real description is used per triplet of:
-            - 'elasticity_model_name'
-            - 'anelasticity_model_name'
-            - 'attenuation_model_name'
-    """
-    # Loads hyper parameters.
-    Love_numbers_hyper_parameters = load_Love_numbers_hyper_parameters()
-
-    # Eventually builds description.
-    initial_real_description = real_description_from_parameters(
-        Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
-        real_description_id=initial_real_description_id,
-        load_description=load_initial_description,
-        save=False,
-    )
-
-    # Builds dummy lists for unmodified models.
-    if not elasticity_model_names:
-        elasticity_model_names = [initial_real_description.elasticity_model_name]
-    if not anelasticity_model_names:
-        anelasticity_model_names = [initial_real_description.anelasticity_model_name]
-    if not attenuation_model_names:
-        attenuation_model_names = [initial_real_description.attenuation_model_name]
-
-    # Loops on model files.
-    for elasticity_model_name, anelasticity_model_name, attenuation_model_name in product(
-        elasticity_model_names, anelasticity_model_names, attenuation_model_names
-    ):
-        # Loops on options.
-        Love_number_comparative_for_options(
-            real_description_id=id_from_model_names(
-                id=initial_real_description_id,
-                real_description=initial_real_description,
-                elasticity_model_name=elasticity_model_name,
-                anelasticity_model_name=anelasticity_model_name,
-                attenuation_model_name=attenuation_model_name,
-            ),
-            load_description=False,
-            elasticity_model_from_name=elasticity_model_name,
-            anelasticity_model_from_name=anelasticity_model_name,
-            attenuation_model_from_name=attenuation_model_name,
-            Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
-        )
-
-
-def gets_id_asymptotic_ratios(
-    asymptotic_ratios_per_layer: list[int],
-    real_description_id: str = "",
-) -> str:
-    """
-    Generates an ID for a run using its asymptotic ratios per layer.
-    """
-    return real_description_id + "-".join([str(asymptotic_ratio) for asymptotic_ratio in asymptotic_ratios_per_layer])
-
-
-def Love_number_comparative_for_asymptotic_ratios(
-    initial_real_description_id: str,
-    asymptotic_ratios: list[list[float]],
-    load_initial_description: Optional[bool] = None,
-    elasticity_model_names: Optional[list[str]] = None,
-    anelasticity_model_names: Optional[list[str]] = None,
-    attenuation_model_names: Optional[list[str]] = None,
-) -> None:
+def Love_numbers_for_options_for_models_for_parameters(
+    forced_real_description_id: Optional[str] = None,
+    overwrite_descriptions: bool = False,
+    elasticity_model_names: list[Optional[str]] = [None],
+    long_term_anelasticity_model_names: list[Optional[str]] = [None],
+    short_term_anelasticity_model_names: list[Optional[str]] = [None],
+    parameters: dict[ModelPart, dict[str, list[list[list[float]]]]] = {model_part: {} for model_part in ModelPart},
+    options: list[RunHyperParameters] = OPTIONS,
+    Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_Love_numbers_hyper_parameters(),
+) -> list[str]:
     """
     Computes anelastic Love numbers by iterating on:
         - models: A real description is used per triplet of:
@@ -217,72 +58,161 @@ def Love_number_comparative_for_asymptotic_ratios(
             - 'anelasticity_model_name'
             - 'attenuation_model_name'
         - options
-        - asymptotic_ratios, when the options allow it.
+        - specified parameters, when the options allow it.
+    Returns the list of real description IDs.
+
+    The 'parameters' input corresponds to parameters polynomial coefficients per layer (list[list[float]]) per model part, per
+    parameter name and per possibility.Here is an example with two possibilites for a short term anelasticity model with 5
+    layers: {
+        ModelPart.short_term_anelasticity: {
+            "asymptotic_mu_ratio": [
+                [
+                    [0.2], [0.2], [0.2], [0.2], [1.0]
+                ],
+                [
+                    [1.0], [1.0], [1.0], [1.0], [1.0]
+                ]
+            ]
+        }
+    }
     """
-    # Loads hyper parameters.
-    Love_numbers_hyper_parameters = load_Love_numbers_hyper_parameters()
-
-    # Eventually builds description.
-    initial_real_description = real_description_from_parameters(
-        Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
-        real_description_id=initial_real_description_id,
-        load_description=load_initial_description,
-        save=False,
-    )
-
-    # Builds dummy lists for unmodified models.
-    if not elasticity_model_names:
-        elasticity_model_names = [initial_real_description.elasticity_model_name]
-    if not anelasticity_model_names:
-        anelasticity_model_names = [initial_real_description.anelasticity_model_name]
-    if not attenuation_model_names:
-        attenuation_model_names = [initial_real_description.attenuation_model_name]
-    dummy_ratios = [asymptotic_ratios[0]]
-
-    # Loops on options.
-    for use_attenuation, bounded_attenuation_functions, use_anelasticity in product(BOOLEANS, BOOLEANS, BOOLEANS):
-        Love_numbers_hyper_parameters.use_anelasticity = use_anelasticity
-        Love_numbers_hyper_parameters.bounded_attenuation_functions = bounded_attenuation_functions
-        Love_numbers_hyper_parameters.use_attenuation = use_attenuation
-        if not use_anelasticity and not use_attenuation and not bounded_attenuation_functions:
-            continue
-        if bounded_attenuation_functions and not use_attenuation:
-            continue
-        # Loops on model files.
-        for elasticity_model_name, anelasticity_model_name, attenuation_model_name in product(
-            elasticity_model_names, anelasticity_model_names, attenuation_model_names
-        ):
-            attenuation_model: Model = load_base_model(
-                name=attenuation_model_name, path=attenuation_models_path, base_model_type=Model
-            )
-            temp_name_attenuation_model = attenuation_model_name + "-variable-asymptotic_ratio"
-            # Loops on asymptotic_ratio.
-            for asymptotic_ratios_per_layer in asymptotic_ratios if bounded_attenuation_functions else dummy_ratios:
-                for k_layer, asymptotic_ratio in enumerate(asymptotic_ratios_per_layer):
-                    attenuation_model.polynomials["asymptotic_attenuation"][k_layer][0] = 1.0 - asymptotic_ratio
-                save_base_model(obj=attenuation_model, name=temp_name_attenuation_model, path=attenuation_models_path)
-                Love_numbers_from_models_to_result(
-                    real_description_id=(
-                        gets_id_asymptotic_ratios(
-                            real_description_id=id_from_model_names(
-                                id=initial_real_description_id,
-                                real_description=initial_real_description,
-                                elasticity_model_name=elasticity_model_name,
-                                anelasticity_model_name=anelasticity_model_name,
-                                attenuation_model_name=temp_name_attenuation_model,
-                            ),
-                            asymptotic_ratios_per_layer=asymptotic_ratios_per_layer,
-                        )
-                    ),
-                    run_id=gets_run_id(
-                        use_anelasticity=Love_numbers_hyper_parameters.use_anelasticity,
-                        bounded_attenuation_functions=Love_numbers_hyper_parameters.bounded_attenuation_functions,
-                        use_attenuation=Love_numbers_hyper_parameters.use_attenuation,
-                    ),
-                    # Real description created during the first options iteration, loaded during the others.
-                    load_description=not (use_anelasticity and bounded_attenuation_functions and use_attenuation),
-                    elasticity_model_from_name=elasticity_model_name,
-                    anelasticity_model_from_name=anelasticity_model_name,
-                    attenuation_model_from_name=temp_name_attenuation_model,
-                    Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+    # Creates all model files variations.
+    model_filenames: dict[ModelPart, list[str]] = {}
+    for model_part, model_name in zip(
+        ModelPart, [elasticity_model_names, long_term_anelasticity_model_names, short_term_anelasticity_model_names]
+    ):
+        if parameters[model_part] == {}:
+            model_filenames[model_part] = elasticity_model_names
+        else:
+            model_filenames[model_part] = [
+                create_model_variation(
+                    model_part=model_part,
+                    model_base_name=model_name,
+                    parameter_names=parameters[model_part].keys(),
+                    parameter_values_per_layer=parameter_values_per_layer,
                 )
+                for parameter_values_per_layer in product(
+                    parameter_values_per_possibility for _, parameter_values_per_possibility in parameters[model_part].items()
+                )
+            ]
+
+    real_description_ids = []
+    # Loops on all possible triplet of model files to launch runs.
+    for elasticity_model_name, long_term_anelasticity_model_name, short_term_anelasticity_model_name in product(
+        model_filenames[ModelPart.elasticity],
+        model_filenames[ModelPart.long_term_anelasticity],
+        model_filenames[ModelPart.short_term_anelasticity],
+    ):
+        # Finds minimal computing options.
+        do_elastic_case = (long_term_anelasticity_model_name == model_filenames[ModelPart.long_term_anelasticity][0]) and (
+            short_term_anelasticity_model_name == model_filenames[ModelPart.short_term_anelasticity][0]
+        )
+        do_long_term_only_case = short_term_anelasticity_model_name == model_filenames[ModelPart.short_term_anelasticity][0]
+        do_short_term_only_case = long_term_anelasticity_model_name == model_filenames[ModelPart.long_term_anelasticity][0]
+
+        # Compute Love numbers for all considered options.
+        real_description_ids += [
+            Love_numbers_from_models_for_options(
+                forced_real_description_id=forced_real_description_id,
+                overwrite_descriptions=overwrite_descriptions,
+                part_names={
+                    ModelPart.elasticity: elasticity_model_name,
+                    ModelPart.long_term_anelasticity: long_term_anelasticity_model_name,
+                    ModelPart.short_term_anelasticity: short_term_anelasticity_model_name,
+                },
+                Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+                options=[
+                    run_hyper_parameters
+                    for run_hyper_parameters in options
+                    if not (
+                        not do_long_term_only_case
+                        and (
+                            run_hyper_parameters.use_long_term_anelasticity == True
+                            and run_hyper_parameters.use_short_term_anelasticity == False
+                        )
+                    )
+                    and not (
+                        not do_short_term_only_case(
+                            run_hyper_parameters.use_long_term_anelasticity == False
+                            and run_hyper_parameters.use_short_term_anelasticity == True
+                        )
+                    )
+                ],
+                do_elastic_case=do_elastic_case,
+            )
+        ]
+
+    # Loops on all possible triplet of model files to create symlinks.
+    if not forced_real_description_id is None:
+        for elasticity_model_name, long_term_anelasticity_model_name, short_term_anelasticity_model_name in product(
+            model_filenames[ModelPart.elasticity],
+            model_filenames[ModelPart.long_term_anelasticity],
+            model_filenames[ModelPart.short_term_anelasticity],
+        ):
+            # Finds minimal conmputing options.
+            do_elastic_case = (long_term_anelasticity_model_name == model_filenames[ModelPart.long_term_anelasticity][0]) and (
+                short_term_anelasticity_model_name == model_filenames[ModelPart.short_term_anelasticity][0]
+            )
+            do_long_term_only_case = short_term_anelasticity_model_name == model_filenames[ModelPart.short_term_anelasticity][0]
+            do_short_term_only_case = long_term_anelasticity_model_name == model_filenames[ModelPart.long_term_anelasticity][0]
+            # Eventually creates a symlink to equivalent model's result.
+            real_description_result_path = results_path.joinpath(
+                real_description_id_from_model_names(
+                    elasticity_model_name=elasticity_model_name,
+                    long_term_anelasticity_model_name=long_term_anelasticity_model_name,
+                    short_term_anelasticity_model_name=short_term_anelasticity_model_name,
+                )
+            )
+            # Creates a symlink to equivalent elastic model's result.
+            if not do_elastic_case:
+                symlink(
+                    src=results_path.joinpath(
+                        real_description_id_from_model_names(
+                            elasticity_model_name=elasticity_model_name,
+                            long_term_anelasticity_model_name=model_filenames[ModelPart.long_term_anelasticity][0],
+                            short_term_anelasticity_model_name=model_filenames[ModelPart.short_term_anelasticity][0],
+                        )
+                    ).joinpath("elastic_Love_numbers.json"),
+                    dst=real_description_result_path.joinpath("elastic_Love_numbers.json"),
+                )
+            # Creates a symlink to equivalent long term anelasticity model's results for long term anelasticity only run.
+            if not do_long_term_only_case:
+                run_id = RunHyperParameters(
+                    use_long_term_anelasticity=True, use_short_term_anelasticity=False, use_bounded_attenuation_functions=False
+                ).run_id()
+                symlink(
+                    src=results_path.joinpath(
+                        real_description_id_from_model_names(
+                            elasticity_model_name=elasticity_model_name,
+                            long_term_anelasticity_model_name=long_term_anelasticity_model_name,
+                            short_term_anelasticity_model_name=model_filenames[ModelPart.short_term_anelasticity][0],
+                        )
+                    )
+                    .joinpath("runs")
+                    .joinpath(run_id),
+                    dst=real_description_result_path.joinpath("runs").joinpath(run_id),
+                    target_is_directory=True,
+                )
+            # Creates a symlink to equivalent short term anelasticity model's results for short term anelasticity only run.
+            if not do_short_term_only_case:
+                for use_bounded_attenuation_functions in BOOLEANS:
+                    run_id = RunHyperParameters(
+                        use_long_term_anelasticity=False,
+                        use_short_term_anelasticity=False,
+                        use_bounded_attenuation_functions=use_bounded_attenuation_functions,
+                    ).run_id()
+                    symlink(
+                        src=results_path.joinpath(
+                            real_description_id_from_model_names(
+                                elasticity_model_name=elasticity_model_name,
+                                long_term_anelasticity_model_name=model_filenames[ModelPart.long_term_anelasticity][0],
+                                short_term_anelasticity_model_name=short_term_anelasticity_model_name,
+                            )
+                        )
+                        .joinpath("runs")
+                        .joinpath(run_id),
+                        dst=real_description_result_path.joinpath("runs").joinpath(run_id),
+                        target_is_directory=True,
+                    )
+
+    return unique(real_description_ids).tolist()

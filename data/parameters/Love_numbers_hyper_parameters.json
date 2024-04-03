@@ -8,7 +8,5 @@
     "y_system_hyper_parameters": "Y_system_hyper_parameters",
     "degree_steps": "degree_steps",
     "degree_thresholds": "degree_thresholds",
-    "use_anelasticity": true,
-    "use_attenuation": true,
-    "bounded_attenuation_functions": true
+    "run_hyper_parameters": "run_hyper_parameters"
 }

@@ -1,35 +1,17 @@
-# Creates figures for elastic modulus mu for a given description.
-#
-# Generates 3 figures, with respect to depth:
-#   - mu_0 / Q_0 ratio.
-#   - mu real part, a plot per period and a curb per option.
-#   - mu imaginary part, a plot per period and a curb per option.
-
-import argparse
 from itertools import product
+from typing import Optional
 
 import matplotlib.pyplot as plt
 from numpy import linspace, log10
 
-from utils import (
-    Integration,
-    figures_path,
-    frequencies_to_periods,
-    load_Love_numbers_hyper_parameters,
-    real_description_from_parameters,
-)
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--real_description_id", type=str, help="wanted ID for the real description to load")
-parser.add_argument("--load_description", action="store_true", help="Option to tell if the description should be loaded")
-parser.add_argument("--subpath", type=str, help="wanted path to save figure")
-args = parser.parse_args()
-
 
 def plot_mu_profiles_for_options(
-    real_description_id: str,
-    load_description: bool,
-    figure_subpath_string: str,
+    forced_real_description_id: Optional[str] = None,
+    elasticity_model_name: Optional[str] = None,
+    long_term_anelasticity_model_name: Optional[str] = None,
+    short_term_anelasticity_model_names: Optional[str] = None,
+    load_description: bool = False,
+    figure_subpath_string: str = "mu/for_depth",
     period_values: list[float] = [10, 100, 1000],
 ):
     """
@@ -160,15 +142,3 @@ def plot_mu_profiles_for_options(
             plot.set_title("$T=" + str(period) + "$ (y)")
         plt.savefig(path.joinpath("mu_" + part + ".png"))
         plt.show()
-
-
-if __name__ == "__main__":
-    plot_mu_profiles_for_options(
-        real_description_id=(
-            args.real_description_id
-            if args.real_description_id
-            else "PREM_low-viscosity-asthenosphere-elastic-lithosphere_Benjamin-variable-asymptotic_ratio0.2-1.0"
-        ),
-        load_description=args.load_description if args.load_description else False,
-        figure_subpath_string=args.subpath if args.subpath else "mu_for_options",
-    )

@@ -2,8 +2,7 @@
     "radius": null,
     "radius_unit": null,
     "real_crust": false,
-    "n_splines_base": 10,
-    "profile_precision": 10,
+    "spline_number": 10,
     "splines_degree": 1,
     "below_ICB_layers": null,
     "below_CMB_layers": null

@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Optional
 
 from numpy import Inf, linspace, ndarray, sum
@@ -6,6 +7,16 @@ from scipy import interpolate
 
 from .description_layer import DescriptionLayer
 from .spline import Spline
+
+
+class ModelPart(Enum):
+    """
+    Available model parts.
+    """
+
+    elasticity = "elasticity"
+    long_term_anelasticity = "long_term_anelasticity"
+    short_term_anelasticity = "short_term_anelasticity"
 
 
 class Model(BaseModel):
@@ -42,7 +53,7 @@ class Model(BaseModel):
     #       - alpha: (Unitless).
     #       - omega_m: (Hz).
     #       - tau_M: (y).
-    #       - asymptotic_attenuation: Defines mu(omega->Inf) = (1.0 - asymptotic_attenuation) * mu_0 (Unitless).
+    #       - asymptotic_mu_ratio: Defines mu(omega->0.0) / mu_0 (Unitless).
     polynomials: dict[str, list[list[float | str]]]
 
     def build_description_layers_list(

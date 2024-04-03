@@ -20,6 +20,10 @@ from .description import Description
 from .elasticity_description import ElasticityDescription
 
 
+def real_description_id_from_model_names():
+    pass
+
+
 class RealDescription(Description):
     """
     Describes the integration constants and all layer model descriptions, including anelastic parameters.

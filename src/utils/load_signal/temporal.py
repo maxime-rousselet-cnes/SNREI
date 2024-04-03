@@ -41,6 +41,10 @@ from ..Love_numbers import gets_run_id
 from ..paths import data_path, results_path
 
 
+def anelastic_induced_load_signal_per_degree():
+    return
+
+
 def extract_ocean_load_data(path: Path = data_path) -> tuple[ndarray[float], ndarray[float]]:
     """
     Opens Frederikse et al.'s file and formats its data. Mean load in equivalent water height with respect to time.
@@ -155,6 +159,24 @@ def normalize_map(
     return map / (max_map - sum_map / (n_t)) + 1.0 / (1.0 - max_map * n_t / sum_map)
 
 
+def get_trend(
+    dates: ndarray[float], load_signal_hyper_parameters: SignalHyperParameters, signal: ndarray[float]
+) -> tuple[ndarray[bool], ndarray[float], ndarray[float], tuple[float, float]]:
+    """
+    Returns the trend and the selected dates, indices and signal to compute so.
+    """
+    trend_indices = dates >= load_signal_hyper_parameters.first_year_for_trend
+    return (
+        trend_indices,
+        dates[trend_indices],
+        signal[trend_indices],
+        signal_trend(
+            trend_dates=dates[trend_indices],
+            signal=signal[trend_indices],
+        ),
+    )
+
+
 def build_uniform_elastic_load_signal(
     dates: ndarray[float],
     load: ndarray[float],
@@ -230,6 +252,11 @@ def build_elastic_load_signal(
             - a uniform temporal elastic load history
             - a uniform frequential elastic load history
             - static harmonic weights if needed.
+    TODO :
+    # Gets temporal load trend.
+    _, _, _, (elastic_load_signal_trend, _) = get_trend(
+        dates=dates, load_signal_hyper_parameters=load_signal_hyper_parameters, signal=temporal_elastic_load_signal
+    ) as -2-th output plz.
     """
     if signal_hyper_parameters.signal == "ocean_load":
         # Builds frequencial signal.

@@ -1,5 +1,3 @@
-from itertools import product
-
 from .classes import RunHyperParameters
 
 # Universal Gravitationnal constant (m^3.kg^-1.s^-2).

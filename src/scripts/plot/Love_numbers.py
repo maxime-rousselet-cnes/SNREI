@@ -21,6 +21,8 @@ from .utils import (
     SYMBOLS_PER_BOUNDARY_CONDITION,
     SYMBOLS_PER_DIRECTION,
     get_degrees_indices,
+    option_linestyle,
+    options_label,
 )
 
 
@@ -102,11 +104,7 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
                             min_frequency_index = -1 if not zoom_in else where(T >= T_min_zoom_in)[0][-1]
                             max_frequency_index = 0 if not zoom_in else where(T <= T_max_zoom_in)[0][0]
                             color = degrees_colors[degrees_to_plot.index(degree)]
-                            linestyle = (
-                                ":"
-                                if option.use_long_term_anelasticity and not option.use_short_term_anelasticity
-                                else ("--" if not option.use_long_term_anelasticity else "-.")
-                            )
+                            linestyle = option_linestyle(option=option)
                             result_values = (
                                 real(complex_result_values[i_degree])
                                 if part == "real"
@@ -115,15 +113,7 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
                             plot.plot(
                                 T[max_frequency_index:min_frequency_index],
                                 result_values[max_frequency_index:min_frequency_index],
-                                label="n = "
-                                + str(degree)
-                                + ": "
-                                + " ".join(
-                                    (
-                                        "with long-term viscosity" if option.use_long_term_anelasticity else "",
-                                        "with short-term viscosity" if option.use_short_term_anelasticity else "",
-                                    )
-                                ),
+                                label="n = " + str(degree) + ": " + options_label(option=option),
                                 color=color,
                                 linestyle=linestyle,
                             )

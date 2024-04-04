@@ -5,6 +5,8 @@ from numpy import (
     argsort,
     array,
     concatenate,
+    conjugate,
+    flip,
     max,
     ndarray,
     round,
@@ -95,3 +97,10 @@ def interpolate_all(x_values_per_component: list[ndarray], function_values: list
             for x_tab, function_values_tab in zip(x_values_per_component, function_values)
         ]
     )
+
+
+def build_hermitian(signal: ndarray[complex]) -> ndarray[complex]:
+    """
+    For a given signal defined for positive values, builds the corresponding extended signal that has hermitian symetry.
+    """
+    return concatenate((conjugate(flip(m=signal)), signal))

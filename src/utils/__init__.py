@@ -24,8 +24,9 @@ from .load_signal import (
 from .Love_numbers import (
     Love_numbers_for_options_for_models_for_parameters,
     create_model_variation,
+    interpolate_Love_numbers,
 )
-from .paths import figures_path, models_path, results_path
+from .paths import descriptions_base_path, figures_path, models_path, results_path
 from .rheological_formulas import find_tau_M, frequencies_to_periods
 
 [
@@ -54,6 +55,8 @@ from .rheological_formulas import find_tau_M, frequencies_to_periods
     signal_trend,
     Love_numbers_for_options_for_models_for_parameters,
     create_model_variation,
+    interpolate_Love_numbers,
+    descriptions_base_path,
     figures_path,
     models_path,
     results_path,

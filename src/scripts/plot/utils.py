@@ -7,10 +7,33 @@ from matplotlib.colors import SymLogNorm, TwoSlopeNorm
 from numpy import Inf, linspace, maximum, minimum, ndarray, round
 from pyshtools.expand import MakeGridDH
 
-from ...utils import BoundaryCondition, Direction
+from ...utils import BoundaryCondition, Direction, RunHyperParameters
 
 SYMBOLS_PER_BOUNDARY_CONDITION = {Direction.radial: "h", Direction.tangential: "l", Direction.potential: "k"}
 SYMBOLS_PER_DIRECTION = {BoundaryCondition.load: "'", BoundaryCondition.shear: "*", BoundaryCondition.potential: ""}
+
+
+def option_linestyle(option: RunHyperParameters) -> str:
+    """
+    Chose a linestyle for the given run option.
+    """
+    return (
+        ":"
+        if option.use_long_term_anelasticity and not option.use_short_term_anelasticity
+        else ("--" if not option.use_long_term_anelasticity else "-.")
+    )
+
+
+def options_label(option: RunHyperParameters) -> str:
+    """
+    Builds a label string corresponding to the given run option.
+    """
+    return " ".join(
+        (
+            "with long-term viscosity" if option.use_long_term_anelasticity else "",
+            "with short-term viscosity" if option.use_short_term_anelasticity else "",
+        )
+    )
 
 
 def get_degrees_indices(degrees: list[int], degrees_to_plot: list[int]) -> list[int]:

@@ -277,13 +277,6 @@ def build_elastic_load_signal(
         pass
 
 
-def build_hermitian(signal: ndarray[complex]) -> ndarray[complex]:
-    """
-    For a given signal defined for positive values, builds the corresponding extended signal that has hermitian symetry.
-    """
-    return concatenate((conjugate(flip(m=signal)), signal))
-
-
 def get_trend_dates(
     dates: ndarray[float],
     signal_hyper_parameters: SignalHyperParameters,

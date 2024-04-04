@@ -16,7 +16,6 @@ setup(
         "itertools",
         "json",
         "pathlib",
-        "uuid",
         "pydantic",
         "multiprocessing",
     ],

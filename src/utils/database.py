@@ -1,17 +1,9 @@
 from json import JSONEncoder, dump, load
 from pathlib import Path
 from typing import Any, Optional
-from uuid import uuid4
 
 from numpy import arange, concatenate, ndarray
 from pydantic import BaseModel
-
-
-def generate_id() -> str:
-    """
-    Generates a random 4 caracters id string.
-    """
-    return str(uuid4())[:4]
 
 
 class JSONSerialize(JSONEncoder):

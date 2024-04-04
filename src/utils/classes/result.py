@@ -58,7 +58,7 @@ class Result:
         degrees: list[int] | ndarray,
     ) -> None:
         """
-        Converts p-dimmensionnal array to 'values' attribute, p >=3.
+        Converts p-dimmensionnal array to 'values' field, p >=3.
         The axis in position 2 should count 9 components corresponding to every combination of Direction and BoundaryCondition.
         """
         result_shape = result_array.shape[:2]
@@ -104,17 +104,13 @@ class Result:
             name=name,
             path=path,
         )
-        result: dict[str, dict[str, dict[str, list[float]]]] = loaded_content["values"]
+        result_values: dict[str, dict[str, dict[str, list[float]]]] = loaded_content["values"]
         self.hyper_parameters = (HyperParameters(**loaded_content["hyper_parameters"]),)
         self.values = {
-            Direction.radial if direction == "0" else (Direction.tangential if direction == "1" else Direction.potential): {
-                (
-                    BoundaryCondition.load
-                    if boundary_condition == "0"
-                    else (BoundaryCondition.shear if boundary_condition == "1" else BoundaryCondition.potential)
-                ): array(sub_values["real"])
+            Direction(direction): {
+                (BoundaryCondition(boundary_condition)): array(sub_values["real"])
                 + (0.0 if not ("imag" in sub_values.keys()) else array(sub_values["imag"])) * 1.0j
                 for boundary_condition, sub_values in values.items()
             }
-            for direction, values in result.items()
+            for direction, values in result_values.items()
         }

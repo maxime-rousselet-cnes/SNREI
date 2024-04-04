@@ -1,4 +1,6 @@
-from .classes import RunHyperParameters
+from typing import Optional
+
+from .classes import ModelPart, RunHyperParameters
 
 # Universal Gravitationnal constant (m^3.kg^-1.s^-2).
 G = 6.67430e-11
@@ -38,3 +40,12 @@ OPTIONS: list[RunHyperParameters] = [
         use_bounded_attenuation_functions=False,
     ),
 ]
+
+# Default hyper parameters.
+DEFAULT_MODELS: dict[Optional[ModelPart], Optional[str]] = {
+    ModelPart.elasticity: "PREM",
+    ModelPart.long_term_anelasticity: "uniform",
+    ModelPart.short_term_anelasticity: "uniform",
+    None: None,
+}
+DEFAULT_SPLINE_NUMBER = 10

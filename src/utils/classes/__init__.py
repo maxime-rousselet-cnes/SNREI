@@ -1,7 +1,8 @@
+from .description_layer import DescriptionLayer
 from .descriptions import (
+    AnelasticityDescription,
     Integration,
-    RealDescription,
-    real_description_id_from_model_names,
+    anelasticity_description_id_from_part_names,
 )
 from .hyper_parameters import (
     LoadSignalHyperParameters,
@@ -14,9 +15,10 @@ from .model import Model, ModelPart
 from .result import BoundaryCondition, Direction, Result
 
 [
+    DescriptionLayer,
     Integration,
-    RealDescription,
-    real_description_id_from_model_names,
+    AnelasticityDescription,
+    anelasticity_description_id_from_part_names,
     LoadSignalHyperParameters,
     LoveNumbersHyperParameters,
     RunHyperParameters,

@@ -7,7 +7,6 @@ from numpy import (
     array,
     ceil,
     concatenate,
-    conjugate,
     cos,
     expand_dims,
     flip,
@@ -34,7 +33,7 @@ from scipy import interpolate
 from scipy.fft import fft, fftfreq, ifft
 from tqdm import tqdm
 
-from ..classes import BoundaryCondition, Direction, Result, SignalHyperParameters
+from ..classes import BoundaryCondition, Direction, LoadSignalHyperParameters, Result
 from ..constants import SECONDS_PER_YEAR
 from ..database import load_base_model, save_base_model
 from ..Love_numbers import gets_run_id
@@ -346,7 +345,7 @@ def signal_induced_trend_from_dates(
 
 
 def interpolate_Love_numbers(
-    real_description_id: str,
+    anelasticity_description_id: str,
     signal_hyper_parameters: SignalHyperParameters,
     frequencies: ndarray[float],  # (y^-1).
 ) -> tuple[Result, Result, ndarray[int], Path]:
@@ -354,7 +353,7 @@ def interpolate_Love_numbers(
     Interpolates load Love numbers in frequency (h'n, l'n, 1 + k'n).
     """
     # Gets Love numbers.
-    base_path = results_path.joinpath(real_description_id)
+    base_path = results_path.joinpath(anelasticity_description_id)
     path = base_path.joinpath("runs").joinpath(
         gets_run_id(
             use_anelasticity=signal_hyper_parameters.use_anelasticity,
@@ -399,7 +398,7 @@ def interpolate_Love_numbers(
 
 
 def anelastic_induced_load_signal(
-    real_description_id: str,
+    anelasticity_description_id: str,
     signal_hyper_parameters: SignalHyperParameters,
     dates: ndarray[float],  # (y).
     frequencies: ndarray[float],  # (y^-1).
@@ -410,7 +409,7 @@ def anelastic_induced_load_signal(
     """
     # Interpolates Love numbers on signal frequencies as hermitian signal.
     hermitian_Love_numbers, elastic_Love_numbers, degrees, path = interpolate_Love_numbers(
-        real_description_id=real_description_id,
+        anelasticity_description_id=anelasticity_description_id,
         signal_hyper_parameters=signal_hyper_parameters,
         frequencies=frequencies,
     )
@@ -506,7 +505,7 @@ def ocean_mean(harmonic_weights: ndarray[float], ocean_mask_filename: str, n_max
 
 def anelastic_harmonic_induced_load_signal(
     harmonic_weights: Optional[ndarray[float]],
-    real_description_id: str,
+    anelasticity_description_id: str,
     signal_hyper_parameters: SignalHyperParameters,
     dates: ndarray[float],
     frequencies: ndarray[float],  # (y^-1).
@@ -525,7 +524,7 @@ def anelastic_harmonic_induced_load_signal(
             frequencial_normalized_load_signal_per_degree,
             hermitian_Love_numbers,
         ) = anelastic_induced_load_signal(
-            real_description_id=real_description_id,
+            anelasticity_description_id=anelasticity_description_id,
             signal_hyper_parameters=signal_hyper_parameters,
             dates=dates,
             frequencies=frequencies,

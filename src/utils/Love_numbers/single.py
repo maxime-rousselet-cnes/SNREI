@@ -6,7 +6,7 @@ from ..constants import OPTIONS
 
 
 def Love_numbers_from_models_for_options(
-    forced_real_description_id: Optional[str] = None,
+    forced_anelasticity_description_id: Optional[str] = None,
     overwrite_descriptions: bool = False,
     part_names: dict[ModelPart, Optional[str]] = {model_part: None for model_part in ModelPart},
     Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_Love_numbers_hyper_parameters(),
@@ -17,7 +17,7 @@ def Love_numbers_from_models_for_options(
     Loads models/descriptions, hyper parameters.
     Compute elastic and anelastic Love numbers.
     Save Results in (.JSON) files.
-    Returns the real description id.
+    Returns the anelasticity description id.
     """
     # Generates an ID for the run.
     if not run_id:
@@ -29,13 +29,13 @@ def Love_numbers_from_models_for_options(
 
     # Eventually stops.
     if Love_numbers_hyper_parameters.bounded_attenuation_functions and not Love_numbers_hyper_parameters.use_attenuation:
-        print("Skip description", real_description_id, "- run ", run_id, "because of incompatible attenuation options.")
+        print("Skip description", anelasticity_description_id, "- run ", run_id, "because of incompatible attenuation options.")
         return
 
     # Loads/buils the planet's description.
-    real_description = real_description_from_parameters(
+    anelasticity_description = anelasticity_description_from_parameters(
         Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
-        real_description_id=real_description_id,
+        anelasticity_description_id=anelasticity_description_id,
         load_description=load_description,
         elasticity_model_from_name=elasticity_model_from_name,
         anelasticity_model_from_name=anelasticity_model_from_name,
@@ -54,11 +54,11 @@ def Love_numbers_from_models_for_options(
         frequency_min=Love_numbers_hyper_parameters.frequency_min,
         frequency_max=Love_numbers_hyper_parameters.frequency_max,
         n_frequency_0=Love_numbers_hyper_parameters.n_frequency_0,
-        frequency_unit=real_description.frequency_unit,
+        frequency_unit=anelasticity_description.frequency_unit,
     )
 
     # Computes all Love numbers.
-    results_for_description_path = results_path.joinpath(real_description.id)
+    results_for_description_path = results_path.joinpath(anelasticity_description.id)
     run_path, log_frequency_values, anelastic_Love_numbers = Love_numbers_computing(
         max_tol=Love_numbers_hyper_parameters.max_tol,
         decimals=Love_numbers_hyper_parameters.decimals,
@@ -68,7 +68,7 @@ def Love_numbers_from_models_for_options(
         bounded_attenuation_functions=Love_numbers_hyper_parameters.bounded_attenuation_functions,
         degrees=degrees,
         log_frequency_initial_values=log_frequency_initial_values,
-        real_description=real_description,
+        anelasticity_description=anelasticity_description,
         runs_path=results_for_description_path.joinpath("runs"),
         run_id=run_id,
     )
@@ -80,7 +80,7 @@ def Love_numbers_from_models_for_options(
         result_array=elastic_Love_numbers_computing(
             y_system_hyper_parameters=Love_numbers_hyper_parameters.y_system_hyper_parameters,
             degrees=degrees,
-            real_description=real_description,
+            anelasticity_description=anelasticity_description,
         ),
         degrees=degrees,
     )
@@ -90,9 +90,11 @@ def Love_numbers_from_models_for_options(
     anelastic_result.update_values_from_array(result_array=anelastic_Love_numbers, degrees=degrees)
     anelastic_result.save(name="anelastic_Love_numbers", path=run_path)
     # Frequencies.
-    save_frequencies(log_frequency_values=log_frequency_values, frequency_unit=real_description.frequency_unit, path=run_path)
+    save_frequencies(
+        log_frequency_values=log_frequency_values, frequency_unit=anelasticity_description.frequency_unit, path=run_path
+    )
     # Save degrees.
     save_base_model(obj=degrees, name="degrees", path=results_for_description_path)
 
     # Prints status.
-    print("Finished description", real_description_id, "- run", run_id)
+    print("Finished description", anelasticity_description_id, "- run", run_id)

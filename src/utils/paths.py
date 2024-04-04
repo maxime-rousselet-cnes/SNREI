@@ -13,7 +13,7 @@ descriptions_base_path = data_path.joinpath("descriptions")
 descriptions_path: dict[ModelPart, Path] = {
     model_part: descriptions_base_path.joinpath(model_part.name) for model_part in ModelPart
 }
-real_descriptions_path = data_path.joinpath("descriptions").joinpath("real_descriptions")
+anelasticity_descriptions_path = data_path.joinpath("descriptions").joinpath("anelasticity_descriptions")
 
 results_path = data_path.joinpath("results")
 

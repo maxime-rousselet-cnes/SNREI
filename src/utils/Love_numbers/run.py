@@ -6,13 +6,13 @@ from numpy import Inf, array, concatenate, linspace, log10, ndarray, round, uniq
 
 from .abstract_computing import interpolate_all, precise_curvature
 from .classes import (
+    AnelasticityDescription,
     Integration,
     LoveNumbersHyperParameters,
-    RealDescription,
     Result,
     YSystemHyperParameters,
+    anelasticity_description_from_parameters,
     load_Love_numbers_hyper_parameters,
-    real_description_from_parameters,
 )
 from .database import generate_degrees_list, save_base_model
 from .paths import results_path
@@ -24,10 +24,10 @@ SAMPLINGS = {"low": 10, "mid": 100, "high": 1000}
 def elastic_Love_numbers_computing(
     y_system_hyper_parameters: YSystemHyperParameters,
     degrees: list[int],
-    real_description: RealDescription,
+    anelasticity_description: AnelasticityDescription,
 ) -> ndarray:
     """
-    Performs Love numbers computing (n) for elastic case with given real description and hyper-parameters.
+    Performs Love numbers computing (n) for elastic case with given anelasticity description and hyper-parameters.
     """
     global elastic_Love_number_computing_per_degree
 
@@ -37,7 +37,7 @@ def elastic_Love_numbers_computing(
         """
         return [
             Integration(
-                real_description=real_description,
+                anelasticity_description=anelasticity_description,
                 log_frequency=Inf,
                 use_attenuation=False,
                 use_anelasticity=False,
@@ -61,7 +61,7 @@ def save_frequencies(log_frequency_values: ndarray[float], frequency_unit: float
 
 def anelastic_Love_number_computing_per_degree_function(
     n: int,
-    real_description: RealDescription,
+    anelasticity_description: AnelasticityDescription,
     y_system_hyper_parameters: YSystemHyperParameters,
     use_anelasticity: bool,
     use_attenuation: bool,
@@ -79,7 +79,7 @@ def anelastic_Love_number_computing_per_degree_function(
     Love_number_computing_parallel = lambda log_frequency_values: array(
         [
             Integration(
-                real_description=real_description,
+                anelasticity_description=anelasticity_description,
                 log_frequency=log_frequency,
                 use_anelasticity=use_anelasticity,
                 use_attenuation=use_attenuation,
@@ -103,7 +103,7 @@ def anelastic_Love_number_computing_per_degree_function(
     # Saves single degree results.
     path_for_degree = result_per_degree_path.joinpath(str(n))
     save_frequencies(
-        log_frequency_values=log_frequency_values, frequency_unit=real_description.frequency_unit, path=path_for_degree
+        log_frequency_values=log_frequency_values, frequency_unit=anelasticity_description.frequency_unit, path=path_for_degree
     )
     save_base_model(
         obj={"real": Love_numbers.real, "imag": Love_numbers.imag},
@@ -123,12 +123,12 @@ def Love_numbers_computing(
     bounded_attenuation_functions: bool,
     degrees: list[int],
     log_frequency_initial_values: ndarray[float],
-    real_description: RealDescription,
+    anelasticity_description: AnelasticityDescription,
     runs_path: Path,
     run_id: str,
 ) -> tuple[Path, ndarray, ndarray]:
     """
-    Performs Love numbers computing (n, frequency) with given real description and hyper-parameters.
+    Performs Love numbers computing (n, frequency) with given anelasticity description and hyper-parameters.
     """
     # Initializes the run.
     run_path = runs_path.joinpath(run_id)
@@ -143,7 +143,7 @@ def Love_numbers_computing(
         """
         return anelastic_Love_number_computing_per_degree_function(
             n=n,
-            real_description=real_description,
+            anelasticity_description=anelasticity_description,
             y_system_hyper_parameters=y_system_hyper_parameters,
             use_anelasticity=use_anelasticity,
             use_attenuation=use_attenuation,

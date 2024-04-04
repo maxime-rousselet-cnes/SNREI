@@ -4,7 +4,7 @@
     "n_frequency_0": 30,
     "max_tol": 0.1,
     "decimals": 2,
-    "real_description_parameters": "real_description_parameters",
+    "anelasticity_description_parameters": "anelasticity_description_parameters",
     "y_system_hyper_parameters": "Y_system_hyper_parameters",
     "degree_steps": "degree_steps",
     "degree_thresholds": "degree_thresholds",

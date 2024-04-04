@@ -11,7 +11,7 @@ from ...utils import (
 
 
 def Love_numbers_for_options(
-    forced_real_description_id: Optional[str] = None,
+    forced_anelasticity_description_id: Optional[str] = None,
     overwrite_descriptions: bool = False,
     elasticity_model_name: Optional[str] = None,
     long_term_anelasticity_model_name: Optional[str] = None,
@@ -21,10 +21,10 @@ def Love_numbers_for_options(
 ) -> str:
     """
     Computes anelastic Love numbers by iterating on options. A single triplet of models is used.
-    Returns the real description ID.
+    Returns the anelasticity description ID.
     """
     return Love_numbers_for_options_for_models_for_parameters(
-        forced_real_description_id=forced_real_description_id,
+        forced_anelasticity_description_id=forced_anelasticity_description_id,
         overwrite_descriptions=overwrite_descriptions,
         elasticity_model_names=[elasticity_model_name],
         long_term_anelasticity_model_names=[long_term_anelasticity_model_name],
@@ -35,7 +35,7 @@ def Love_numbers_for_options(
 
 
 def Love_numbers_single_run(
-    forced_real_description_id: Optional[str] = None,
+    forced_anelasticity_description_id: Optional[str] = None,
     overwrite_descriptions: bool = False,
     elasticity_model_name: Optional[str] = None,
     long_term_anelasticity_model_name: Optional[str] = None,
@@ -47,10 +47,10 @@ def Love_numbers_single_run(
 ) -> str:
     """
     Computes anelastic Love numbers for given run options. A single triplet of models is used.
-    Returns the real description ID.
+    Returns the anelasticity description ID.
     """
     return Love_numbers_for_options(
-        forced_real_description_id=forced_real_description_id,
+        forced_anelasticity_description_id=forced_anelasticity_description_id,
         overwrite_descriptions=overwrite_descriptions,
         elasticity_model_name=elasticity_model_name,
         long_term_anelasticity_model_name=long_term_anelasticity_model_name,
@@ -72,13 +72,13 @@ def Love_numbers_for_options_for_models_for_asymptotic_mu_ratios(
 ) -> list[str]:
     """
     Computes anelastic Love numbers by iterating on:
-        - models: A real description is used per triplet of:
+        - models: An anelasticity description is used per triplet of:
             - 'elasticity_model_name'
             - 'anelasticity_model_name'
             - 'attenuation_model_name'
         - options
         - asymptotic_mu_ratios: loops on its value in the Mantle.
-    Returns the real description IDs.
+    Returns the anelasticity description IDs.
     """
     return Love_numbers_for_options_for_models_for_parameters(
         elasticity_model_names=elasticity_model_names,
@@ -106,17 +106,20 @@ def Love_numbers_for_samplings(
     Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_Love_numbers_hyper_parameters(),
 ) -> list[str]:
     """
-    Computes anelastic Love numbers by iterating on real description sampling parameters.
-    Return the real description IDs.
+    Computes anelastic Love numbers by iterating on anelasticity description sampling parameters.
+    Return the anelasticity description IDs.
     """
-    real_description_ids = []
+    anelasticity_description_ids = []
     for spline_number in spline_number_sampling_options:
-        Love_numbers_hyper_parameters.real_description_parameters.spline_number = spline_number
+        Love_numbers_hyper_parameters.anelasticity_description_parameters.spline_number = spline_number
         for spline_degree in spline_degree_sampling_options:
-            Love_numbers_hyper_parameters.real_description_parameters.splines_degree = spline_degree
-            real_description_ids += [
+            Love_numbers_hyper_parameters.anelasticity_description_parameters.spline_degree = spline_degree
+            anelasticity_description_ids += [
                 Love_numbers_single_run(
-                    forced_real_description_id="sampling_test__n_s_" + str(spline_number) + "_d_s_" + str(spline_degree),
+                    forced_anelasticity_description_id="sampling_test__n_s_"
+                    + str(spline_number)
+                    + "_d_s_"
+                    + str(spline_degree),
                     overwrite_descriptions=True,
                     elasticity_model_name=elasticity_model_name,
                     long_term_anelasticity_model_name=long_term_anelasticity_model_name,
@@ -124,4 +127,4 @@ def Love_numbers_for_samplings(
                     Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
                 )
             ]
-    return real_description_ids
+    return anelasticity_description_ids

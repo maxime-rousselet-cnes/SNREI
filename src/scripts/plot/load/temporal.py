@@ -17,7 +17,7 @@ from ....utils import (
 
 
 def plot_anelastic_induced_load_per_degree_per_description_per_options(
-    real_description_ids: list[str],
+    anelasticity_description_ids: list[str],
     load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
     options: list[RunHyperParameters] = OPTIONS,
     degrees_to_plot: list[int] = [2, 3, 4, 10, 20],
@@ -29,13 +29,15 @@ def plot_anelastic_induced_load_per_degree_per_description_per_options(
         - Generates and saves figures in the specified subfolder.
     """
     # Loops on descriptions.
-    for real_description_id in real_description_ids:
+    for anelasticity_description_id in anelasticity_description_ids:
         # Loops on options.
         for run_hyper_parameters in options:
             load_signal_hyper_parameters.run_hyper_parameters = run_hyper_parameters
             # Gets already computed anelastic induced load signal per degree.
             run_folder_name = (
-                get_run_folder_name(real_description_id=real_description_id, run_id=run_hyper_parameters.run_id())
+                get_run_folder_name(
+                    anelasticity_description_id=anelasticity_description_id, run_id=run_hyper_parameters.run_id()
+                )
                 + "/load/"
                 + load_signal_hyper_parameters.ocean_load_Frederikse
             )

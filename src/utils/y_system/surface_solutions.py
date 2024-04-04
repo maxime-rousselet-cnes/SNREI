@@ -3,9 +3,7 @@ from numpy import array, asarray, dot, linalg, ndarray
 # TODO: Vectorize and implement minimal computing policy.
 
 
-def load_surface_solution(
-    n: int, Y1s: ndarray, Y2s: ndarray, Y3s: ndarray, g_0_surface: float, piG: float, length_ratio: float
-):
+def load_surface_solution(n: int, Y1s: ndarray, Y2s: ndarray, Y3s: ndarray, g_0_surface: float, piG: float):
     # Form Outer Surface Vector Describing Load
     dmat = array(
         [
@@ -38,9 +36,9 @@ def load_surface_solution(
     Y6sol = dot(array([Y1s[5], Y2s[5], Y3s[5]]), mvec)
 
     # Compute Load Love Numbers
-    h_load = Y1sol * length_ratio
-    l_load = Y3sol * length_ratio
-    k_load = Y5sol * length_ratio / g_0_surface - 1.0
+    h_load = Y1sol
+    l_load = Y3sol
+    k_load = Y5sol / g_0_surface - 1.0
 
     # Adjust degree-one Love numbers to ensure that the potential field
     # outside the Earth vanishes in the CE frame (e.g. Merriam 1985)
@@ -52,9 +50,7 @@ def load_surface_solution(
     return Y1sol, Y2sol, Y3sol, Y4sol, Y5sol, Y6sol, mvec, h_load, l_load, k_load
 
 
-def shear_surface_solution(
-    n: int, Y1s: ndarray, Y2s: ndarray, Y3s: ndarray, g_0_surface: float, piG: float, length_ratio: float
-):
+def shear_surface_solution(n: int, Y1s: ndarray, Y2s: ndarray, Y3s: ndarray, g_0_surface: float, piG: float):
     # Form Outer Surface Vector Describing Shear
     # See Okubo & Saito (1983), Saito (1978)
     dmat = array([[0.0, ((2.0 * n + 1.0) * (g_0_surface**2)) / ((4.0 * piG * n) * (n + 1)), 0.0]])
@@ -80,9 +76,9 @@ def shear_surface_solution(
     Y6sol = dot(array([[Y1s[5], Y2s[5], Y3s[5]]]), mvec).flatten()[0]
 
     # Compute Shear Love Numbers
-    h_shr = Y1sol * length_ratio
-    l_shr = Y3sol * length_ratio
-    k_shr = Y5sol * length_ratio / g_0_surface
+    h_shr = Y1sol
+    l_shr = Y3sol
+    k_shr = Y5sol / g_0_surface
 
     # Degree1 is not well defined
     if n == 1:
@@ -93,7 +89,7 @@ def shear_surface_solution(
     return Y1sol, Y2sol, Y3sol, Y4sol, Y5sol, Y6sol, mvec, h_shr, l_shr, k_shr
 
 
-def potential_surface_solution(n: int, Y1s: ndarray, Y2s: ndarray, Y3s: ndarray, g_0_surface: float, length_ratio: float):
+def potential_surface_solution(n: int, Y1s: ndarray, Y2s: ndarray, Y3s: ndarray, g_0_surface: float):
     # Form Outer Surface Vector Describing External Potential
     dmat = array([[0.0, 0.0, (2.0 * n + 1) * g_0_surface]])
 
@@ -118,9 +114,9 @@ def potential_surface_solution(n: int, Y1s: ndarray, Y2s: ndarray, Y3s: ndarray,
     Y6sol = dot(array([[Y1s[5], Y2s[5], Y3s[5]]]), mvec)
 
     # Compute Potential Love Numbers
-    h_pot = Y1sol * length_ratio
-    l_pot = Y3sol * length_ratio
-    k_pot = Y5sol * length_ratio / g_0_surface - 1.0
+    h_pot = Y1sol
+    l_pot = Y3sol
+    k_pot = Y5sol / g_0_surface - 1.0
 
     # Degree1 is not well defined
     if n == 1:

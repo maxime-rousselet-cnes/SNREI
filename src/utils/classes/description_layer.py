@@ -4,16 +4,18 @@ from numpy import Inf, linspace, ndarray, ones, shape
 from pydantic import BaseModel
 from scipy import interpolate
 
-from .spline import Spline
+
+class Spline(tuple[ndarray | float, ndarray | float, int]):
+    """
+    Quantities necessary to describe a polynomial spline over a real interval according to the scipy.interpolate.splrep formalism.
+    """
+
+    pass
 
 
 class DescriptionLayer(BaseModel):
     """
-    Defines a layer of an Earth description, such as:
-        - elasticity description
-        - anelasticity description
-        - attenuation description
-        - complete description
+    Defines a layer of a description.
     """
 
     name: Optional[str]

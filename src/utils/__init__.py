@@ -1,4 +1,5 @@
 from .classes import (
+    AnelasticityDescription,
     BoundaryCondition,
     Direction,
     Integration,
@@ -6,7 +7,6 @@ from .classes import (
     LoveNumbersHyperParameters,
     Model,
     ModelPart,
-    RealDescription,
     Result,
     RunHyperParameters,
     load_load_signal_hyper_parameters,
@@ -37,7 +37,7 @@ from .rheological_formulas import find_tau_M, frequencies_to_periods
     LoveNumbersHyperParameters,
     Model,
     ModelPart,
-    RealDescription,
+    AnelasticityDescription,
     Result,
     RunHyperParameters,
     load_load_signal_hyper_parameters,

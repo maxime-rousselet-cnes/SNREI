@@ -2,7 +2,7 @@ CURRENTLY:
     Running for Q312 oand Q30. Check curbs with 3rd pannel
 TODO:
     rename anelasticity and attenuation
-    automatic below_icb/cmb_layers with real_description splitted layer names in real real_description
+    automatic below_icb/cmb_layers with anelasticity_description splitted layer names in real anelasticity_description
     pass zoom_in limits as parameters in plot functions instead of hard code
     Add loop with/without anelasticity in plot Love 4
     do load scripts looping on descriptions
@@ -10,7 +10,7 @@ TODO:
     select plots / plots_Love_numbers
     LaTeX disponible figures
     verify all plot script descriptions
-    verify if the same real_description is passed for every degree for initial frequencies.
+    verify if the same anelasticity_description is passed for every degree for initial frequencies.
     add simlink in results varying asymptotic ratio for unbounded attenuation functions.
     reorg script indices.
     loop on plot script 06

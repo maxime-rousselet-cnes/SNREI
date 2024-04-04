@@ -3,8 +3,9 @@ from typing import Optional
 
 from numpy import Inf, array, ndarray
 
+from ...constants import DEFAULT_MODELS, DEFAULT_SPLINE_NUMBER, EARTH_RADIUS
 from ...database import load_base_model, save_base_model
-from ...paths import descriptions_path, models_path
+from ...paths import anelasticity_descriptions_path, descriptions_path, models_path
 from ..description_layer import DescriptionLayer
 from ..model import Model, ModelPart
 from ..spline import Spline
@@ -16,7 +17,7 @@ class Description:
     """
 
     # Proper attributes.
-    id: str
+    id: Optional[str]
     model_filename: Optional[str]
     model_part: Optional[ModelPart]
 
@@ -38,17 +39,17 @@ class Description:
         spline_number: Optional[int] = None,
     ) -> None:
         # Initializes IDs.
-        self.id = id if id else model_filename
-        self.model_filename = model_filename
+        self.model_filename = DEFAULT_MODELS[model_part] if model_filename is None else model_filename
         self.model_part = model_part
-        # Updates attributes.
-        self.radius_unit = radius_unit
-        self.real_crust = real_crust
-        self.spline_number = spline_number
+        self.id = id if id else self.model_filename
+        # Updates fields.
+        self.radius_unit = EARTH_RADIUS if radius_unit is None else radius_unit
+        self.real_crust = False if real_crust is None else real_crust
+        self.spline_number = DEFAULT_SPLINE_NUMBER if spline_number is None else spline_number
         # Initializes description layers as empty.
         self.description_layers = []
 
-    def build(self, overwrite_description: bool = True):
+    def build(self, overwrite_description: bool = False, save: bool = True):
         """
         Builds description layers from model file parameters.
         """
@@ -64,20 +65,25 @@ class Description:
             spline_number=self.spline_number,
             real_crust=self.real_crust,
         )
+        # Eventually saves.
+        if save:
+            self.save(overwrite_description=overwrite_description)
 
     def load(self) -> None:
         """
-        Loads a Description instance with correctly formatted attributes.
+        Loads a Description instance with correctly formatted fields.
         """
         # Gets raw description.
         description_dict: dict = load_base_model(name=self.id, path=descriptions_path)
+        self.model_part = ModelPart(description_dict["model_part"])
         # Formats attributes.
         for key, value in description_dict.items():
             setattr(self, key, value)
         # Formats layers.
         for i_layer, layer in enumerate(description_dict["description_layers"]):
             self.description_layers[i_layer] = DescriptionLayer(**layer)
-            for variable_name, spline in layer["splines"].items():
+            splines: dict[str, tuple] = layer["splines"]
+            for variable_name, spline in splines.items():
                 # Handles infinite values, as strings in files but as Inf float for computing.
                 if not isinstance(spline[0], list) and spline[0] == "Inf":
                     self.description_layers[i_layer].splines[variable_name] = (Inf, Inf, 0)
@@ -87,29 +93,36 @@ class Description:
                         array(self.description_layers[i_layer].splines[variable_name][1]),
                         self.description_layers[i_layer].splines[variable_name][2],
                     )
-                    # Formats every polynoimial spline as a scipy polynomial spline.
+                    # Formats every polynomial spline as a scipy polynomial spline.
                     self.description_layers[i_layer].splines[variable_name] = spline
-        # Formats variable array values.
-        if "variable_values_per_layer" in description_dict.keys():
-            layer_values_list: list[dict[str, list[float]]] = description_dict["variable_values_per_layer"]
-            self.variable_values_per_layer: list[dict[str, ndarray]] = [
-                {variable_name: array(values, dtype=float) for variable_name, values in layer_values.items()}
-                for layer_values in layer_values_list
-            ]
 
-    def save(self, path: Path) -> None:
+    def save(self, overwrite_description: bool = True) -> None:
         """
         Saves the Description instance in a (.JSON) file.
         """
-        # Converts Infinite values to strings.
-        for i_layer, layer in enumerate(self.description_layers):
-            for variable_name, spline in layer.splines.items():
-                if not isinstance(spline[0], ndarray) and spline[0] == Inf:
-                    self.description_layers[i_layer].splines[variable_name] = ("Inf", "Inf", 0)
-        # Saves as basic type.
-        save_base_model(obj=self.__dict__, name=self.id, path=path)
-        # Converts back to numpy.Inf.
-        for i_layer, layer in enumerate(self.description_layers):
-            for variable_name, spline in layer.splines.items():
-                if not isinstance(spline[0], ndarray) and spline[0] == "Inf":
-                    self.description_layers[i_layer].splines[variable_name] = (Inf, Inf, 0)
+        path = self.get_path()
+        if not (path.joinpath("id" + ".json").is_file() and not overwrite_description):
+            self_dict = self.__dict__
+            self_dict["model_part"] = self.model_part.value
+            # Converts Infinite values to strings.
+            for i_layer, layer in enumerate(self_dict["description_layers"]):
+                splines: dict[str, tuple] = layer["splines"]
+                for variable_name, spline in splines.items():
+                    if not isinstance(spline[0], ndarray) and spline[0] == Inf:
+                        self_dict["description_layers"][i_layer]["splines"][variable_name] = ("Inf", "Inf", 0)
+            # Saves as basic type.
+            save_base_model(
+                obj=self_dict,
+                name=self.id,
+                path=path,
+            )
+
+    def get_path(self) -> Path:
+        """
+        Returns directory path to save the description.
+        """
+        return (
+            anelasticity_descriptions_path
+            if not self.model_part in descriptions_path.keys()
+            else descriptions_path[self.model_part]
+        )

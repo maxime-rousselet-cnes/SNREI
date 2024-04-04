@@ -26,24 +26,23 @@ from ...y_system import (
 from ..description_layer import DescriptionLayer
 from ..hyper_parameters import YSystemHyperParameters
 from ..spline import Spline
+from .anelasticity_description import AnelasticityDescription
 from .description import Description
-from .real_description import RealDescription
 
 
 class Integration(Description):
     """
-    "Applies" a real description to some frequency value.
+    "Applies" an anelasticity description to some frequency value.
     Describes the integration constants and all complex description layers at a given frequency.
     Handles elastic case for frequency = Inf.
     Description layers variables include mu and lambda real and imaginary parts.
     """
 
-    # Attributes from the real description.
+    # Attributes from the anelasticity description.
     piG: float
-    length_ratio: float
     below_ICB_layers: int
     below_CMB_layers: int
-    CMB_x: float
+    x_CMB: float
 
     # Proper attributes.
     frequency: float  # (Unitless frequency).
@@ -53,22 +52,19 @@ class Integration(Description):
     def __init__(
         self,
         # Proper field parameters.
-        real_description: RealDescription,
+        anelasticity_description: AnelasticityDescription,
         log_frequency: float,  # Base 10 logarithm of the unitless frequency.
-        use_anelasticity: bool,
-        use_attenuation: bool,
-        bounded_attenuation_functions: bool,
-        # Other parameters.
-        id: Optional[str] = None,
+        use_long_term_anelasticity: bool,
+        use_short_term_anelasticity: bool,
+        use_bounded_attenuation_functions: bool,
     ) -> None:
         """
         Creates an Integration instance.
         """
         super().__init__(
-            radius_unit=real_description.radius_unit,
-            real_crust=real_description.real_crust,
-            n_splines_base=real_description.n_splines_base,
-            id=id,
+            radius_unit=anelasticity_description.radius_unit,
+            real_crust=anelasticity_description.real_crust,
+            spline_number=anelasticity_description.spline_number,
         )
 
         # Updates proper attributes.
@@ -76,9 +72,15 @@ class Integration(Description):
         self.omega = Inf if self.frequency == Inf else 2 * pi * self.frequency
         self.omega_j = Inf if self.omega == Inf else self.omega * 1.0j
 
+        # Updates attributes from the anelasticity description.
+        self.piG = anelasticity_description.piG
+        self.below_ICB_layers = anelasticity_description.below_ICB_layers
+        self.below_CMB_layers = anelasticity_description.below_CMB_layers
+        self.x_CMB = anelasticity_description.x_CMB
+
         # Initializes the needed description layers.
         for i_layer, (variables, layer) in enumerate(
-            zip(real_description.variable_values_per_layer, real_description.description_layers)
+            zip(anelasticity_description.variable_values_per_layer, anelasticity_description.description_layers)
         ):
             # First gets the needed real variable splines.
             description_layer = DescriptionLayer(
@@ -102,19 +104,20 @@ class Integration(Description):
             )
 
             # Computes complex mu and lambda.
-            if i_layer >= real_description.below_CMB_layers:
-                if i_layer >= real_description.below_CMB_layers:
+            if i_layer >= self.below_CMB_layers:
+                if i_layer >= self.below_CMB_layers:
 
                     # Attenuation.
-                    if use_attenuation:
+                    if use_short_term_anelasticity:
                         # Updates with attenuation functions f_r and f_i.
                         f = f_attenuation_computing(
                             omega_m_tab=variables["omega_m"],
                             tau_M_tab=variables["tau_M"],
                             alpha_tab=variables["alpha"],
+                            omega=self.omega,
                             frequency=self.frequency,
-                            frequency_unit=real_description.frequency_unit,
-                            bounded_attenuation_functions=bounded_attenuation_functions,
+                            frequency_unit=anelasticity_description.frequency_unit,
+                            use_bounded_attenuation_functions=use_bounded_attenuation_functions,
                         )
                         description_layer.splines.update(
                             {
@@ -125,7 +128,7 @@ class Integration(Description):
                         # Adds delta mu, computed using f_r and f_i.
                         delta_mu = delta_mu_computing(
                             mu_0=variables["mu_0"],
-                            Qmu=variables["Qmu"],
+                            Q_mu=variables["Q_mu"],
                             f=f,
                         )
                         variables["lambda"] = variables["lambda_0"] - 2.0 / 3.0 * delta_mu
@@ -139,7 +142,7 @@ class Integration(Description):
                     variables.update(build_cutting_omegas(variables=variables))
 
                     # Anelasticity.
-                    if use_anelasticity:
+                    if use_long_term_anelasticity:
                         m_prime = m_prime_computing(omega_cut_m=variables["omega_cut_m"], omega_j=self.omega_j)
                         b = b_computing(
                             omega_cut_m=variables["omega_cut_m"],
@@ -168,13 +171,6 @@ class Integration(Description):
             # Updates.
             self.description_layers += [description_layer]
 
-        # Updates attributes from the real description.
-        self.piG = real_description.piG
-        self.length_ratio = real_description.length_ratio
-        self.below_ICB_layers = real_description.below_ICB_layers
-        self.below_CMB_layers = real_description.below_CMB_layers
-        self.CMB_x = real_description.CMB_x
-
     def integration(
         self,
         Y_i: ndarray,
@@ -188,7 +184,7 @@ class Integration(Description):
         """
         Proceeds to the numerical integration of the wanted system along the planet's unitless radius.
         The 'system' input may corresponds to 'fluid_system' or 'solid_system'. It should always be a callable. Its first inputs
-        are x and Y and its output is dY/dx.
+        are x and Y vector and its output is the dY/dx vector.
         """
         with errstate(divide="ignore", invalid="ignore"):
             solver: OdeSolution = integrate.solve_ivp(
@@ -210,12 +206,14 @@ class Integration(Description):
                         self.piG,
                         self.omega,
                         hyper_parameters.dynamic_term,
-                        hyper_parameters.first_order_cross_terms,
+                        hyper_parameters.inhomogeneity_gradients,
                     )
                 ),
                 rtol=hyper_parameters.rtol,
                 atol=hyper_parameters.atol,
             )
+
+        # TODO: catch exception.
         if solver.success == True:
             return solver.y, solver.t  # x corresponds to last dimension.
         else:
@@ -226,7 +224,7 @@ class Integration(Description):
     # TODO: Vectorize.
     def y_system_integration(self, n: int, hyper_parameters: YSystemHyperParameters) -> ndarray[complex]:
         """
-        Integrates the unitless gravito-elastic system from the geocenter to the surface, at given n, omega and fixed rheology.
+        Integrates the unitless gravito-elastic system from the geocenter to the surface, at given n, omega and rheology.
         """
 
         # Integrate from geocenter to CMB.
@@ -245,7 +243,7 @@ class Integration(Description):
                 Y2i = Y[1, :].flatten()
                 Y3i = Y[2, :].flatten()
             else:
-                # ...Or starts to integrate from r = minimal_radius.
+                # ... or starts to integrate from r = minimal_radius.
                 Y = array(
                     [
                         [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
@@ -302,6 +300,9 @@ class Integration(Description):
                     first_fluid_layer=self.description_layers[self.below_ICB_layers],
                     piG=self.piG,
                 )
+            else:
+                # TODO: manage case below_CMB_layers > below_ICB_layers = 0 by defining Y at Geocenter for fluid Core.
+                pass
 
             # Integrates in the Outer-Core.
             for n_layer in range(self.below_ICB_layers, self.below_CMB_layers):
@@ -332,10 +333,9 @@ class Integration(Description):
         else:
             # Integrate from geocenter to CMB with high degrees approximation.
             n_start_layer: int = (
-                where((array([layer.x_inf for layer in self.description_layers]) ** n) > (self.CMB_x**n))[0][0] + 1
+                where((array([layer.x_inf for layer in self.description_layers]) ** n) > (self.x_CMB**n))[0][0] + 1
             )
             if hyper_parameters.homogeneous_solution:
-                # 1) solution homogène jusqu'à r>=3480000m (CMB).
                 Y = solid_homogeneous_system(
                     x=self.description_layers[n_start_layer].x_inf,
                     n=n,
@@ -346,7 +346,6 @@ class Integration(Description):
                 Y2cmb = Y[1, :].flatten()
                 Y3cmb = Y[2, :].flatten()
             else:
-                # 1) solution initiale.
                 Y = array(
                     [
                         [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
@@ -403,7 +402,6 @@ class Integration(Description):
             Y3s=Y3,
             g_0_surface=g_0_surface,
             piG=self.piG,
-            length_ratio=self.length_ratio,
         )
         _, _, _, _, _, _, _, h_shr, l_shr, k_shr = shear_surface_solution(
             n=n,
@@ -412,7 +410,6 @@ class Integration(Description):
             Y3s=Y3,
             g_0_surface=g_0_surface,
             piG=self.piG,
-            length_ratio=self.length_ratio,
         )
 
         _, _, _, _, _, _, _, h_pot, l_pot, k_pot = potential_surface_solution(
@@ -421,7 +418,6 @@ class Integration(Description):
             Y2s=Y2,
             Y3s=Y3,
             g_0_surface=g_0_surface,
-            length_ratio=self.length_ratio,
         )
 
         LOVE = zeros((9), dtype=complex)

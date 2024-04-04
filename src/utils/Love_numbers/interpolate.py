@@ -11,7 +11,7 @@ from ..paths import results_path
 
 
 def interpolate_Love_numbers(
-    real_description_id: str,
+    anelasticity_description_id: str,
     target_frequencies: ndarray[float],  # (Hz).
     option: RunHyperParameters,
     degrees: Optional[list[int]] = None,
@@ -27,7 +27,9 @@ def interpolate_Love_numbers(
     frequencies.
     """
     # Initializes.
-    result_subpath = results_path.joinpath(get_run_folder_name(real_description_id=real_description_id, run_id=option.run_id()))
+    result_subpath = results_path.joinpath(
+        get_run_folder_name(anelasticity_description_id=anelasticity_description_id, run_id=option.run_id())
+    )
     anelastic_Love_numbers = Result()
     anelastic_Love_numbers.load(name="anelastic_Love_numbers", path=result_subpath)
     source_frequencies = load_base_model(name="frequencies", path=result_subpath)

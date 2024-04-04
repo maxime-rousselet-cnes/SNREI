@@ -9,7 +9,7 @@ from ....utils import (
 
 
 def compute_anelastic_induced_load_per_degree_per_description_per_options(
-    real_description_ids: list[str],
+    anelasticity_description_ids: list[str],
     load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
     options: list[RunHyperParameters] = OPTIONS,
 ) -> None:
@@ -24,13 +24,13 @@ def compute_anelastic_induced_load_per_degree_per_description_per_options(
     )
 
     # Loops on descriptions.
-    for real_description_id in real_description_ids:
+    for anelasticity_description_id in anelasticity_description_ids:
         # Loops on options.
         for run_hyper_parameters in options:
             load_signal_hyper_parameters.run_hyper_parameters = run_hyper_parameters
             # Computes anelastic induced load signal per degree.
             anelastic_induced_load_signal_per_degree(
-                real_description_id=real_description_id,
+                anelasticity_description_id=anelasticity_description_id,
                 load_signal_hyper_parameters=load_signal_hyper_parameters,
                 frequencies=frequencies,
                 frequencial_elastic_normalized_load_signal=frequencial_elastic_load_signal,
@@ -39,21 +39,21 @@ def compute_anelastic_induced_load_per_degree_per_description_per_options(
 
 
 def compute_anelastic_induced_load_per_degree_per_description(
-    real_description_ids: list[str],
+    anelasticity_description_ids: list[str],
     load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
 ) -> None:
     """
     Computes anelastic induced load signal per degree for given descriptions.
     """
     compute_anelastic_induced_load_per_degree_per_description_per_options(
-        real_description_ids=real_description_ids,
+        anelasticity_description_ids=anelasticity_description_ids,
         load_signal_hyper_parameters=load_signal_hyper_parameters,
         options=[load_signal_hyper_parameters.run_hyper_parameters],
     )
 
 
 def compute_anelastic_induced_load_per_degree_per_options(
-    real_description_id: list[str],
+    anelasticity_description_id: list[str],
     load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
     options: list[tuple[bool, bool, bool]] = OPTIONS,
 ) -> None:
@@ -61,18 +61,20 @@ def compute_anelastic_induced_load_per_degree_per_options(
     Computes anelastic induced load signal per degree for a given description and options.
     """
     compute_anelastic_induced_load_per_degree_per_description_per_options(
-        real_description_ids=[real_description_id], load_signal_hyper_parameters=load_signal_hyper_parameters, options=options
+        anelasticity_description_ids=[anelasticity_description_id],
+        load_signal_hyper_parameters=load_signal_hyper_parameters,
+        options=options,
     )
 
 
 def compute_anelastic_induced_load_per_degree(
-    real_description_id: str,
+    anelasticity_description_id: str,
     load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
 ) -> None:
     """
     Computes anelastic induced load signal per degree for a given description.
     """
     compute_anelastic_induced_load_per_degree_per_description(
-        real_description_ids=[real_description_id],
+        anelasticity_description_ids=[anelasticity_description_id],
         load_signal_hyper_parameters=load_signal_hyper_parameters,
     )

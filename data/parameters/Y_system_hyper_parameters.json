@@ -2,7 +2,7 @@
     "n_max_for_sub_CMB_integration": 35,
     "homogeneous_solution": false,
     "dynamic_term": true,
-    "inhomogenetiy_gradients": false,
+    "inhomogeneity_gradients": false,
     "minimal_radius": 1e3,
     "method": "DOP853",
     "atol": 1e-13,

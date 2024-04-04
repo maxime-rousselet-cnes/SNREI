@@ -1,9 +1,8 @@
 {
-    "radius": null,
     "radius_unit": null,
     "real_crust": false,
     "spline_number": 10,
-    "splines_degree": 1,
+    "spline_degree": 1,
     "below_ICB_layers": null,
     "below_CMB_layers": null
 }

@@ -6,9 +6,9 @@ from numpy import linspace, log10, zeros
 
 from ....utils import (
     OPTIONS,
+    AnelasticityDescription,
     Integration,
     LoveNumbersHyperParameters,
-    RealDescription,
     RunHyperParameters,
     figures_path,
     frequencies_to_periods,
@@ -19,7 +19,7 @@ from ..utils import option_linestyle, options_label
 
 def plot_mu_profiles_for_options_to_periods(
     load_description: bool = False,
-    forced_real_description_id: Optional[str] = None,
+    forced_anelasticity_description_id: Optional[str] = None,
     elasticity_model_name: Optional[str] = None,
     long_term_anelasticity_model_name: Optional[str] = None,
     short_term_anelasticity_model_name: Optional[str] = None,
@@ -40,17 +40,17 @@ def plot_mu_profiles_for_options_to_periods(
     # Initializes.
     period_values = 10 ** linspace(log10(T_min), log10(T_max), n_period_points)
     frequencies = frequencies_to_periods(period_values)  # It is OK to converts years like this. Tested.
-    real_description = RealDescription(
-        real_description_parameters=Love_numbers_hyper_parameters.real_description_parameters,
+    anelasticity_description = AnelasticityDescription(
+        anelasticity_description_parameters=Love_numbers_hyper_parameters.anelasticity_description_parameters,
         load_description=load_description,
-        id=forced_real_description_id,
+        id=forced_anelasticity_description_id,
         save=False,
         overwrite_descriptions=overwrite_descriptions,
         elasticity_model_name=elasticity_model_name,
         long_term_anelasticity_model_name=long_term_anelasticity_model_name,
         short_term_anelasticity_model_name=short_term_anelasticity_model_name,
     )
-    figures_subpath = figures_path.joinpath(figure_subpath_string).joinpath(real_description.id)
+    figures_subpath = figures_path.joinpath(figure_subpath_string).joinpath(anelasticity_description.id)
     figures_subpath.mkdir(parents=True, exist_ok=True)
 
     _, plots = plt.subplots(2, 1, figsize=(16, 9), sharex=True)
@@ -78,8 +78,8 @@ def plot_mu_profiles_for_options_to_periods(
         for i_f, frequency in enumerate(frequencies):
             # Preprocesses.
             integration = Integration(
-                real_description=real_description,
-                log_frequency=log10(frequency / real_description.frequency_unit),
+                anelasticity_description=anelasticity_description,
+                log_frequency=log10(frequency / anelasticity_description.frequency_unit),
                 use_long_term_anelasticity=option.use_long_term_anelasticity,
                 use_short_term_anelasticity=option.use_short_term_anelasticity,
                 use_bounded_attenuation_functions=option.use_bounded_attenuation_functions,
@@ -87,10 +87,8 @@ def plot_mu_profiles_for_options_to_periods(
             # Plots mu_real and mu_imag.
             for part in ["real", "imag"]:
                 mu[part][i_f] = integration.description_layers[integration.below_CMB_layers].evaluate(
-                    x=integration.description_layers[integration.below_CMB_layers].x_inf, variable="mu_" + part
-                ) / integration.description_layers[integration.below_CMB_layers].evaluate(
-                    x=integration.description_layers[integration.below_CMB_layers].x_inf, variable="mu_0"
-                )
+                    x=integration.x_CMB, variable="mu_" + part
+                ) / integration.description_layers[integration.below_CMB_layers].evaluate(x=integration.x_CMB, variable="mu_0")
         # Plots mu_real and mu_imag.
         for part, plot in zip(["real", "imag"], plots):
             plot.plot(

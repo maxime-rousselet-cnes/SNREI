@@ -5,8 +5,7 @@ from numpy import Inf, linspace, ndarray, sum
 from pydantic import BaseModel
 from scipy import interpolate
 
-from .description_layer import DescriptionLayer
-from .spline import Spline
+from .description_layer import DescriptionLayer, Spline
 
 
 class ModelPart(Enum):
@@ -21,11 +20,8 @@ class ModelPart(Enum):
 
 class Model(BaseModel):
     """
-    Describes physical quantities by 3rd order polynomials depending on the unitless radius.
-    Can be used to encode different parts of some rheology:
-        - elasticity part
-        - anelasticity part
-        - attenuation part
+    Describes physical quantities by polynomials depending on the unitless radius.
+    Can be used to encode all different parts of some rheology.
     """
 
     # Names of the spherical layers.
@@ -37,28 +33,26 @@ class Model(BaseModel):
     # Constant values in the crust depending on 'real_crust' boolean. The keys are the variable names.
     crust_values: dict[str, Optional[float]]
 
-    # 3rd order polynomials (depending on x := unitless r) of physical quantities describing the planetary model. The keys are
-    # the variable names. They should include:
+    # Polynomials (depending on x := unitless r) of physical quantities describing the planetary model. The keys are the
+    # variable names. They should include:
     #   - for elasticity part:
     #       - Vs: S wave velocity (m.s^-1).
     #       - Vp: P wave velocity (m.s^-1).
     #       - rho_0: Density (kg.m^-3).
-    #       - Qmu: Quality factor (unitless).
-    #   - for anelasticity part:
+    #   - for long term anelasticity part:
     #       - eta_m: Maxwell's viscosity (Pa.s).
     #       - eta_k: Kelvin's viscosity (Pa.s).
     #       - mu_K1: Kelvin's elasticity constant term (Pa).
     #       - c: Elasticities ratio, such as mu_K = c * mu_E + mu_K1 (Unitless).
-    #   - for attenuation part:
+    #   - for short term anelasticity part:
     #       - alpha: (Unitless).
     #       - omega_m: (Hz).
     #       - tau_M: (y).
-    #       - asymptotic_mu_ratio: Defines mu(omega->0.0) / mu_0 (Unitless).
+    #       - asymptotic_mu_ratio: Defines mu(omega -> 0.0) / mu_0 (Unitless).
+    #       - Q_mu: Quality factor (unitless).
     polynomials: dict[str, list[list[float | str]]]
 
-    def build_description_layers_list(
-        self, radius_unit: float, n_splines_base: int, real_crust: bool
-    ) -> list[DescriptionLayer]:
+    def build_description_layers_list(self, radius_unit: float, spline_number: int, real_crust: bool) -> list[DescriptionLayer]:
         """
         Constructs the layers of an Earth description given model polynomials.
         """
@@ -78,7 +72,7 @@ class Model(BaseModel):
                     r_sup=r_sup,
                     layer_name=layer_name,
                     radius_unit=radius_unit,
-                    n_splines_base=n_splines_base,
+                    spline_number=spline_number,
                     layer_polynomials=layer_polynomials,
                     real_crust=real_crust,
                 )
@@ -91,14 +85,14 @@ class Model(BaseModel):
         r_sup: float,
         layer_name: Optional[str],
         radius_unit: float,
-        n_splines_base: int,
+        spline_number: int,
         layer_polynomials: dict[str, list[float | str]],
         real_crust: bool,
     ) -> DescriptionLayer:
         """
         Constructs a layer of an Earth description given its model polynomials.
         """
-        x = linspace(r_inf, r_sup, n_splines_base) / radius_unit
+        x = linspace(r_inf, r_sup, spline_number) / radius_unit
         return DescriptionLayer(
             name=layer_name,
             x_inf=x[0],
@@ -127,7 +121,6 @@ class Model(BaseModel):
         Creates a polynomial spline structure to approximate a given physical quantity.
         Infinite values and modified crust values are handled.
         """
-        polynomial_degree = len(polynomial) - 1
         if Inf in polynomial:
             return Inf, Inf, 0
         else:
@@ -137,7 +130,7 @@ class Model(BaseModel):
                     [
                         (
                             crust_value
-                            if layer_name == "CRUST 2" and not real_crust and i == 0 and crust_value != "None"
+                            if "CRUST_2" in layer_name and not real_crust and i == 0 and crust_value != "None"
                             else coefficient
                         )
                         * x**i
@@ -145,5 +138,5 @@ class Model(BaseModel):
                     ],
                     axis=0,
                 ),
-                k=polynomial_degree,
+                k=len(polynomial) - 1,
             )

@@ -58,8 +58,8 @@ def generate_degrees_list(
     ).tolist()
 
 
-def get_run_folder_name(real_description_id: str, run_id: str) -> str:
+def get_run_folder_name(anelasticity_description_id: str, run_id: str) -> str:
     """
-    Builds a folder id with real description id and run id.
+    Builds a folder id with anelasticity description id and run id.
     """
-    return "/".join(real_description_id, "runs", run_id)
+    return "/".join(anelasticity_description_id, "runs", run_id)

@@ -15,7 +15,7 @@ def solid_system(
     piG: float,
     omega: float,
     dynamic_term: bool,
-    first_order_cross_terms: bool,
+    inhomogeneity_gradients: bool,
 ) -> ndarray:
     # Interpolate Parameters at Current Radius
     lndi = layer.evaluate(x=x, variable="lambda_real") + layer.evaluate(x=x, variable="lambda_imag") * 1.0j
@@ -26,7 +26,7 @@ def solid_system(
     # add dynamics terms (in w square)
     # change the high frequencies behavior of LN
     dyn_term = -rndi * omega**2.0 if dynamic_term and omega != Inf else 0.0
-    if first_order_cross_terms:
+    if inhomogeneity_gradients:
         lndi_prime = (
             layer.evaluate(x=x, variable="lambda_real", derivative_order=1)
             + layer.evaluate(x=x, variable="lambda_imag", derivative_order=1) * 1.0j
@@ -160,6 +160,7 @@ def fluid_to_solid(Yf1: ndarray, x: float, last_fluid_layer: DescriptionLayer, p
     return Y1, Y2, Y3
 
 
+# TODO: verify/redo analytic developments.
 def solid_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: float):
     """
     Computes analytical solution to homogeneous sphere system of radius x, with n_layer-th layer elastic rheology.

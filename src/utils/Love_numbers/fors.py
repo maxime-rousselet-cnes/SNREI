@@ -9,8 +9,8 @@ from ..classes import (
     Model,
     ModelPart,
     RunHyperParameters,
+    anelasticity_description_id_from_part_names,
     load_Love_numbers_hyper_parameters,
-    real_description_id_from_model_names,
 )
 from ..constants import BOOLEANS, OPTIONS
 from ..database import load_base_model, save_base_model
@@ -34,15 +34,17 @@ def create_model_variation(
     save_base_model(
         obj=model,
         name="___".join(
-            "__".join([parameter_name] + ["_".join(parameter_values) for parameter_values in parameter_values_per_layer])
-            for parameter_name, parameter_values_per_layer in zip(parameter_names, parameter_values_per_layer)
+            (
+                "__".join([parameter_name] + ["_".join(parameter_values) for parameter_values in parameter_values_per_layer])
+                for parameter_name, parameter_values_per_layer in zip(parameter_names, parameter_values_per_layer)
+            )
         ),
         path=models_path[model_part].joinpath(model_base_name),
     )
 
 
 def Love_numbers_for_options_for_models_for_parameters(
-    forced_real_description_id: Optional[str] = None,
+    forced_anelasticity_description_id: Optional[str] = None,
     overwrite_descriptions: bool = False,
     elasticity_model_names: list[Optional[str]] = [None],
     long_term_anelasticity_model_names: list[Optional[str]] = [None],
@@ -53,13 +55,13 @@ def Love_numbers_for_options_for_models_for_parameters(
 ) -> list[str]:
     """
     Computes anelastic Love numbers by iterating on:
-        - models: A real description is used per triplet of:
+        - models: An anelasticity description is used per triplet of:
             - 'elasticity_model_name'
             - 'anelasticity_model_name'
             - 'attenuation_model_name'
         - options
         - specified parameters, when the options allow it.
-    Returns the list of real description IDs.
+    Returns the list of anelasticity description IDs.
 
     The 'parameters' input corresponds to parameters polynomial coefficients per layer (list[list[float]]) per model part, per
     parameter name and per possibility.Here is an example with two possibilites for a short term anelasticity model with 5
@@ -96,7 +98,7 @@ def Love_numbers_for_options_for_models_for_parameters(
                 )
             ]
 
-    real_description_ids = []
+    anelasticity_description_ids = []
     # Loops on all possible triplet of model files to launch runs.
     for elasticity_model_name, long_term_anelasticity_model_name, short_term_anelasticity_model_name in product(
         model_filenames[ModelPart.elasticity],
@@ -111,9 +113,9 @@ def Love_numbers_for_options_for_models_for_parameters(
         do_short_term_only_case = long_term_anelasticity_model_name == model_filenames[ModelPart.long_term_anelasticity][0]
 
         # Compute Love numbers for all considered options.
-        real_description_ids += [
+        anelasticity_description_ids += [
             Love_numbers_from_models_for_options(
-                forced_real_description_id=forced_real_description_id,
+                forced_anelasticity_description_id=forced_anelasticity_description_id,
                 overwrite_descriptions=overwrite_descriptions,
                 part_names={
                     ModelPart.elasticity: elasticity_model_name,
@@ -143,7 +145,7 @@ def Love_numbers_for_options_for_models_for_parameters(
         ]
 
     # Loops on all possible triplet of model files to create symlinks.
-    if not forced_real_description_id is None:
+    if not forced_anelasticity_description_id is None:
         for elasticity_model_name, long_term_anelasticity_model_name, short_term_anelasticity_model_name in product(
             model_filenames[ModelPart.elasticity],
             model_filenames[ModelPart.long_term_anelasticity],
@@ -156,24 +158,24 @@ def Love_numbers_for_options_for_models_for_parameters(
             do_long_term_only_case = short_term_anelasticity_model_name == model_filenames[ModelPart.short_term_anelasticity][0]
             do_short_term_only_case = long_term_anelasticity_model_name == model_filenames[ModelPart.long_term_anelasticity][0]
             # Eventually creates a symlink to equivalent model's result.
-            real_description_result_path = results_path.joinpath(
-                real_description_id_from_model_names(
-                    elasticity_model_name=elasticity_model_name,
-                    long_term_anelasticity_model_name=long_term_anelasticity_model_name,
-                    short_term_anelasticity_model_name=short_term_anelasticity_model_name,
+            anelasticity_description_result_path = results_path.joinpath(
+                anelasticity_description_id_from_part_names(
+                    elasticity_name=elasticity_model_name,
+                    long_term_anelasticity_name=long_term_anelasticity_model_name,
+                    short_term_anelasticity_name=short_term_anelasticity_model_name,
                 )
             )
             # Creates a symlink to equivalent elastic model's result.
             if not do_elastic_case:
                 symlink(
                     src=results_path.joinpath(
-                        real_description_id_from_model_names(
-                            elasticity_model_name=elasticity_model_name,
-                            long_term_anelasticity_model_name=model_filenames[ModelPart.long_term_anelasticity][0],
-                            short_term_anelasticity_model_name=model_filenames[ModelPart.short_term_anelasticity][0],
+                        anelasticity_description_id_from_part_names(
+                            elasticity_name=elasticity_model_name,
+                            long_term_anelasticity_name=model_filenames[ModelPart.long_term_anelasticity][0],
+                            short_term_anelasticity_name=model_filenames[ModelPart.short_term_anelasticity][0],
                         )
                     ).joinpath("elastic_Love_numbers.json"),
-                    dst=real_description_result_path.joinpath("elastic_Love_numbers.json"),
+                    dst=anelasticity_description_result_path.joinpath("elastic_Love_numbers.json"),
                 )
             # Creates a symlink to equivalent long term anelasticity model's results for long term anelasticity only run.
             if not do_long_term_only_case:
@@ -182,15 +184,15 @@ def Love_numbers_for_options_for_models_for_parameters(
                 ).run_id()
                 symlink(
                     src=results_path.joinpath(
-                        real_description_id_from_model_names(
-                            elasticity_model_name=elasticity_model_name,
-                            long_term_anelasticity_model_name=long_term_anelasticity_model_name,
-                            short_term_anelasticity_model_name=model_filenames[ModelPart.short_term_anelasticity][0],
+                        anelasticity_description_id_from_part_names(
+                            elasticity_name=elasticity_model_name,
+                            long_term_anelasticity_name=long_term_anelasticity_model_name,
+                            short_term_anelasticity_name=model_filenames[ModelPart.short_term_anelasticity][0],
                         )
                     )
                     .joinpath("runs")
                     .joinpath(run_id),
-                    dst=real_description_result_path.joinpath("runs").joinpath(run_id),
+                    dst=anelasticity_description_result_path.joinpath("runs").joinpath(run_id),
                     target_is_directory=True,
                 )
             # Creates a symlink to equivalent short term anelasticity model's results for short term anelasticity only run.
@@ -203,16 +205,16 @@ def Love_numbers_for_options_for_models_for_parameters(
                     ).run_id()
                     symlink(
                         src=results_path.joinpath(
-                            real_description_id_from_model_names(
-                                elasticity_model_name=elasticity_model_name,
-                                long_term_anelasticity_model_name=model_filenames[ModelPart.long_term_anelasticity][0],
-                                short_term_anelasticity_model_name=short_term_anelasticity_model_name,
+                            anelasticity_description_id_from_part_names(
+                                elasticity_name=elasticity_model_name,
+                                long_term_anelasticity_name=model_filenames[ModelPart.long_term_anelasticity][0],
+                                short_term_anelasticity_name=short_term_anelasticity_model_name,
                             )
                         )
                         .joinpath("runs")
                         .joinpath(run_id),
-                        dst=real_description_result_path.joinpath("runs").joinpath(run_id),
+                        dst=anelasticity_description_result_path.joinpath("runs").joinpath(run_id),
                         target_is_directory=True,
                     )
 
-    return unique(real_description_ids).tolist()
+    return unique(anelasticity_description_ids).tolist()

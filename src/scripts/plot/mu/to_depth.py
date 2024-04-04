@@ -6,9 +6,9 @@ from numpy import linspace, log10
 
 from ....utils import (
     OPTIONS,
+    AnelasticityDescription,
     Integration,
     LoveNumbersHyperParameters,
-    RealDescription,
     RunHyperParameters,
     figures_path,
     frequencies_to_periods,
@@ -19,7 +19,7 @@ from ..utils import option_linestyle, options_label
 
 def plot_mu_profiles_for_options_for_periods_to_depth(
     load_description: bool = False,
-    forced_real_description_id: Optional[str] = None,
+    forced_anelasticity_description_id: Optional[str] = None,
     elasticity_model_name: Optional[str] = None,
     long_term_anelasticity_model_name: Optional[str] = None,
     short_term_anelasticity_model_name: Optional[str] = None,
@@ -37,17 +37,17 @@ def plot_mu_profiles_for_options_for_periods_to_depth(
     """
     # Initializes.
     frequencies = frequencies_to_periods(period_values)  # It is OK to converts years like this. Tested.
-    real_description = RealDescription(
-        real_description_parameters=Love_numbers_hyper_parameters.real_description_parameters,
+    anelasticity_description = AnelasticityDescription(
+        anelasticity_description_parameters=Love_numbers_hyper_parameters.anelasticity_description_parameters,
         load_description=load_description,
-        id=forced_real_description_id,
+        id=forced_anelasticity_description_id,
         save=False,
         overwrite_descriptions=overwrite_descriptions,
         elasticity_model_name=elasticity_model_name,
         long_term_anelasticity_model_name=long_term_anelasticity_model_name,
         short_term_anelasticity_model_name=short_term_anelasticity_model_name,
     )
-    figures_subpath = figures_path.joinpath(figure_subpath_string).joinpath(real_description.id)
+    figures_subpath = figures_path.joinpath(figure_subpath_string).joinpath(anelasticity_description.id)
     figures_subpath.mkdir(parents=True, exist_ok=True)
 
     # Plots mu_real and mu_imag. A figure per loop.
@@ -62,8 +62,8 @@ def plot_mu_profiles_for_options_for_periods_to_depth(
                 )
             ]:
                 integration = Integration(
-                    real_description=real_description,
-                    log_frequency=log10(frequency / real_description.frequency_unit),
+                    anelasticity_description=anelasticity_description,
+                    log_frequency=log10(frequency / anelasticity_description.frequency_unit),
                     use_long_term_anelasticity=option.use_long_term_anelasticity,
                     use_short_term_anelasticity=option.use_short_term_anelasticity,
                     use_bounded_attenuation_functions=option.use_bounded_attenuation_functions,
@@ -79,12 +79,12 @@ def plot_mu_profiles_for_options_for_periods_to_depth(
                     else option_linestyle(option=option)
                 )
                 # Iterates on layers.
-                for k_layer in range(real_description.below_CMB_layers, len(integration.description_layers)):
+                for k_layer in range(anelasticity_description.below_CMB_layers, len(integration.description_layers)):
                     layer = integration.description_layers[k_layer]
-                    x = linspace(start=layer.x_inf, stop=layer.x_sup, num=real_description.spline_number)
+                    x = linspace(start=layer.x_inf, stop=layer.x_sup, num=anelasticity_description.spline_number)
                     plot.plot(
-                        layer.evaluate(x=x, variable="mu_" + part) * real_description.elasticity_unit,
-                        (1.0 - x) * real_description.radius_unit / 1e3,
+                        layer.evaluate(x=x, variable="mu_" + part) * anelasticity_description.elasticity_unit,
+                        (1.0 - x) * anelasticity_description.radius_unit / 1e3,
                         color=(
                             0.0,
                             0.0,
@@ -93,7 +93,7 @@ def plot_mu_profiles_for_options_for_periods_to_depth(
                         label=label,
                         linestyle=linestyle,
                     )
-                    if k_layer == real_description.below_CMB_layers and frequency == frequencies[0]:
+                    if k_layer == anelasticity_description.below_CMB_layers and frequency == frequencies[0]:
                         plot.legend(loc="lower left")
             plot.set_xlabel("$\mu_{" + part + "}$ (Pa)")
             plot.grid()

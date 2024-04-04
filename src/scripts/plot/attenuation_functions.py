@@ -3,10 +3,10 @@ from numpy import linspace, log10, ndarray, round
 
 from ...utils import (
     SECONDS_PER_YEAR,
+    AnelasticityDescription,
     Integration,
     Model,
     ModelPart,
-    RealDescription,
     RunHyperParameters,
     create_model_variation,
     figures_path,
@@ -84,15 +84,15 @@ def plot_attenuation_functions(
                 parameter_names=[variable],
                 parameter_values_per_layer=[[[variable_value]] * len(short_term_anelasticity_model.layer_names)],
             )
-            real_description = RealDescription(
-                real_description_parameters=Love_numbers_hyper_parameters.real_description_parameters,
+            anelasticity_description = AnelasticityDescription(
+                anelasticity_description_parameters=Love_numbers_hyper_parameters.anelasticity_description_parameters,
                 short_term_anelasticity_model_name=short_term_anelasticity_model_name,
                 save=False,
             )
             # Gets bounded f.
             f_r, f_i = get_attenuation_function(
                 periods=periods[variable],
-                real_description=real_description,
+                anelasticity_description=anelasticity_description,
                 run_hyper_parameters=Love_numbers_hyper_parameters.run_hyper_parameters,
                 above_CMB_layer_index=above_CMB_layer_index,
             )
@@ -113,7 +113,7 @@ def plot_attenuation_functions(
         Love_numbers_hyper_parameters.run_hyper_parameters.use_bounded_attenuation_functions = False
         f_r_unbounded, f_i_unbounded = get_attenuation_function(
             periods=periods[variable],
-            real_description=real_description,
+            anelasticity_description=anelasticity_description,
             run_hyper_parameters=Love_numbers_hyper_parameters.run_hyper_parameters,
             above_CMB_layer_index=above_CMB_layer_index,
         )
@@ -132,7 +132,10 @@ def plot_attenuation_functions(
 
 
 def get_attenuation_function(
-    periods: ndarray, real_description: RealDescription, run_hyper_parameters: RunHyperParameters, above_CMB_layer_index: int
+    periods: ndarray,
+    anelasticity_description: AnelasticityDescription,
+    run_hyper_parameters: RunHyperParameters,
+    above_CMB_layer_index: int,
 ) -> tuple[ndarray, ndarray]:
     """
     Evaluates attenuation functions of a given description at every frequency of a given list.
@@ -140,21 +143,21 @@ def get_attenuation_function(
     f_r, f_i = [], []
     for T_value in periods:
         integration = Integration(
-            real_description=real_description,
-            log_frequency=log10(real_description.period_unit / T_value),
+            anelasticity_description=anelasticity_description,
+            log_frequency=log10(anelasticity_description.period_unit / T_value),
             use_long_term_anelasticity=run_hyper_parameters.use_long_term_anelasticity,
             use_short_term_anelasticity=True,
             use_bounded_attenuation_functions=run_hyper_parameters.use_bounded_attenuation_functions,
         )
         f_r += [
-            integration.description_layers[real_description.below_CMB_layers + above_CMB_layer_index].evaluate(
-                x=integration.description_layers[real_description.below_CMB_layers + above_CMB_layer_index].x_inf,
+            integration.description_layers[anelasticity_description.below_CMB_layers + above_CMB_layer_index].evaluate(
+                x=integration.description_layers[anelasticity_description.below_CMB_layers + above_CMB_layer_index].x_inf,
                 variable="f_r",
             )
         ]
         f_i += [
-            integration.description_layers[real_description.below_CMB_layers + above_CMB_layer_index].evaluate(
-                x=integration.description_layers[real_description.below_CMB_layers + above_CMB_layer_index].x_inf,
+            integration.description_layers[anelasticity_description.below_CMB_layers + above_CMB_layer_index].evaluate(
+                x=integration.description_layers[anelasticity_description.below_CMB_layers + above_CMB_layer_index].x_inf,
                 variable="f_i",
             )
         ]

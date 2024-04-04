@@ -15,9 +15,6 @@ from scipy import integrate
 
 from .constants import SECONDS_PER_YEAR
 
-SYMBOLS_PER_DIRECTION = ["h", "l", "k"]
-SYMBOLS_PER_BOUNDARY_CONDITION = ["'", "*", ""]
-
 
 def frequencies_to_periods(
     frequencies: ndarray | list[float],
@@ -138,15 +135,18 @@ def f_attenuation_computing(
     omega_m_tab: ndarray,
     tau_M_tab: ndarray,
     alpha_tab: ndarray,
+    omega: float,
     frequency: float,
     frequency_unit: float,
-    bounded_attenuation_functions: bool,
+    use_bounded_attenuation_functions: bool,
 ) -> ndarray[complex]:
     """
     computes the attenuation function f using parameters omega_m and alpha.
-    The omega_m and frequency parameters are unitless frequencies.
+    omega_m is a unitless frequency.
+    frequency is a unitless frequency.
+    omega is a unitless pulsation.
     """
-    if bounded_attenuation_functions:
+    if use_bounded_attenuation_functions:
         tau = lambda tau_log: exp(tau_log)
         Y = lambda tau_log, alpha: (tau(tau_log=tau_log) ** alpha)
         denom = lambda tau_log, omega: (1.0 + (omega * tau(tau_log=tau_log) * 1.0j))
@@ -161,7 +161,7 @@ def f_attenuation_computing(
                             func=integrand,
                             a=log(1.0 / omega_m),
                             b=log(tau_M),
-                            args=(2.0 * pi * frequency, alpha),
+                            args=(omega, alpha),
                             complex_func=True,
                         )[0]
                     )

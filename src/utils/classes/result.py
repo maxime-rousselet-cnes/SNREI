@@ -2,7 +2,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional
 
-from numpy import array, ndarray, ones, transpose
+from numpy import array, expand_dims, ndarray, ones
 
 from ..database import load_base_model, save_base_model
 from .hyper_parameters import HyperParameters
@@ -61,12 +61,16 @@ class Result:
         Converts p-dimmensionnal array to 'values' field, p >=3.
         The axis in position 2 should count 9 components corresponding to every combination of Direction and BoundaryCondition.
         """
-        result_shape = result_array.shape[:2]
-        non_radial_factor = transpose([degrees])
-        radial_factor = ones(result_shape)
+        result_shape = result_array.shape[:-1]
+        non_radial_factor = array(object=degrees, dtype=int) if len(result_shape) == 1 else expand_dims(a=degrees, axis=1)
+        radial_factor = ones(shape=result_shape)
         self.values = {
             direction: {
-                boundary_condition: result_array[:, :, i_direction + 3 * i_boundary_condition]
+                boundary_condition: (
+                    result_array[:, i_direction + 3 * i_boundary_condition]
+                    if len(result_shape) == 1
+                    else result_array[:, :, i_direction + 3 * i_boundary_condition]
+                )
                 * (radial_factor if direction == Direction.radial else non_radial_factor)
                 for i_boundary_condition, boundary_condition in enumerate(BoundaryCondition)
             }
@@ -107,8 +111,8 @@ class Result:
         result_values: dict[str, dict[str, dict[str, list[float]]]] = loaded_content["values"]
         self.hyper_parameters = (HyperParameters(**loaded_content["hyper_parameters"]),)
         self.values = {
-            Direction(direction): {
-                (BoundaryCondition(boundary_condition)): array(sub_values["real"])
+            Direction(int(direction)): {
+                (BoundaryCondition(int(boundary_condition))): array(sub_values["real"])
                 + (0.0 if not ("imag" in sub_values.keys()) else array(sub_values["imag"])) * 1.0j
                 for boundary_condition, sub_values in values.items()
             }

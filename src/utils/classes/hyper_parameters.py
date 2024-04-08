@@ -94,6 +94,7 @@ class LoveNumbersHyperParameters(HyperParameters):
     degree_steps: Optional[str] | list[int]  # Love numbers are computed every degree_steps[i] between...
     degree_thresholds: Optional[str] | list[int]  # ... degree_thresholds[i] and degree_thresholds[i + 1].
     run_hyper_parameters: Optional[str] | RunHyperParameters  # Run parameters.
+    save_result_per_degree: bool  # Whether to save a result per degree or not.
 
     def load(self) -> None:
         """

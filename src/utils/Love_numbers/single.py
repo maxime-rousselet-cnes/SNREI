@@ -98,6 +98,7 @@ def Love_numbers_from_models_for_options(
             log_frequency_initial_values=log_frequency_initial_values,
             anelasticity_description=anelasticity_description,
             result_subpath=result_subpath,
+            save_result_per_degree=Love_numbers_hyper_parameters.save_result_per_degree,
         )
 
         # Saves.

@@ -31,6 +31,7 @@ def anelastic_Love_numbers_computing(
     log_frequency_initial_values: ndarray[float],
     anelasticity_description: AnelasticityDescription,
     result_subpath: Path,
+    save_result_per_degree: bool,
 ) -> tuple[ndarray, ndarray]:
     """
     Performs Love numbers computing (n, frequency) with given anelasticity description and hyper-parameters.
@@ -54,6 +55,7 @@ def anelastic_Love_numbers_computing(
             max_tol=max_tol,
             decimals=decimals,
             degree_path=result_subpath.joinpath("per_degree").joinpath(str(n)),
+            save_result_per_degree=save_result_per_degree,
         )
 
     with Pool() as p:  # Processes for degrees.
@@ -92,6 +94,7 @@ def anelastic_Love_number_computing_per_degree_function(
     max_tol: float,
     decimals: int,
     degree_path: Path,
+    save_result_per_degree: bool,
 ) -> tuple[ndarray[float], ndarray[complex]]:
     """
     Computes Love numbers for all frequencies, for a given degree.
@@ -123,12 +126,13 @@ def anelastic_Love_number_computing_per_degree_function(
     )
 
     # Saves single degree results.
-    save_frequencies(
-        log_frequency_values=log_frequency_values, frequency_unit=anelasticity_description.frequency_unit, path=degree_path
-    )
-    Love_numbers_result = Result(hyper_parameters=y_system_hyper_parameters)
-    Love_numbers_result.update_values_from_array(result_array=Love_numbers, degrees=[n])
-    Love_numbers_result.save(name="anelastic_Love_numbers", path=degree_path)
+    if save_result_per_degree:
+        save_frequencies(
+            log_frequency_values=log_frequency_values, frequency_unit=anelasticity_description.frequency_unit, path=degree_path
+        )
+        Love_numbers_result = Result(hyper_parameters=y_system_hyper_parameters)
+        Love_numbers_result.update_values_from_array(result_array=Love_numbers, degrees=[n])
+        Love_numbers_result.save(name="anelastic_Love_numbers", path=degree_path)
 
     return log_frequency_values, Love_numbers
 

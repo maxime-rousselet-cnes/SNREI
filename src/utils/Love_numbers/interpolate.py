@@ -40,7 +40,7 @@ def interpolate_Love_numbers(
     anelastic_Love_numbers = Result()
     anelastic_Love_numbers.load(name="anelastic_Love_numbers", path=result_subpath)
     elastic_Love_numbers = Result()
-    elastic_Love_numbers.load(name="anelastic_Love_numbers", path=result_subpath.parent.parent)
+    elastic_Love_numbers.load(name="elastic_Love_numbers", path=result_subpath.parent.parent)
     source_frequencies = load_base_model(name="frequencies", path=result_subpath)
     base_degrees = load_base_model(name="degrees", path=result_subpath.parent.parent)
     if degrees is None:
@@ -65,7 +65,9 @@ def interpolate_Love_numbers(
                             ),
                             kind="linear",
                         )(x=target_frequencies)
-                        for degree_index, degree in zip(get_degrees_indices(degrees=base_degrees, degrees_to_plot=degrees))
+                        for degree_index, degree in zip(
+                            get_degrees_indices(degrees=base_degrees, degrees_to_plot=degrees), degrees
+                        )
                     ]
                     for boundary_condition in boundary_conditions
                 }

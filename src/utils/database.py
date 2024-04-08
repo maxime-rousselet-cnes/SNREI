@@ -25,7 +25,7 @@ def save_base_model(obj: Any, name: str, path: Path):
     Saves a JSON serializable type.
     """
     # May create the directory.
-    if len(name.split("/")) > 1:
+    while len(name.split("/")) > 1:
         path = path.joinpath(name.split("/")[0])
         name = "".join(name.split("/")[1:])
     path.mkdir(exist_ok=True, parents=True)

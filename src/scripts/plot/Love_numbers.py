@@ -3,6 +3,7 @@ from itertools import product
 import matplotlib.pyplot as plt
 from numpy import imag, ndarray, real, where
 
+from ...functions import get_degrees_indices
 from ...utils import (
     BOOLEANS,
     OPTIONS,
@@ -20,7 +21,6 @@ from ...utils import (
 from .utils import (
     SYMBOLS_PER_BOUNDARY_CONDITION,
     SYMBOLS_PER_DIRECTION,
-    get_degrees_indices,
     option_linestyle,
     options_label,
 )
@@ -59,7 +59,7 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
         for anelasticity_description_id, option in product(anelasticity_description_ids, options)
     }
     T_values: dict[tuple[str, bool, bool], ndarray] = {}
-    elastic_results = dict[str, Result] = {
+    elastic_results: dict[str, Result] = {
         anelasticity_description_id: Result() for anelasticity_description_id in anelasticity_description_ids
     }
     figure_subpath = figures_path.joinpath(figure_subpath_string).joinpath(

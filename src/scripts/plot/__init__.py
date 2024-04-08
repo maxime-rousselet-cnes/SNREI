@@ -1,0 +1,3 @@
+from .Love_numbers import plot_Love_numbers_for_options_for_descriptions_per_type
+
+[plot_Love_numbers_for_options_for_descriptions_per_type]

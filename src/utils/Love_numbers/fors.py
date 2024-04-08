@@ -160,8 +160,8 @@ def Love_numbers_for_options_for_models_for_parameters(
             )
         ]
 
-    # Loops on all possible triplet of model files to create symlinks.
-    if not forced_anelasticity_description_id is None:
+        # Symlinks.
+    if forced_anelasticity_description_id is None:
         for elasticity_model_name, long_term_anelasticity_model_name, short_term_anelasticity_model_name in product(
             model_filenames[ModelPart.elasticity],
             model_filenames[ModelPart.long_term_anelasticity],
@@ -183,6 +183,7 @@ def Love_numbers_for_options_for_models_for_parameters(
             )
             # Creates a symlink to equivalent elastic model's result.
             if not do_elastic_case:
+                print("symlink_test 0")
                 symlink(
                     src=results_path.joinpath(
                         anelasticity_description_id_from_part_names(
@@ -198,6 +199,7 @@ def Love_numbers_for_options_for_models_for_parameters(
                 run_id = RunHyperParameters(
                     use_long_term_anelasticity=True, use_short_term_anelasticity=False, use_bounded_attenuation_functions=False
                 ).run_id()
+                print("symlink_test 1")
                 symlink(
                     src=results_path.joinpath(
                         anelasticity_description_id_from_part_names(
@@ -216,9 +218,10 @@ def Love_numbers_for_options_for_models_for_parameters(
                 for use_bounded_attenuation_functions in BOOLEANS:
                     run_id = RunHyperParameters(
                         use_long_term_anelasticity=False,
-                        use_short_term_anelasticity=False,
+                        use_short_term_anelasticity=True,
                         use_bounded_attenuation_functions=use_bounded_attenuation_functions,
                     ).run_id()
+                    print("symlink_test 2")
                     symlink(
                         src=results_path.joinpath(
                             anelasticity_description_id_from_part_names(
@@ -233,4 +236,4 @@ def Love_numbers_for_options_for_models_for_parameters(
                         target_is_directory=True,
                     )
 
-    return unique(anelasticity_description_ids).tolist()
+    return anelasticity_description_ids

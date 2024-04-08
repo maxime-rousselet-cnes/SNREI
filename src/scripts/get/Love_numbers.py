@@ -22,7 +22,7 @@ def get_single_float_Love_number(
     gets the wanted Love number and interpolates it at the wanted period.
     """
     result: Result = interpolate_Love_numbers(
-        anelasticity_desciption_id=anelasticity_desciption_id,
+        anelasticity_description_id=anelasticity_desciption_id,
         target_frequencies=frequencies_to_periods(frequencies=[period]),  # (y) -> (Hz).
         option=option,
         degrees=[degree],

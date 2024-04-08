@@ -9,7 +9,7 @@ from ...utils import (
 
 
 def get_single_float_Love_number(
-    real_desciption_id: str,
+    anelasticity_desciption_id: str,
     option: RunHyperParameters = RunHyperParameters(
         use_long_term_anelasticity=False, use_short_term_anelasticity=True, use_bounded_attenuation_functions=False
     ),
@@ -22,7 +22,7 @@ def get_single_float_Love_number(
     gets the wanted Love number and interpolates it at the wanted period.
     """
     result: Result = interpolate_Love_numbers(
-        real_desciption_id=real_desciption_id,
+        anelasticity_desciption_id=anelasticity_desciption_id,
         target_frequencies=frequencies_to_periods(frequencies=[period]),  # (y) -> (Hz).
         option=option,
         degrees=[degree],

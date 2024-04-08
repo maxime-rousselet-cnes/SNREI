@@ -39,18 +39,18 @@ def lambda_0_computing(rho_0: ndarray, Vp: ndarray, mu_0: ndarray) -> ndarray:
     return rho_0 * Vp**2 - 2 * mu_0
 
 
-def g_0_computing(x: ndarray, piG: float, rho_0: ndarray, g_0_inf: float, x_inf: float, profile_precision: int) -> ndarray:
+def g_0_computing(x: ndarray, piG: float, rho_0: ndarray, g_0_inf: float, x_inf: float, spline_number: int) -> ndarray:
     """
     Integrates the internal mass GM to get gravitational acceleration g.
     """
     # Trapezoidal rule integral method for GM = integral(rho_0 G dV).
     GdV_spherical = 4.0 / 3.0 * piG * diff(x**3)
     mean_rho = convolve(a=rho_0, v=[0.5, 0.5])[1:-1]
-    dGM_0 = zeros(shape=(profile_precision))
+    dGM_0 = zeros(shape=(spline_number))
     dGM_0[0] = g_0_inf * x_inf**2
     dGM_0[1:] = mean_rho * GdV_spherical
     GM_0 = cumsum(dGM_0)
-    g_0 = zeros(shape=(profile_precision))
+    g_0 = zeros(shape=(spline_number))
     g_0[0] = g_0_inf
     g_0[1:] = GM_0[1:] / x[1:] ** 2  # To avoid division by 0 for first point.
     return g_0
@@ -183,14 +183,14 @@ def f_attenuation_computing(
             )
 
 
-def delta_mu_computing(mu_0: ndarray, Qmu: ndarray, f: ndarray[complex]) -> ndarray[complex]:
+def delta_mu_computing(mu_0: ndarray, Q_mu: ndarray, f: ndarray[complex]) -> ndarray[complex]:
     """
     Computes the first order frequency dependent variation from elasticity delta_mu at frequency value frequency, given the real
-    elastic modulus mu_0, the elasticicty's quality factor Qmu and attenuation function f.
+    elastic modulus mu_0, the elasticicty's quality factor Q_mu and attenuation function f.
     """
     with errstate(invalid="ignore", divide="ignore"):
-        return nan_to_num(  # Qmu may be equal to infinity, meaning no attenuation should be taken into account.
-            x=(mu_0 / Qmu) * f,
+        return nan_to_num(  # Q_mu may be equal to infinity, meaning no attenuation should be taken into account.
+            x=(mu_0 / Q_mu) * f,
             nan=0.0,
         )
 

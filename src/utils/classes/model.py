@@ -138,5 +138,5 @@ class Model(BaseModel):
                     ],
                     axis=0,
                 ),
-                k=len(polynomial) - 1,
+                k=max(len(polynomial) - 1, 1),
             )

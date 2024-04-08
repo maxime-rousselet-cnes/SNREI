@@ -95,7 +95,7 @@ class AnelasticityDescription(Description):
         super().__init__(
             id=(
                 id
-                if id
+                if not (id is None)
                 else anelasticity_description_id_from_part_names(
                     elasticity_name=elasticity_name,
                     long_term_anelasticity_name=long_term_anelasticity_name,
@@ -107,7 +107,7 @@ class AnelasticityDescription(Description):
             spline_number=anelasticity_description_parameters.spline_number,
         )
         # Eventually loads already preprocessed anelasticity description...
-        if load_description and self.get_path().joinpath(id).is_file():
+        if load_description and self.get_path().joinpath(self.id).is_file():
             self.load()
         # ... or builds the description.
         else:
@@ -118,7 +118,7 @@ class AnelasticityDescription(Description):
                 ModelPart.long_term_anelasticity: long_term_anelasticity_name,
                 ModelPart.short_term_anelasticity: short_term_anelasticity_name,
             }
-            for model_part, part_name in zip(ModelPart, part_names):
+            for model_part, (_, part_name) in zip(ModelPart, part_names.items()):
                 # Initializes.
                 if model_part == ModelPart.elasticity:
                     description_parts[model_part] = ElasticityDescription(
@@ -207,7 +207,9 @@ class AnelasticityDescription(Description):
                 )
             ]
             x_inf = x_sup
-            layer_indices_per_part = {model_part: layer_indices_per_part[model_part] + 1 for model_part in ModelPart}
+            for model_part in ModelPart:
+                if x_sup == x_sup_per_part[model_part]:
+                    layer_indices_per_part[model_part] += 1
 
     def merge_layers(
         self,
@@ -267,7 +269,7 @@ class AnelasticityDescription(Description):
         """
         Computes the needed explicit variable values for a single layer.
         """
-        x = layer.x_profile(profile_precision=self.spline_number)
+        x = layer.x_profile(spline_number=self.spline_number)
         # Variables needed for all layers.
         variable_values: dict[str, ndarray] = {
             "x": x,

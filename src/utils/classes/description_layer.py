@@ -33,8 +33,8 @@ class DescriptionLayer(BaseModel):
             )
         return interpolate.splev(x=x, tck=self.splines[variable], der=derivative_order)
 
-    def x_profile(self, profile_precision: int) -> ndarray:
+    def x_profile(self, spline_number: int) -> ndarray:
         """
         Builds an array of x values in the layer.
         """
-        return linspace(start=self.x_inf, stop=self.x_sup, num=profile_precision)
+        return linspace(start=self.x_inf, stop=self.x_sup, num=spline_number)

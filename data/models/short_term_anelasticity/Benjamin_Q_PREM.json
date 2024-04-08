@@ -8,10 +8,10 @@
     ],
     "r_limits": [
         3480000.0,
+        5701000.0,
         6151000.0,
         6291000.0,
         6346600.0,
-        5701000.0,
         6371000.0
     ],
     "variable_names": [
@@ -19,17 +19,17 @@
         "omega_m",
         "alpha",
         "tau_M",
-        "asymptotic_attenuation"
+        "asymptotic_mu_ratio"
     ],
     "crust_values": {
         "Q_mu": null,
         "omega_m": null,
         "alpha": null,
         "tau_M": null,
-        "asymptotic_attenuation": null
+        "asymptotic_mu_ratio": null
     },
     "polynomials": {
-        "Qmu": [
+        "Q_mu": [
             [
                 312
             ],
@@ -97,21 +97,21 @@
                 0.0
             ]
         ],
-        "asymptotic_attenuation": [
+        "asymptotic_mu_ratio": [
             [
-                0.0
+                1.0
             ],
             [
-                0.0
+                1.0
             ],
             [
-                0.0
+                1.0
             ],
             [
-                0.0
+                1.0
             ],
             [
-                0.0
+                1.0
             ]
         ]
     }

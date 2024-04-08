@@ -113,14 +113,17 @@ def Love_numbers_from_models_for_options(
         print("----Run: " + run_id + ": Done.")
 
     # Saves elastic results.
-    elastic_result = Result(hyper_parameters=Love_numbers_hyper_parameters)
-    elastic_result.update_values_from_array(
-        result_array=elastic_Love_numbers_computing(
-            y_system_hyper_parameters=Love_numbers_hyper_parameters.y_system_hyper_parameters,
+    if do_elastic_case:
+        elastic_result = Result(hyper_parameters=Love_numbers_hyper_parameters)
+        elastic_result.update_values_from_array(
+            result_array=elastic_Love_numbers_computing(
+                y_system_hyper_parameters=Love_numbers_hyper_parameters.y_system_hyper_parameters,
+                degrees=degrees,
+                anelasticity_description=anelasticity_description,
+            ),
             degrees=degrees,
-            anelasticity_description=anelasticity_description,
-        ),
-        degrees=degrees,
-    )
-    elastic_result.save(name="elastic_Love_numbers", path=result_subpath.parent.parent)
-    save_base_model(obj=degrees, name="degrees", path=result_subpath.parent.parent)
+        )
+        elastic_result.save(name="elastic_Love_numbers", path=result_subpath.parent.parent)
+        save_base_model(obj=degrees, name="degrees", path=result_subpath.parent.parent)
+
+    return anelasticity_description.id

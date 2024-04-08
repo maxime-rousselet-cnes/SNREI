@@ -94,7 +94,7 @@ def Love_numbers_for_options_for_models_for_asymptotic_mu_ratios(
         parameters={
             ModelPart.short_term_anelasticity: {
                 "asymptotic_mu_ratio": [
-                    [asymptotic_mu_ratio] * n_mantle_layers + [1.0] * n_crust_layers
+                    [[asymptotic_mu_ratio]] * n_mantle_layers + [[1.0]] * n_crust_layers
                     for asymptotic_mu_ratio in asymptotic_mu_ratios
                 ]
             }

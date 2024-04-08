@@ -24,7 +24,12 @@ def save_base_model(obj: Any, name: str, path: Path):
     """
     Saves a JSON serializable type.
     """
+    # May create the directory.
+    if len(name.split("/")) > 1:
+        path = path.joinpath(name.split("/")[0])
+        name = "".join(name.split("/")[1:])
     path.mkdir(exist_ok=True, parents=True)
+    # Saves the object.
     with open(path.joinpath(name + ".json"), "w") as file:
         dump(obj, fp=file, cls=JSONSerialize)
 
@@ -62,4 +67,4 @@ def get_run_folder_name(anelasticity_description_id: str, run_id: str) -> str:
     """
     Builds a folder id with anelasticity description id and run id.
     """
-    return "/".join(anelasticity_description_id, "runs", run_id)
+    return "/".join((anelasticity_description_id, "runs", run_id))

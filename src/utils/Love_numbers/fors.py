@@ -2,7 +2,7 @@ from itertools import product
 from os import symlink
 from typing import Optional
 
-from numpy import concatenate, unique
+from numpy import concatenate, ndarray, unique
 
 from ..classes import (
     BOOLEANS,
@@ -31,18 +31,20 @@ def create_model_variation(
     per layer.
     """
     model: Model = load_base_model(name=model_base_name, path=models_path[model_part], base_model_type=Model)
-    for parameter_name, parameter_values_per_layer in zip(parameter_names, parameter_values_per_layer):
-        model.polynomials[parameter_name] = parameter_values_per_layer
+    for parameter_name, parameter_values in zip(parameter_names, parameter_values_per_layer):
+        model.polynomials[parameter_name] = parameter_values
+    name = "___".join(
+        [
+            "__".join([parameter_name] + ["_".join((str(value) for value in values)) for values in parameter_values])
+            for parameter_name, parameter_values in zip(parameter_names, parameter_values_per_layer)
+        ]
+    )
     save_base_model(
         obj=model,
-        name="___".join(
-            (
-                "__".join([parameter_name] + ["_".join((str(value) for value in values)) for values in parameter_values])
-                for parameter_name, parameter_values in zip(parameter_names, parameter_values_per_layer)
-            )
-        ),
+        name=name,
         path=models_path[model_part].joinpath(model_base_name),
     )
+    return name
 
 
 def Love_numbers_for_options_for_models_for_parameters(
@@ -85,28 +87,31 @@ def Love_numbers_for_options_for_models_for_parameters(
     for model_part, model_names in zip(
         ModelPart, [elasticity_model_names, long_term_anelasticity_model_names, short_term_anelasticity_model_names]
     ):
-        if not model_part in parameters.keys():
+        if not (model_part in parameters.keys()):
             model_filenames[model_part] = model_names
         else:
-            model_filenames[model_part] = concatenate(
+            filename_variations: ndarray = concatenate(
                 [
                     [
-                        create_model_variation(
+                        model_name
+                        + "/"
+                        + create_model_variation(
                             model_part=model_part,
                             model_base_name=model_name,
                             parameter_names=parameters[model_part].keys(),
-                            parameter_values_per_layer=[
-                                parameter_values
-                                for parameter_values in product(
-                                    parameter_values_per_possibility
-                                    for _, parameter_values_per_possibility in parameters[model_part].items()
-                                )
-                            ],
+                            parameter_values_per_layer=list(parameter_values),
+                        )
+                        for parameter_values in product(
+                            *(
+                                parameter_values_per_possibility
+                                for _, parameter_values_per_possibility in parameters[model_part].items()
+                            )
                         )
                     ]
                     for model_name in model_names
                 ]
             )
+            model_filenames[model_part] = filename_variations.tolist()
 
     anelasticity_description_ids = []
     # Loops on all possible triplet of model files to launch runs.

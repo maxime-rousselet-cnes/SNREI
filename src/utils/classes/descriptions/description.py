@@ -40,7 +40,7 @@ class Description:
         # Initializes IDs.
         self.model_filename = DEFAULT_MODELS[model_part] if model_filename is None else model_filename
         self.model_part = model_part
-        self.id = id if id else self.model_filename
+        self.id = id if not (id is None) else self.model_filename
         # Updates fields.
         self.radius_unit = EARTH_RADIUS if radius_unit is None else radius_unit
         self.real_crust = False if real_crust is None else real_crust
@@ -102,26 +102,31 @@ class Description:
         path = self.get_path()
         if not (path.joinpath("id" + ".json").is_file() and not overwrite_description):
             self_dict = self.__dict__
-            self_dict["model_part"] = self.model_part.value
+            self_dict["model_part"] = None if self.model_part is None else self.model_part.value
+            layer: DescriptionLayer
             # Converts Infinite values to strings.
             for i_layer, layer in enumerate(self_dict["description_layers"]):
-                splines: dict[str, tuple] = layer["splines"]
+                splines: dict[str, tuple] = layer.splines
                 for variable_name, spline in splines.items():
                     if not isinstance(spline[0], ndarray) and spline[0] == Inf:
-                        self_dict["description_layers"][i_layer]["splines"][variable_name] = ("Inf", "Inf", 0)
+                        description_layer: DescriptionLayer = self_dict["description_layers"][i_layer]
+                        description_layer.splines[variable_name] = ("Inf", "Inf", 0)
+                        self_dict["description_layers"][i_layer] = description_layer
             # Saves as basic type.
             save_base_model(
                 obj=self_dict,
                 name=self.id,
                 path=path,
             )
+            # Convert back if needed.
+            for i_layer, layer in enumerate(self.description_layers):
+                splines: dict[str, tuple] = layer.splines
+                for variable_name, spline in splines.items():
+                    if not isinstance(spline[0], ndarray) and spline[0] == "Inf":
+                        self.description_layers[i_layer].splines[variable_name] = (Inf, Inf, 0)
 
     def get_path(self) -> Path:
         """
         Returns directory path to save the description.
         """
-        return (
-            anelasticity_descriptions_path
-            if not self.model_part in descriptions_path.keys()
-            else descriptions_path[self.model_part]
-        )
+        return anelasticity_descriptions_path if self.model_part is None else descriptions_path[self.model_part]

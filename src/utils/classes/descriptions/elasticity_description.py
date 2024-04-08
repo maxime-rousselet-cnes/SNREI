@@ -80,9 +80,9 @@ class ElasticityDescription(Description):
         # Updates basic fields.
         if self.below_ICB_layers is None or self.below_CMB_layers is None:
             below_ICB_layers, below_CMB_layers = self.find_fluid_layers()
-            if below_CMB_layers is None:
+            if self.below_CMB_layers is None:
                 self.below_CMB_layers = below_CMB_layers
-            if below_ICB_layers is None:
+            if self.below_ICB_layers is None:
                 self.below_ICB_layers = below_ICB_layers
         self.x_CMB = self.description_layers[below_CMB_layers].x_inf
 

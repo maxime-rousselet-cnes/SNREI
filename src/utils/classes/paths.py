@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from .classes import ModelPart
+from .model import ModelPart
 
 data_path = Path("data")
 

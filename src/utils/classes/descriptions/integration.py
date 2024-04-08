@@ -25,9 +25,8 @@ from ...y_system import (
 )
 from ..description_layer import DescriptionLayer
 from ..hyper_parameters import YSystemHyperParameters
-from ..spline import Spline
 from .anelasticity_description import AnelasticityDescription
-from .description import Description
+from .description import Description, Spline
 
 
 class Integration(Description):

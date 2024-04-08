@@ -3,13 +3,12 @@ from typing import Optional
 from numpy import Inf, array, min, ndarray, round
 from scipy import interpolate
 
-from ...constants import SECONDS_PER_YEAR
 from ...rheological_formulas import find_tau_M, mu_k_computing
+from ..constants import SECONDS_PER_YEAR
 from ..description_layer import DescriptionLayer
 from ..hyper_parameters import AnelasticityDescriptionParameters
 from ..model import ModelPart
-from ..spline import Spline
-from .description import Description
+from .description import Description, Spline
 from .elasticity_description import ElasticityDescription
 
 

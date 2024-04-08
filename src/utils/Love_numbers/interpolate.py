@@ -4,11 +4,16 @@ from typing import Callable, Optional
 from numpy import concatenate, flip, ndarray
 from scipy import interpolate
 
-from ...scripts import get_degrees_indices
+from ...functions import get_degrees_indices
 from ..abstract_computing import build_hermitian
-from ..classes import BoundaryCondition, Direction, Result, RunHyperParameters
+from ..classes import (
+    BoundaryCondition,
+    Direction,
+    Result,
+    RunHyperParameters,
+    results_path,
+)
 from ..database import get_run_folder_name, load_base_model
-from ..paths import results_path
 
 
 def interpolate_Love_numbers(

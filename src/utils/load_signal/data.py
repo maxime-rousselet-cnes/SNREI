@@ -5,7 +5,7 @@ from numpy import array, expand_dims, flip, ndarray, prod, round, unique
 from pandas import read_csv
 from pyshtools.expand import MakeGridDH, SHExpandDH
 
-from ..paths import data_Frederikse_path, data_masks_path, data_trends_GRACE_path
+from ..classes import data_Frederikse_path, data_masks_path, data_trends_GRACE_path
 
 
 def extract_temporal_load_signal(

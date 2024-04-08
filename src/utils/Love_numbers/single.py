@@ -3,16 +3,16 @@ from typing import Optional
 from numpy import linspace, log10, ndarray
 
 from ..classes import (
+    OPTIONS,
     AnelasticityDescription,
     LoveNumbersHyperParameters,
     ModelPart,
     Result,
     RunHyperParameters,
     load_Love_numbers_hyper_parameters,
+    results_path,
 )
-from ..constants import OPTIONS
 from ..database import generate_degrees_list, get_run_folder_name, save_base_model
-from ..paths import results_path
 from .run import (
     anelastic_Love_numbers_computing,
     elastic_Love_numbers_computing,
@@ -50,14 +50,14 @@ def Love_numbers_from_models_for_options(
 
     # Loads/buils the planet's description.
     anelasticity_description = AnelasticityDescription(
-        Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+        anelasticity_description_parameters=Love_numbers_hyper_parameters.anelasticity_description_parameters,
         load_description=True,
         id=forced_anelasticity_description_id,
         save=True,
         overwrite_descriptions=overwrite_descriptions,
-        elasticity_model_name=part_names[ModelPart.elasticity],
-        long_term_anelasticity_model_name=part_names[ModelPart.long_term_anelasticity],
-        short_term_anelasticity_model_name=part_names[ModelPart.short_term_anelasticity],
+        elasticity_name=part_names[ModelPart.elasticity],
+        long_term_anelasticity_name=part_names[ModelPart.long_term_anelasticity],
+        short_term_anelasticity_name=part_names[ModelPart.short_term_anelasticity],
     )
 
     # Generates degrees.

@@ -1,3 +1,4 @@
+from .constants import BOOLEANS, OPTIONS, SECONDS_PER_YEAR
 from .description_layer import DescriptionLayer
 from .descriptions import (
     AnelasticityDescription,
@@ -13,9 +14,21 @@ from .hyper_parameters import (
     load_Love_numbers_hyper_parameters,
 )
 from .model import Model, ModelPart
+from .paths import (
+    data_Frederikse_path,
+    data_masks_path,
+    data_trends_GRACE_path,
+    descriptions_base_path,
+    figures_path,
+    models_path,
+    results_path,
+)
 from .result import BoundaryCondition, Direction, Result
 
 [
+    BOOLEANS,
+    OPTIONS,
+    SECONDS_PER_YEAR,
     DescriptionLayer,
     Integration,
     AnelasticityDescription,
@@ -28,6 +41,13 @@ from .result import BoundaryCondition, Direction, Result
     load_Love_numbers_hyper_parameters,
     Model,
     ModelPart,
+    data_Frederikse_path,
+    data_masks_path,
+    data_trends_GRACE_path,
+    descriptions_base_path,
+    figures_path,
+    models_path,
+    results_path,
     BoundaryCondition,
     Direction,
     Result,

@@ -6,7 +6,9 @@ from ...utils import (
     LoveNumbersHyperParameters,
     ModelPart,
     RunHyperParameters,
+    load_base_model,
     load_Love_numbers_hyper_parameters,
+    models_path,
 )
 
 
@@ -62,8 +64,6 @@ def Love_numbers_single_run(
 
 def Love_numbers_for_options_for_models_for_asymptotic_mu_ratios(
     asymptotic_mu_ratios: list[float],
-    n_mantle_layers: int,
-    n_crust_layers: int,
     elasticity_model_names: list[Optional[str]] = [None],
     long_term_anelasticity_model_names: list[Optional[str]] = [None],
     short_term_anelasticity_model_names: list[Optional[str]] = [None],
@@ -80,6 +80,13 @@ def Love_numbers_for_options_for_models_for_asymptotic_mu_ratios(
         - asymptotic_mu_ratios: loops on its value in the Mantle.
     Returns the anelasticity description IDs.
     """
+    # Finds the number of mantle layers and the number of crust layers in a short term anelasticity model.
+    example_model_layers = load_base_model(
+        name=short_term_anelasticity_model_names[0], path=models_path[ModelPart.short_term_anelasticity]
+    )["layer_names"]
+    n_crust_layers = len([layer_name for layer_name in example_model_layers if "CRUST" in layer_name])
+    n_mantle_layers = len(example_model_layers) - n_crust_layers
+    # Computes.
     return Love_numbers_for_options_for_models_for_parameters(
         elasticity_model_names=elasticity_model_names,
         long_term_anelasticity_model_names=long_term_anelasticity_model_names,

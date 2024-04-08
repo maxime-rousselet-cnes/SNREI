@@ -2,19 +2,21 @@ from itertools import product
 from os import symlink
 from typing import Optional
 
-from numpy import unique
+from numpy import concatenate, unique
 
 from ..classes import (
+    BOOLEANS,
+    OPTIONS,
     LoveNumbersHyperParameters,
     Model,
     ModelPart,
     RunHyperParameters,
     anelasticity_description_id_from_part_names,
     load_Love_numbers_hyper_parameters,
+    models_path,
+    results_path,
 )
-from ..constants import BOOLEANS, OPTIONS
 from ..database import load_base_model, save_base_model
-from ..paths import models_path, results_path
 from .single import Love_numbers_from_models_for_options
 
 
@@ -35,8 +37,8 @@ def create_model_variation(
         obj=model,
         name="___".join(
             (
-                "__".join([parameter_name] + ["_".join(parameter_values) for parameter_values in parameter_values_per_layer])
-                for parameter_name, parameter_values_per_layer in zip(parameter_names, parameter_values_per_layer)
+                "__".join([parameter_name] + ["_".join((str(value) for value in values)) for values in parameter_values])
+                for parameter_name, parameter_values in zip(parameter_names, parameter_values_per_layer)
             )
         ),
         path=models_path[model_part].joinpath(model_base_name),
@@ -80,23 +82,31 @@ def Love_numbers_for_options_for_models_for_parameters(
     """
     # Creates all model files variations.
     model_filenames: dict[ModelPart, list[str]] = {}
-    for model_part, model_name in zip(
+    for model_part, model_names in zip(
         ModelPart, [elasticity_model_names, long_term_anelasticity_model_names, short_term_anelasticity_model_names]
     ):
-        if parameters[model_part] == {}:
-            model_filenames[model_part] = elasticity_model_names
+        if not model_part in parameters.keys():
+            model_filenames[model_part] = model_names
         else:
-            model_filenames[model_part] = [
-                create_model_variation(
-                    model_part=model_part,
-                    model_base_name=model_name,
-                    parameter_names=parameters[model_part].keys(),
-                    parameter_values_per_layer=parameter_values_per_layer,
-                )
-                for parameter_values_per_layer in product(
-                    parameter_values_per_possibility for _, parameter_values_per_possibility in parameters[model_part].items()
-                )
-            ]
+            model_filenames[model_part] = concatenate(
+                [
+                    [
+                        create_model_variation(
+                            model_part=model_part,
+                            model_base_name=model_name,
+                            parameter_names=parameters[model_part].keys(),
+                            parameter_values_per_layer=[
+                                parameter_values
+                                for parameter_values in product(
+                                    parameter_values_per_possibility
+                                    for _, parameter_values_per_possibility in parameters[model_part].items()
+                                )
+                            ],
+                        )
+                    ]
+                    for model_name in model_names
+                ]
+            )
 
     anelasticity_description_ids = []
     # Loops on all possible triplet of model files to launch runs.
@@ -134,7 +144,8 @@ def Love_numbers_for_options_for_models_for_parameters(
                         )
                     )
                     and not (
-                        not do_short_term_only_case(
+                        not do_short_term_only_case
+                        and (
                             run_hyper_parameters.use_long_term_anelasticity == False
                             and run_hyper_parameters.use_short_term_anelasticity == True
                         )

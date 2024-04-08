@@ -3,8 +3,8 @@ from typing import Optional
 from numpy import pi, sqrt
 from scipy import interpolate
 
-from ...constants import G
 from ...rheological_formulas import g_0_computing, lambda_0_computing, mu_0_computing
+from ..constants import G
 from ..model import ModelPart
 from .description import Description
 

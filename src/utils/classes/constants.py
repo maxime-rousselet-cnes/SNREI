@@ -1,6 +1,7 @@
 from typing import Optional
 
-from .classes import ModelPart, RunHyperParameters
+from .hyper_parameters import RunHyperParameters
+from .model import ModelPart
 
 # Universal Gravitationnal constant (m^3.kg^-1.s^-2).
 G = 6.67430e-11

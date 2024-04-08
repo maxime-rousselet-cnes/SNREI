@@ -3,7 +3,7 @@ from typing import Any, Optional
 from pydantic import BaseModel
 
 from ..database import load_base_model
-from ..paths import parameters_path
+from .paths import parameters_path
 
 
 class HyperParameters(BaseModel):

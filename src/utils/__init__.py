@@ -1,4 +1,7 @@
 from .classes import (
+    BOOLEANS,
+    OPTIONS,
+    SECONDS_PER_YEAR,
     AnelasticityDescription,
     BoundaryCondition,
     Direction,
@@ -9,10 +12,13 @@ from .classes import (
     ModelPart,
     Result,
     RunHyperParameters,
+    descriptions_base_path,
+    figures_path,
     load_load_signal_hyper_parameters,
     load_Love_numbers_hyper_parameters,
+    models_path,
+    results_path,
 )
-from .constants import BOOLEANS, OPTIONS, SECONDS_PER_YEAR
 from .database import get_run_folder_name, load_base_model, save_base_model
 from .load_signal import (
     anelastic_harmonic_induced_load_signal,
@@ -29,7 +35,6 @@ from .Love_numbers import (
     create_model_variation,
     interpolate_Love_numbers,
 )
-from .paths import descriptions_base_path, figures_path, models_path, results_path
 from .rheological_formulas import find_tau_M, frequencies_to_periods
 
 [
@@ -56,6 +61,7 @@ from .rheological_formulas import find_tau_M, frequencies_to_periods
     anelastic_induced_load_signal_per_degree,
     get_ocean_mask,
     get_trend_dates,
+    harmonic_name,
     ocean_mean,
     signal_trend,
     Love_numbers_for_options_for_models_for_parameters,

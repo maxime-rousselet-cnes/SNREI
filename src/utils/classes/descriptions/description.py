@@ -3,12 +3,11 @@ from typing import Optional
 
 from numpy import Inf, array, ndarray
 
-from ...constants import DEFAULT_MODELS, DEFAULT_SPLINE_NUMBER, EARTH_RADIUS
 from ...database import load_base_model, save_base_model
-from ...paths import anelasticity_descriptions_path, descriptions_path, models_path
-from ..description_layer import DescriptionLayer
+from ..constants import DEFAULT_MODELS, DEFAULT_SPLINE_NUMBER, EARTH_RADIUS
+from ..description_layer import DescriptionLayer, Spline
 from ..model import Model, ModelPart
-from ..spline import Spline
+from ..paths import anelasticity_descriptions_path, descriptions_path, models_path
 
 
 class Description:

@@ -28,5 +28,5 @@ def get_single_float_Love_number(
         degrees=[degree],
         directions=[direction],
         boundary_conditions=[boundary_condition],
-    )
+    )[0]
     return result.values[direction][boundary_condition]

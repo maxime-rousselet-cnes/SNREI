@@ -8,6 +8,7 @@ from .hyper_parameters import (
     LoadSignalHyperParameters,
     LoveNumbersHyperParameters,
     RunHyperParameters,
+    YSystemHyperParameters,
     load_load_signal_hyper_parameters,
     load_Love_numbers_hyper_parameters,
 )
@@ -22,6 +23,7 @@ from .result import BoundaryCondition, Direction, Result
     LoadSignalHyperParameters,
     LoveNumbersHyperParameters,
     RunHyperParameters,
+    YSystemHyperParameters,
     load_load_signal_hyper_parameters,
     load_Love_numbers_hyper_parameters,
     Model,

@@ -18,7 +18,10 @@ from .load_signal import (
     anelastic_harmonic_induced_load_signal,
     anelastic_induced_load_signal_per_degree,
     build_elastic_load_signal,
+    get_ocean_mask,
     get_trend_dates,
+    harmonic_name,
+    ocean_mean,
     signal_trend,
 )
 from .Love_numbers import (
@@ -51,7 +54,9 @@ from .rheological_formulas import find_tau_M, frequencies_to_periods
     build_elastic_load_signal,
     anelastic_harmonic_induced_load_signal,
     anelastic_induced_load_signal_per_degree,
+    get_ocean_mask,
     get_trend_dates,
+    ocean_mean,
     signal_trend,
     Love_numbers_for_options_for_models_for_parameters,
     create_model_variation,

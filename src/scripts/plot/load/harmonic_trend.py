@@ -6,9 +6,10 @@ from ....utils import (
     LoadSignalHyperParameters,
     RunHyperParameters,
     figures_path,
-    format_ocean_mask,
+    get_ocean_mask,
     get_run_folder_name,
     get_trend_dates,
+    harmonic_name,
     load_base_model,
     load_load_signal_hyper_parameters,
     ocean_mean,
@@ -51,8 +52,8 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
             dates = load_base_model(name="dates", path=result_subpath)
             trend_indices, trend_dates = get_trend_dates(dates=dates, load_signal_hyper_parameters=load_signal_hyper_parameters)
             load_signal_harmonic_trends = {
-                "elastic": zeros(shape=(2, load_signal_hyper_parameters.n_max, load_signal_hyper_parameters.n_max)),
-                "anelastic": zeros(shape=(2, load_signal_hyper_parameters.n_max, load_signal_hyper_parameters.n_max)),
+                "elastic": zeros(shape=(2, load_signal_hyper_parameters.n_max + 1, load_signal_hyper_parameters.n_max + 1)),
+                "anelastic": zeros(shape=(2, load_signal_hyper_parameters.n_max + 1, load_signal_hyper_parameters.n_max + 1)),
             }
             for earth_model in ["elastic", "anelastic"]:
                 # Loops on harmonics:
@@ -61,7 +62,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                     for degree in range(start_index, load_signal_hyper_parameters.n_max + 1):
                         for order in range(start_index, degree + 1):
                             harmonic_frequencial_load_signal = load_base_model(
-                                name="_".join((coefficient, degree, order)),
+                                name=harmonic_name(coefficient=coefficient, degree=degree, order=order),
                                 path=result_subpath.joinpath(earth_model + "_harmonic_frequencial_load_signal"),
                             )
                             # Computes harmonic trend.
@@ -76,7 +77,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                             )[0]
 
             # Preprocesses ocean mask.
-            ocean_mask = format_ocean_mask(
+            ocean_mask = get_ocean_mask(
                 ocean_mask_filename=load_signal_hyper_parameters.ocean_mask, n_max=load_signal_hyper_parameters.n_max
             )
             # Saves ocean rise mean trend.

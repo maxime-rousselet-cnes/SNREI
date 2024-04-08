@@ -61,6 +61,18 @@ class RunHyperParameters(HyperParameters):
     use_short_term_anelasticity: bool  # Whether to use short term anelasticity model or not.
     use_bounded_attenuation_functions: bool  # Whether to use the bounded version of attenuation functions or not.
 
+    def run_id(self):
+        """
+        Generates a run ID.
+        """
+        return "__".join(
+            (
+                "long_term_anelasticity" if self.use_long_term_anelasticity else "",
+                "short_term_anelasticity" if self.use_short_term_anelasticity else "",
+                "bounded_attenuation_functions" if self.use_bounded_attenuation_functions else "",
+            )
+        )
+
 
 class LoveNumbersHyperParameters(HyperParameters):
     """
@@ -154,7 +166,7 @@ class LoadSignalHyperParameters(HyperParameters):
     weights_map: str
     n_max: int
     GRACE: Optional[str]
-    ocean_mask: Optional[str]  # "ocean_mask_buffer_coast_300km_eq_removed_0_360.csv"
+    ocean_mask: Optional[str]
 
     # Trend parameters.
     first_year_for_trend: int

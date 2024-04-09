@@ -16,7 +16,7 @@ def extract_temporal_load_signal(
     """
     # Gets raw data.
     df = read_csv(filepath_or_buffer=path.joinpath(name), sep=",")
-    dates = df["Unnamed: 0"].values
+    signal_dates = df["Unnamed: 0"].values
     # Formats.
     sum_values = array(
         object=[float(item.split(",")[0] + "." + item.split(",")[1]) for item in df["Sum of contributors [mean]"].values],
@@ -27,7 +27,7 @@ def extract_temporal_load_signal(
         dtype=float,
     )
     barystatic = sum_values - steric_values
-    return dates, barystatic - barystatic[0]
+    return signal_dates, barystatic - barystatic[0]
 
 
 def erase_area(

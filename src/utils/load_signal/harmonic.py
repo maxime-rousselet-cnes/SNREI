@@ -11,13 +11,12 @@ from numpy import (
     ndarray,
     pi,
     transpose,
-    zeros,
 )
 from pyshtools.expand import MakeGridDH
 from scipy import interpolate
 from tqdm import tqdm
 
-from ..classes import LoadSignalHyperParameters, Result
+from ..classes import LoadSignalHyperParameters
 from ..database import save_base_model
 from .temporal import anelastic_induced_load_signal_per_degree
 
@@ -42,7 +41,7 @@ def anelastic_harmonic_induced_load_signal(
     harmonic_weights: Optional[ndarray[float]],
     anelasticity_description_id: str,
     load_signal_hyper_parameters: LoadSignalHyperParameters,
-    dates: ndarray[float],
+    signal_dates: ndarray[float],
     frequencies: ndarray[float],  # (y^-1).
     frequencial_elastic_normalized_load_signal: ndarray[complex],
     elastic_load_signal_trend: float,
@@ -50,7 +49,7 @@ def anelastic_harmonic_induced_load_signal(
     """
     Computes the anelastic induced harmonic load and saves it in (.JSON) files.
     """
-    if load_signal_hyper_parameters.signal == "ocean_load_Frederikse":
+    if load_signal_hyper_parameters.load_signal == "ocean_load_Frederikse":
 
         # Gets Love numbers, computes anelastic induced load signal and saves.
         path: Path
@@ -59,7 +58,7 @@ def anelastic_harmonic_induced_load_signal(
         path, degrees, frequencial_load_signal_per_degree = anelastic_induced_load_signal_per_degree(
             anelasticity_description_id=anelasticity_description_id,
             load_signal_hyper_parameters=load_signal_hyper_parameters,
-            dates=dates,  # (y).
+            signal_dates=signal_dates,  # (y).
             frequencies=frequencies,  # (y^-1).
             frequencial_elastic_normalized_load_signal=frequencial_elastic_normalized_load_signal,
             elastic_load_signal_trend=elastic_load_signal_trend,
@@ -89,15 +88,17 @@ def anelastic_harmonic_induced_load_signal(
                 ):
                     # Saves results in (.JSON) files.
                     name = harmonic_name(coefficient=coefficient, degree=i_degree, order=i_order)
+                    complex_anelastic_result: ndarray[complex] = frequencial_load_signals[:, i_degree] * harmonic_weight
                     save_base_model(
-                        obj=frequencial_load_signals[:, i_degree] * harmonic_weight,
+                        obj={"real": complex_anelastic_result.real, "imag": complex_anelastic_result.imag},
                         name=name,
                         path=anelastic_subpath,
                     )
+                    complex_elastic_result: ndarray[complex] = frequencial_elastic_normalized_load_signal * harmonic_weight
                     save_base_model(
-                        obj=frequencial_elastic_normalized_load_signal * harmonic_weight,
+                        obj={"real": complex_elastic_result.real, "imag": complex_elastic_result.imag},
                         name=name,
-                        path=anelastic_subpath,
+                        path=elastic_subpath,
                     )
 
         return anelastic_subpath

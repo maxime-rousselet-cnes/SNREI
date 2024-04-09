@@ -31,7 +31,7 @@ def period_abscissa_values(n_points_period: int, tau_M_years_values: list[float]
 
 def plot_attenuation_functions(
     short_term_anelasticity_model_name: str,
-    figure_subpath_string: str = "attanuation_functions",
+    figure_subpath_string: str = "attenuation_functions",
     tau_M_years_values: dict[int, list[float]] = [1.0 / 12, 1.0, 5.0, 20.0, 100.0, 500.0, 1000.0],
     asymptotic_mu_ratio_values: dict[int, list[float]] = [1.0, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01],
     n_points_period: int = 50,

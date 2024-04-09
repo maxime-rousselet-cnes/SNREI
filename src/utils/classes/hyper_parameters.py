@@ -157,13 +157,13 @@ class LoadSignalHyperParameters(HyperParameters):
     numbers.
     """
 
-    # Parameters describing the extended signal.
+    # Parameters describing the extended load signal.
     spline_time: int
     zero_duration: int
     anti_Gibbs_effect_factor: int
-    signal: str
+    load_signal: str
 
-    # Parameters describing spacially-dependent signal.
+    # Parameters describing spacially-dependent load signal.
     weights_map: str
     n_max: int
     GRACE: Optional[str]
@@ -182,7 +182,7 @@ class LoadSignalHyperParameters(HyperParameters):
         """
         #  Parameters for the run.
         if not isinstance(self.run_hyper_parameters, RunHyperParameters):
-            self.y_system_hyper_parameters = load_base_model(
+            self.run_hyper_parameters = load_base_model(
                 name=self.run_hyper_parameters if self.run_hyper_parameters else "run_hyper_parameters",
                 base_model_type=RunHyperParameters,
                 path=parameters_path,

@@ -1,23 +1,12 @@
-CURRENTLY:
-    Running for Q312 oand Q30. Check curbs with 3rd pannel
+
 TODO:
-    rename anelasticity and attenuation
-    automatic below_icb/cmb_layers with anelasticity_description splitted layer names in real anelasticity_description
-    pass zoom_in limits as parameters in plot functions instead of hard code
-    Add loop with/without anelasticity in plot Love 4
-    do load scripts looping on descriptions
     README.md infography for code documentation
     select plots / plots_Love_numbers
     LaTeX disponible figures
-    verify all plot script descriptions
-    verify if the same anelasticity_description is passed for every degree for initial frequencies.
-    add simlink in results varying asymptotic ratio for unbounded attenuation functions.
-    reorg script indices.
-    loop on plot script 06
 
 later:
+    Parallelize harmonic load signal computing for descriptions and options on processes
     Vectorize and implement minimal computing policy for:
         integration.py: y_system_integration method and subfunctions
         surface_solutiuons.py
         system_definitions.py
-    refactoring: description/runs nomenclature in figures too.

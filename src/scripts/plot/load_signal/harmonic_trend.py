@@ -1,4 +1,4 @@
-from numpy import real, zeros
+from numpy import array, real, sqrt, zeros
 from scipy.fft import ifft
 
 from ....utils import (
@@ -36,30 +36,37 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
     """
     # Loops on descriptions.
     for anelasticity_description_id in anelasticity_description_ids:
+        # Prints status.
+        print("Description: " + anelasticity_description_id + ":")
         # Loops on options.
         for run_hyper_parameters in options:
             load_signal_hyper_parameters.run_hyper_parameters = run_hyper_parameters
 
             # Gets already computed anelastic induced harmonic load signal.
+            run_id = run_hyper_parameters.run_id()
             run_folder_name = (
-                get_run_folder_name(
-                    anelasticity_description_id=anelasticity_description_id, run_id=run_hyper_parameters.run_id()
-                )
+                get_run_folder_name(anelasticity_description_id=anelasticity_description_id, run_id=run_id)
                 + "/load/"
-                + load_signal_hyper_parameters.ocean_load_Frederikse
+                + load_signal_hyper_parameters.load_signal
             )
             result_subpath = results_path.joinpath(run_folder_name)
-            dates = load_base_model(name="dates", path=result_subpath)
-            trend_indices, trend_dates = get_trend_dates(dates=dates, load_signal_hyper_parameters=load_signal_hyper_parameters)
+            signal_dates = load_base_model(name="signal_dates", path=result_subpath)
+            trend_indices, trend_dates = get_trend_dates(
+                signal_dates=signal_dates, load_signal_hyper_parameters=load_signal_hyper_parameters
+            )
+            n_max = min(
+                load_signal_hyper_parameters.n_max,
+                int(sqrt(len([f for f in result_subpath.joinpath("elastic_harmonic_frequencial_load_signal").iterdir()]))) - 1,
+            )
             load_signal_harmonic_trends = {
-                "elastic": zeros(shape=(2, load_signal_hyper_parameters.n_max + 1, load_signal_hyper_parameters.n_max + 1)),
-                "anelastic": zeros(shape=(2, load_signal_hyper_parameters.n_max + 1, load_signal_hyper_parameters.n_max + 1)),
+                "elastic": zeros(shape=(2, n_max + 1, n_max + 1)),
+                "anelastic": zeros(shape=(2, n_max + 1, n_max + 1)),
             }
             for earth_model in ["elastic", "anelastic"]:
                 # Loops on harmonics:
                 for coefficient in ["C", "S"]:
                     start_index = 0 if coefficient == "C" else 1
-                    for degree in range(start_index, load_signal_hyper_parameters.n_max + 1):
+                    for degree in range(start_index, n_max + 1):
                         for order in range(start_index, degree + 1):
                             harmonic_frequencial_load_signal = load_base_model(
                                 name=harmonic_name(coefficient=coefficient, degree=degree, order=order),
@@ -70,16 +77,14 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                                 trend_dates=trend_dates,
                                 signal=real(
                                     ifft(
-                                        x=harmonic_frequencial_load_signal["real"]
-                                        + 1.0j * harmonic_frequencial_load_signal["imag"]
+                                        x=array(object=harmonic_frequencial_load_signal["real"], dtype=float)
+                                        + 1.0j * array(object=harmonic_frequencial_load_signal["imag"], dtype=float)
                                     )
                                 )[trend_indices],
                             )[0]
 
             # Preprocesses ocean mask.
-            ocean_mask = get_ocean_mask(
-                ocean_mask_filename=load_signal_hyper_parameters.ocean_mask, n_max=load_signal_hyper_parameters.n_max
-            )
+            ocean_mask = get_ocean_mask(name=load_signal_hyper_parameters.ocean_mask, n_max=n_max)
             # Saves ocean rise mean trend.
             ocean_means = {
                 earth_model: ocean_mean(harmonics=load_signal_harmonic_trends[earth_model], ocean_mask=ocean_mask)
@@ -102,7 +107,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 name=load_signal_hyper_parameters.weights_map + "_load_signal_trend",
                 title=load_signal_hyper_parameters.weights_map + " load signal trend",
                 label="(cm/y): ocean mean = " + str(ocean_means["elastic"]),
-                ocean_mask_filename=load_signal_hyper_parameters.ocean_mask,
+                ocean_mask=ocean_mask,
                 min_saturation=min_saturation,
                 max_saturation=max_saturation,
                 num_colormesh_bins=num_colormesh_bins,
@@ -119,7 +124,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 + " anelastic induced load signal trend since "
                 + str(load_signal_hyper_parameters.first_year_for_trend),
                 label="(cm/y): ocean mean = " + str(ocean_means["anelastic"]),
-                ocean_mask_filename=load_signal_hyper_parameters.ocean_mask,
+                ocean_mask=ocean_mask,
                 min_saturation=min_saturation,
                 max_saturation=max_saturation,
                 num_colormesh_bins=num_colormesh_bins,
@@ -136,8 +141,11 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 + " anelastic induced load signal trend difference with elastic since "
                 + str(load_signal_hyper_parameters.first_year_for_trend),
                 label="(cm/y): ocean mean = " + str(ocean_means["anelastic"] - ocean_means["elastic"]),
-                ocean_mask_filename=load_signal_hyper_parameters.ocean_mask,
+                ocean_mask=ocean_mask,
                 min_saturation=min_saturation,
                 max_saturation=max_saturation,
                 num_colormesh_bins=num_colormesh_bins,
             )
+
+            # Load bar.
+            print("----Run: " + run_id + ": Done.")

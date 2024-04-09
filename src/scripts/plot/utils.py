@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from cartopy import crs
 from matplotlib import ticker
 from matplotlib.colors import SymLogNorm, TwoSlopeNorm
-from numpy import Inf, linspace, maximum, minimum, ndarray, round
+from numpy import Inf, abs, linspace, maximum, minimum, ndarray, round
 from pyshtools.expand import MakeGridDH
 
 from ...utils import BoundaryCondition, Direction, RunHyperParameters
@@ -74,7 +74,7 @@ def plot_harmonics_on_natural_projection(
             transform=crs.PlateCarree(),
             cmap="RdBu_r",
             # levels=num_colormesh_bins,
-            norm=SymLogNorm(vcenter=0),  # TwoSlopeNorm(vcenter=0), TODO.
+            norm=SymLogNorm(linthresh=min(min(abs(spatial_result))), vcenter=0),  # TwoSlopeNorm(vcenter=0), TODO.
         )
         ax.coastlines()
         cbar = plt.colorbar(contour, ax=ax, orientation="horizontal", fraction=0.07)

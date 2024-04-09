@@ -2,7 +2,7 @@
     "spline_time": 50,
     "zero_duration": 600,
     "anti_Gibbs_effect_factor": 1,
-    "signal": "ocean_load_Frederikse",
+    "load_signal": "ocean_load_Frederikse",
     "weights_map": "GRACE",
     "n_max": 1000,
     "GRACE": "GRACE(-FO)_MSSA_corrected_for_leakage_2003_2022.xyz",

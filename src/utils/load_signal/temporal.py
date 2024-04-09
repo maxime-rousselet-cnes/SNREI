@@ -21,7 +21,12 @@ from numpy.linalg import pinv
 from scipy import interpolate
 from scipy.fft import fft, fftfreq
 
-from ..classes import BoundaryCondition, Direction, LoadSignalHyperParameters
+from ..classes import (
+    SECONDS_PER_YEAR,
+    BoundaryCondition,
+    Direction,
+    LoadSignalHyperParameters,
+)
 from ..database import save_base_model
 from ..Love_numbers import interpolate_Love_numbers
 from .data import (
@@ -35,16 +40,20 @@ from .data import (
 
 
 def get_trend_dates(
-    dates: ndarray[float],
-    signal_hyper_parameters: LoadSignalHyperParameters,
+    signal_dates: ndarray[float] | list[float],
+    load_signal_hyper_parameters: LoadSignalHyperParameters,
 ) -> tuple[ndarray[float], ndarray[int]]:
     """
     Returns trend indices and trend dates.
     """
-    shift_dates = dates + signal_hyper_parameters.spline_time + signal_hyper_parameters.last_year_for_trend
+    shift_dates = (
+        array(object=signal_dates, dtype=float)
+        + load_signal_hyper_parameters.spline_time
+        + load_signal_hyper_parameters.last_year_for_trend
+    )
     trend_indices = where(
-        (shift_dates < signal_hyper_parameters.last_year_for_trend)
-        * (shift_dates >= signal_hyper_parameters.first_year_for_trend)
+        (shift_dates < load_signal_hyper_parameters.last_year_for_trend)
+        * (shift_dates >= load_signal_hyper_parameters.first_year_for_trend)
     )[0]
     return trend_indices, shift_dates[trend_indices]
 
@@ -65,23 +74,13 @@ def signal_trend(trend_dates: ndarray[float], signal: ndarray[float]) -> tuple[f
     return result.flatten()  # Turn the signal into a column vector.
 
 
-# TODO: from here. Eventually use the following comment and function "uniform" below
-"""
-    (
-        dates,
-        frequencies,
-        (frequencial_elastic_load_signal, elastic_load_signal_trend, harmonic_weights),
-    ) = build_elastic_load_signal(signal_hyper_parameters=load_signal_hyper_parameters, get_harmonic_weights=True)
-"""
-
-
 def build_elastic_load_signal(
     load_signal_hyper_parameters: LoadSignalHyperParameters, get_harmonic_weights: bool = False
 ) -> tuple[ndarray[float], ndarray[float], Path | tuple[float, ndarray[float], ndarray[complex], Optional[ndarray[float]]]]:
     """
     Builds load history in frequential domain, eventually in frequential-harmonic domain.
     Returns:
-        - dates
+        - signal_dates
         - frequencies
         - For SLR/GRACE load history:
             - a frequential-harmonic load history: i.e. path of the folder containing a function of omega per harmonic in files.
@@ -90,10 +89,10 @@ def build_elastic_load_signal(
             - elastic load signal trend
             - static harmonic weights if needed.
     """
-    if load_signal_hyper_parameters.signal == "ocean_load_Frederikse":
+    if load_signal_hyper_parameters.load_signal == "ocean_load_Frederikse":
         # Builds frequencial signal.
         dates_Frederikse, load_signal_Frederikse = extract_temporal_load_signal()
-        dates, temporal_elastic_load_signal, time_step, elastic_load_signal_trend = build_elastic_load_signal_history(
+        signal_dates, temporal_elastic_load_signal, time_step, elastic_load_signal_trend = build_elastic_load_signal_history(
             signal_dates=dates_Frederikse,
             load_signal=load_signal_Frederikse,
             load_signal_hyper_parameters=load_signal_hyper_parameters,
@@ -121,7 +120,7 @@ def build_elastic_load_signal(
         )
         # Eventually gets harmonics.
         return (
-            dates,
+            signal_dates,
             frequencies,
             (frequencial_elastic_load_signal / elastic_load_signal_trend, elastic_load_signal_trend, harmonic_weights),
         )
@@ -141,10 +140,10 @@ def build_elastic_load_signal_history(
     # Linearly extends the signal for last years.
     trend_indices = signal_dates >= load_signal_hyper_parameters.first_year_for_trend
     elastic_load_signal_trend, elastic_load_signal_additive_constant = signal_trend(
-        trend_dates=dates[trend_indices],
+        trend_dates=signal_dates[trend_indices],
         signal=load_signal[trend_indices],
     )
-    extend_part_dates = arange(dates[-1] + 1, load_signal_hyper_parameters.last_year_for_trend + 1)
+    extend_part_dates = arange(signal_dates[-1] + 1, load_signal_hyper_parameters.last_year_for_trend + 1)
     extend_part_load_signal = elastic_load_signal_trend * extend_part_dates + elastic_load_signal_additive_constant
     # Creates cubic spline for antisymetry.
     mean_slope = extend_part_load_signal[-1] / load_signal_hyper_parameters.spline_time
@@ -167,11 +166,11 @@ def build_elastic_load_signal_history(
     n_log_min_no_Gibbs = round(ceil(log2(n_extended_signal)))
     half_signal_period = max(extended_dates)
     n_signal = int(2 ** (n_log_min_no_Gibbs + load_signal_hyper_parameters.anti_Gibbs_effect_factor))
-    dates = linspace(-half_signal_period, stop=half_signal_period, num=n_signal)
+    signal_dates = linspace(-half_signal_period, stop=half_signal_period, num=n_signal)
 
     return (
-        dates,
-        interpolate.splev(x=dates, tck=interpolate.splrep(x=extended_dates, y=extended_time_serie, k=3)),  # Signal.
+        signal_dates,
+        interpolate.splev(x=signal_dates, tck=interpolate.splrep(x=extended_dates, y=extended_time_serie, k=3)),  # Signal.
         2.0 * half_signal_period / n_signal,  # Time step.
         elastic_load_signal_trend,  # Trend.
     )
@@ -180,7 +179,7 @@ def build_elastic_load_signal_history(
 def anelastic_induced_load_signal_per_degree(
     anelasticity_description_id: str,
     load_signal_hyper_parameters: LoadSignalHyperParameters,
-    dates: ndarray[float],  # (y).
+    signal_dates: ndarray[float],  # (y).
     frequencies: ndarray[float],  # (y^-1).
     frequencial_elastic_normalized_load_signal: ndarray[complex],
     elastic_load_signal_trend: float,
@@ -194,9 +193,9 @@ def anelastic_induced_load_signal_per_degree(
     (.JSON) file.
     """
     # Interpolates Love numbers on signal frequencies as hermitian signal.
-    hermitian_Love_number_fractions, elastic_Love_number_fractions, degrees, path = interpolate_Love_numbers(
+    hermitian_Love_number_fractions, elastic_Love_number_fractions, degrees, Love_numbers_path = interpolate_Love_numbers(
         anelasticity_description_id=anelasticity_description_id,
-        target_frequencies=frequencies,
+        target_frequencies=frequencies / SECONDS_PER_YEAR,
         option=load_signal_hyper_parameters.run_hyper_parameters,
         degrees=None,
         directions=[Direction.potential],
@@ -205,7 +204,7 @@ def anelastic_induced_load_signal_per_degree(
     )
 
     # Computes anelastic induced signal in frequencial domain.
-    frequencial_load_signal_per_degree = array(
+    frequencial_load_signal_per_degree: ndarray[complex] = array(
         object=[
             frequencial_elastic_normalized_load_signal * anelastic_fraction / elastic_fraction[0]
             for anelastic_fraction, elastic_fraction in zip(
@@ -217,12 +216,20 @@ def anelastic_induced_load_signal_per_degree(
     )
 
     # Saves the needed informations.
+    path: Path = Love_numbers_path.joinpath("load").joinpath(load_signal_hyper_parameters.load_signal)
     save_base_model(obj=elastic_load_signal_trend, name="elastic_load_signal_trend", path=path)
-    save_base_model(obj=elastic_load_signal_trend, name="elastic_load_signal", path=path)
-    subpath = path.joinpath("anelastic_induced_frequencial_load_per_degree")
+    save_base_model(
+        obj={"real": frequencial_elastic_normalized_load_signal.real, "imag": frequencial_elastic_normalized_load_signal.imag},
+        name="frequencial_elastic_normalized_load_signal",
+        path=path,
+    )
+    subpath = path.joinpath("anelastic_induced_frequencial_load_signal_per_degree")
     subpath.mkdir(parents=True, exist_ok=True)
+    frequencial_load_signal: ndarray[complex]
     for degree, frequencial_load_signal in zip(degrees, frequencial_load_signal_per_degree):
-        save_base_model(obj=frequencial_load_signal, name=str(degree), path=subpath)
-    save_base_model(obj=dates, name="dates", path=path)
+        save_base_model(
+            obj={"real": frequencial_load_signal.real, "imag": frequencial_load_signal.imag}, name=str(degree), path=subpath
+        )
+    save_base_model(obj=signal_dates, name="signal_dates", path=path)
 
     return path, degrees, frequencial_load_signal_per_degree

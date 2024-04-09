@@ -19,8 +19,8 @@ def compute_anelastic_induced_load_per_degree_per_description_per_options(
         - Computes and saves anelastic induced load signal per degree.
     """
     # Builds load signal.
-    dates, frequencies, (frequencial_elastic_normalized_load_signal, elastic_load_signal_trend, _) = build_elastic_load_signal(
-        signal_hyper_parameters=load_signal_hyper_parameters, get_harmonic_weights=False
+    signal_dates, frequencies, (frequencial_elastic_normalized_load_signal, elastic_load_signal_trend, _) = (
+        build_elastic_load_signal(signal_hyper_parameters=load_signal_hyper_parameters, get_harmonic_weights=False)
     )
 
     # Loops on descriptions.
@@ -32,7 +32,7 @@ def compute_anelastic_induced_load_per_degree_per_description_per_options(
             anelastic_induced_load_signal_per_degree(
                 anelasticity_description_id=anelasticity_description_id,
                 load_signal_hyper_parameters=load_signal_hyper_parameters,
-                dates=dates,
+                signal_dates=signal_dates,
                 frequencies=frequencies,
                 frequencial_elastic_normalized_load_signal=frequencial_elastic_normalized_load_signal,
                 elastic_load_signal_trend=elastic_load_signal_trend,

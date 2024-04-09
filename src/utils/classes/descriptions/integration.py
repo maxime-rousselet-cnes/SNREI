@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from numpy import Inf, array, errstate, ndarray, pi, shape, where, zeros
 from scipy import integrate, interpolate

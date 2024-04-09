@@ -21,10 +21,10 @@ def compute_anelastic_induced_harmonic_load_per_description_per_options(
     """
     # Builds load signal.
     (
-        dates,
+        signal_dates,
         frequencies,
         (frequencial_elastic_normalized_load_signal, elastic_load_signal_trend, harmonic_weights),
-    ) = build_elastic_load_signal(signal_hyper_parameters=load_signal_hyper_parameters, get_harmonic_weights=True)
+    ) = build_elastic_load_signal(load_signal_hyper_parameters=load_signal_hyper_parameters, get_harmonic_weights=True)
 
     # Loops on descriptions.
     for anelasticity_description_id in anelasticity_description_ids:
@@ -36,7 +36,7 @@ def compute_anelastic_induced_harmonic_load_per_description_per_options(
                 harmonic_weights=harmonic_weights,
                 anelasticity_description_id=anelasticity_description_id,
                 load_signal_hyper_parameters=load_signal_hyper_parameters,
-                dates=dates,
+                signal_dates=signal_dates,
                 frequencies=frequencies,
                 frequencial_elastic_normalized_load_signal=frequencial_elastic_normalized_load_signal,
                 elastic_load_signal_trend=elastic_load_signal_trend,

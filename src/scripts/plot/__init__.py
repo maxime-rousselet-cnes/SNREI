@@ -1,3 +1,6 @@
+from .load_signal import (
+    plot_anelastic_induced_spatial_load_trend_per_description_per_options,
+)
 from .Love_numbers import plot_Love_numbers_for_options_for_descriptions_per_type
 
-[plot_Love_numbers_for_options_for_descriptions_per_type]
+[plot_anelastic_induced_spatial_load_trend_per_description_per_options, plot_Love_numbers_for_options_for_descriptions_per_type]

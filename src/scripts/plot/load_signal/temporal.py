@@ -39,19 +39,21 @@ def plot_anelastic_induced_load_per_degree_per_description_per_options(
                     anelasticity_description_id=anelasticity_description_id, run_id=run_hyper_parameters.run_id()
                 )
                 + "/load/"
-                + load_signal_hyper_parameters.ocean_load_Frederikse
+                + load_signal_hyper_parameters.load_signal
             )
             result_subpath = results_path.joinpath(run_folder_name)
-            dates = load_base_model(name="dates", path=result_subpath)
+            signal_dates = load_base_model(name="signal_dates", path=result_subpath)
             elastic_load_signal_trend = load_base_model(name="elastic_load_signal_trend", path=result_subpath)
             elastic_load_signal = load_base_model(name="elastic_load_signal", path=result_subpath)
             anelastic_frequencial_load_signal_per_degree: dict[int, dict[str, ndarray[float]]] = {
                 degree: load_base_model(
-                    name=str(degree), path=result_subpath.joinpath("anelastic_induced_frequencial_load_per_degree")
+                    name=str(degree), path=result_subpath.joinpath("anelastic_induced_frequencial_load_signal_per_degree")
                 )
                 for degree in degrees_to_plot
             }
-            trend_indices, trend_dates = get_trend_dates(dates=dates, load_signal_hyper_parameters=load_signal_hyper_parameters)
+            trend_indices, trend_dates = get_trend_dates(
+                signal_dates=signal_dates, load_signal_hyper_parameters=load_signal_hyper_parameters
+            )
             # Computes trends.
             anelastic_temporal_load_signal_per_degree = {
                 degree: real(ifft(x=anelastic_frequencial_load_signal)) * elastic_load_signal_trend
@@ -63,15 +65,17 @@ def plot_anelastic_induced_load_per_degree_per_description_per_options(
             }
 
             # Saves the figures.
-            figure_subpath = figures_path.joinpath(run_folder_name)
+            figure_subpath = (
+                figures_path.joinpath(run_folder_name).joinpath("load").joinpath(load_signal_hyper_parameters.load_signal)
+            )
             figure_subpath.mkdir(parents=True, exist_ok=True)
 
             # Whole signal.
             plt.figure(figsize=(16, 9))
-            plt.plot(dates, elastic_load_signal, label="elastic")
+            plt.plot(signal_dates, elastic_load_signal, label="elastic")
             for degree in degrees_to_plot:
                 plt.plot(
-                    dates,
+                    signal_dates,
                     anelastic_temporal_load_signal_per_degree[degree],
                     label="degree " + str(degree),
                 )

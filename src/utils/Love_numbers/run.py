@@ -68,11 +68,13 @@ def anelastic_Love_numbers_computing(
         round(a=anelastic_Love_numbers_tuple[0], decimals=decimals)
         for anelastic_Love_numbers_tuple in anelastic_Love_numbers_tuples
     ]
-    Love_numbers = [anelastic_Love_numbers_tuple[1] for anelastic_Love_numbers_tuple in anelastic_Love_numbers_tuples]
+    Love_numbers_per_degree = [
+        anelastic_Love_numbers_tuple[1] for anelastic_Love_numbers_tuple in anelastic_Love_numbers_tuples
+    ]
     log_frequency_all_values = unique(concatenate(log_frequency_values_per_degree))
     all_Love_numbers = interpolate_all(
         x_values_per_component=log_frequency_values_per_degree,
-        function_values=Love_numbers,
+        function_values=Love_numbers_per_degree,
         x_shared_values=log_frequency_all_values,
     )
 

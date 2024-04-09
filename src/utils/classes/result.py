@@ -59,7 +59,7 @@ class Result:
     ) -> None:
         """
         Converts p-dimmensionnal array to 'values' field, p >=3.
-        The axis in position 2 should count 9 components corresponding to every combination of Direction and BoundaryCondition.
+        The axis in position -1 should count 9 components corresponding to every combination of Direction and BoundaryCondition.
         """
         result_shape = result_array.shape[:-1]
         non_radial_factor = array(object=degrees, dtype=int) if len(result_shape) == 1 else expand_dims(a=degrees, axis=1)
@@ -109,12 +109,14 @@ class Result:
             path=path,
         )
         result_values: dict[str, dict[str, dict[str, list[float]]]] = loaded_content["values"]
-        self.hyper_parameters = (HyperParameters(**loaded_content["hyper_parameters"]),)
-        self.values = {
-            Direction(int(direction)): {
-                (BoundaryCondition(int(boundary_condition))): array(sub_values["real"])
-                + (0.0 if not ("imag" in sub_values.keys()) else array(sub_values["imag"])) * 1.0j
-                for boundary_condition, sub_values in values.items()
+        self.hyper_parameters = HyperParameters(**loaded_content["hyper_parameters"])
+        self.values = Values(
+            {
+                Direction(int(direction)): {
+                    (BoundaryCondition(int(boundary_condition))): array(sub_values["real"])
+                    + (0.0 if not ("imag" in sub_values.keys()) else array(sub_values["imag"])) * 1.0j
+                    for boundary_condition, sub_values in values.items()
+                }
+                for direction, values in result_values.items()
             }
-            for direction, values in result_values.items()
-        }
+        )

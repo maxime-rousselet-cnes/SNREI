@@ -38,6 +38,7 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
     T_max_zoom_in: float = 2.5e3,  # (y)
     # Should have as many elements as 'degrees_to_plot'.
     degrees_colors: list[tuple[float, float, float]] = [(0.0, 0.0, 1.0), (1.0, 0.0, 0.0)],
+    figsize: tuple[int, int] = (10, 10),
 ):
     """
     Generates figures of Love numbers.
@@ -52,7 +53,8 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
     options = [
         option
         for option in options
-        if option.use_bounded_attenuation_functions == option.use_short_term_anelasticity and use_bounded_attenuation_functions
+        if option.use_bounded_attenuation_functions
+        == (option.use_short_term_anelasticity and use_bounded_attenuation_functions)
     ]
     anelastic_results: dict[tuple[str, bool, bool], Result] = {
         (anelasticity_description_id, option.use_long_term_anelasticity, option.use_short_term_anelasticity): Result()
@@ -86,16 +88,17 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
     # Plots Love numbers.
     for direction in directions:
         for boundary_condition in boundary_conditions:
-            symbol = SYMBOLS_PER_DIRECTION[direction.value] + "_n" + SYMBOLS_PER_BOUNDARY_CONDITION[boundary_condition.value]
+            symbol = SYMBOLS_PER_DIRECTION[direction] + "_n" + SYMBOLS_PER_BOUNDARY_CONDITION[boundary_condition]
             for zoom_in in BOOLEANS:
                 # A grid of plots per Love number type and with/without zoom in.
-                _, plots = plt.subplots(2, len(anelasticity_description_ids), figsize=(16, 9), sharex=True)
+                _, plots = plt.subplots(2, len(anelasticity_description_ids), figsize=figsize, sharex=True)
                 for part in ["real", "imaginary"]:
                     for anelasticity_description_id, plot in zip(
                         anelasticity_description_ids, plots[0 if part == "real" else 1]
                     ):
                         elastic_values = elastic_results[anelasticity_description_id].values[direction][boundary_condition]
                         for i_degree, degree in zip(degrees_indices, degrees_to_plot):
+                            color = degrees_colors[degrees_to_plot.index(degree)]
                             for option in options:
                                 # Gets corresponding data.
                                 complex_result_values = anelastic_results[
@@ -108,27 +111,27 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
                                     option.use_long_term_anelasticity,
                                     option.use_short_term_anelasticity,
                                 ]
-                            # Eventually restricts frequency range.
-                            min_frequency_index = -1 if not zoom_in else where(T >= T_min_zoom_in)[0][-1]
-                            max_frequency_index = 0 if not zoom_in else where(T <= T_max_zoom_in)[0][0]
-                            color = degrees_colors[degrees_to_plot.index(degree)]
-                            linestyle = option_linestyle(option=option)
-                            result_values = (
-                                real(complex_result_values[i_degree])
-                                if part == "real"
-                                else imag(complex_result_values[i_degree])
-                            ) / real(elastic_values[i_degree][0])
-                            plot.plot(
-                                T[max_frequency_index:min_frequency_index],
-                                result_values[max_frequency_index:min_frequency_index],
-                                label="n = " + str(degree) + ": " + options_label(option=option),
-                                color=color,
-                                linestyle=linestyle,
-                            )
+                                # Eventually restricts frequency range.
+                                min_frequency_index = -1 if not zoom_in else where(T >= T_min_zoom_in)[0][-1]
+                                max_frequency_index = 0 if not zoom_in else where(T <= T_max_zoom_in)[0][0]
+                                # Plots.
+                                linestyle = option_linestyle(option=option)
+                                result_values = (
+                                    real(complex_result_values[i_degree])
+                                    if part == "real"
+                                    else imag(complex_result_values[i_degree])
+                                ) / real(elastic_values[i_degree][0])
+                                plot.plot(
+                                    T[max_frequency_index:min_frequency_index],
+                                    result_values[max_frequency_index:min_frequency_index],
+                                    label="n = " + str(degree) + ": " + options_label(option=option),
+                                    color=color,
+                                    linestyle=linestyle,
+                                )
                         # Layout.
                         plot.grid()
                         if part == "real":
-                            plot.set_title(anelasticity_description_id)
+                            plot.set_title(anelasticity_description_id.replace("___", "\n").replace("/", "\n"))
                         if anelasticity_description_id == anelasticity_description_ids[0]:
                             plot.set_ylabel(part + " part")
                     plot.set_xlabel("T (y)")
@@ -150,6 +153,7 @@ def plot_Love_numbers_for_options_per_description_per_type(
     T_min_zoom_in: float = 1.0,  # (y)
     T_max_zoom_in: float = 2.5e3,  # (y)
     degrees_colors: list[tuple[float, float, float]] = [(0.0, 0.0, 1.0), (1.0, 0.0, 0.0)],
+    figsize: tuple[int, int] = (10, 10),
 ):
     """
     Generates figures of Love numbers.
@@ -172,4 +176,5 @@ def plot_Love_numbers_for_options_per_description_per_type(
             T_min_zoom_in=T_min_zoom_in,
             T_max_zoom_in=T_max_zoom_in,
             degrees_colors=degrees_colors,
+            figsize=figsize,
         )

@@ -1,9 +1,23 @@
 from json import JSONEncoder, dump, load
+from os import symlink
 from pathlib import Path
 from typing import Any, Optional
 
 from numpy import arange, concatenate, ndarray
 from pydantic import BaseModel
+
+
+def symlinkfolder(src: Path, dst: Path) -> None:
+    """
+    Recursively creates symlinks from folder to folder.
+    """
+    dst.mkdir(parents=True, exist_ok=True)
+    for child in src.iterdir():
+        new_child = dst.joinpath(child.name)
+        if child.is_file():
+            symlink(src=child, dst=new_child)
+        else:
+            symlinkfolder(src=child, dst=new_child)
 
 
 class JSONSerialize(JSONEncoder):

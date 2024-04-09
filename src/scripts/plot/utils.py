@@ -9,8 +9,8 @@ from pyshtools.expand import MakeGridDH
 
 from ...utils import BoundaryCondition, Direction, RunHyperParameters
 
-SYMBOLS_PER_BOUNDARY_CONDITION = {Direction.radial: "h", Direction.tangential: "l", Direction.potential: "k"}
-SYMBOLS_PER_DIRECTION = {BoundaryCondition.load: "'", BoundaryCondition.shear: "*", BoundaryCondition.potential: ""}
+SYMBOLS_PER_BOUNDARY_CONDITION = {BoundaryCondition.load: "'", BoundaryCondition.shear: "*", BoundaryCondition.potential: ""}
+SYMBOLS_PER_DIRECTION = {Direction.radial: "h", Direction.tangential: "l", Direction.potential: "k"}
 
 
 def option_linestyle(option: RunHyperParameters) -> str:
@@ -30,8 +30,8 @@ def options_label(option: RunHyperParameters) -> str:
     """
     return " ".join(
         (
-            "with long-term viscosity" if option.use_long_term_anelasticity else "",
-            "with short-term viscosity" if option.use_short_term_anelasticity else "",
+            "with long-term visc." if option.use_long_term_anelasticity else "",
+            "with short-term visc." if option.use_short_term_anelasticity else "",
         )
     )
 

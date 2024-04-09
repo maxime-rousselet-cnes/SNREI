@@ -2,7 +2,7 @@ from itertools import product
 from os import symlink
 from typing import Optional
 
-from numpy import concatenate, ndarray, unique
+from numpy import concatenate, ndarray
 
 from ..classes import (
     BOOLEANS,
@@ -16,7 +16,7 @@ from ..classes import (
     models_path,
     results_path,
 )
-from ..database import load_base_model, save_base_model
+from ..database import load_base_model, save_base_model, symlinkfolder
 from .single import Love_numbers_from_models_for_options
 
 
@@ -159,7 +159,6 @@ def Love_numbers_for_options_for_models_for_parameters(
                 do_elastic_case=do_elastic_case,
             )
         ]
-
         # Symlinks.
     if forced_anelasticity_description_id is None:
         for elasticity_model_name, long_term_anelasticity_model_name, short_term_anelasticity_model_name in product(
@@ -183,25 +182,28 @@ def Love_numbers_for_options_for_models_for_parameters(
             )
             # Creates a symlink to equivalent elastic model's result.
             if not do_elastic_case:
-                print("symlink_test 0")
+                src_path = results_path.joinpath(
+                    anelasticity_description_id_from_part_names(
+                        elasticity_name=elasticity_model_name,
+                        long_term_anelasticity_name=model_filenames[ModelPart.long_term_anelasticity][0],
+                        short_term_anelasticity_name=model_filenames[ModelPart.short_term_anelasticity][0],
+                    )
+                )
                 symlink(
-                    src=results_path.joinpath(
-                        anelasticity_description_id_from_part_names(
-                            elasticity_name=elasticity_model_name,
-                            long_term_anelasticity_name=model_filenames[ModelPart.long_term_anelasticity][0],
-                            short_term_anelasticity_name=model_filenames[ModelPart.short_term_anelasticity][0],
-                        )
-                    ).joinpath("elastic_Love_numbers.json"),
+                    src=src_path.joinpath("elastic_Love_numbers.json").absolute(),
                     dst=anelasticity_description_result_path.joinpath("elastic_Love_numbers.json"),
+                )
+                symlink(
+                    src=src_path.joinpath("degrees.json").absolute(),
+                    dst=anelasticity_description_result_path.joinpath("degrees.json"),
                 )
             # Creates a symlink to equivalent long term anelasticity model's results for long term anelasticity only run.
             if not do_long_term_only_case:
                 run_id = RunHyperParameters(
                     use_long_term_anelasticity=True, use_short_term_anelasticity=False, use_bounded_attenuation_functions=False
                 ).run_id()
-                print("symlink_test 1")
-                symlink(
-                    src=results_path.joinpath(
+                src_path = (
+                    results_path.joinpath(
                         anelasticity_description_id_from_part_names(
                             elasticity_name=elasticity_model_name,
                             long_term_anelasticity_name=long_term_anelasticity_model_name,
@@ -209,9 +211,11 @@ def Love_numbers_for_options_for_models_for_parameters(
                         )
                     )
                     .joinpath("runs")
-                    .joinpath(run_id),
+                    .joinpath(run_id)
+                )
+                symlinkfolder(
+                    src=src_path.absolute(),
                     dst=anelasticity_description_result_path.joinpath("runs").joinpath(run_id),
-                    target_is_directory=True,
                 )
             # Creates a symlink to equivalent short term anelasticity model's results for short term anelasticity only run.
             if not do_short_term_only_case:
@@ -221,9 +225,8 @@ def Love_numbers_for_options_for_models_for_parameters(
                         use_short_term_anelasticity=True,
                         use_bounded_attenuation_functions=use_bounded_attenuation_functions,
                     ).run_id()
-                    print("symlink_test 2")
-                    symlink(
-                        src=results_path.joinpath(
+                    src_path = (
+                        results_path.joinpath(
                             anelasticity_description_id_from_part_names(
                                 elasticity_name=elasticity_model_name,
                                 long_term_anelasticity_name=model_filenames[ModelPart.long_term_anelasticity][0],
@@ -231,9 +234,11 @@ def Love_numbers_for_options_for_models_for_parameters(
                             )
                         )
                         .joinpath("runs")
-                        .joinpath(run_id),
+                        .joinpath(run_id)
+                    )
+                    symlinkfolder(
+                        src=src_path.absolute(),
                         dst=anelasticity_description_result_path.joinpath("runs").joinpath(run_id),
-                        target_is_directory=True,
                     )
 
     return anelasticity_description_ids

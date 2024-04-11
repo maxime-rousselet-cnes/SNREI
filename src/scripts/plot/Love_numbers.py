@@ -134,11 +134,15 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
                         # Layout.
                         plot.grid()
                         if part == "real":
-                            plot.set_title("Model " + str(i_plot + 1))
-                            # plot.set_title(anelasticity_description_id.replace("___", "\n").replace("/", "\n"))
+                            plot.set_title(
+                                "Model "
+                                + str(i_plot + 1)
+                                + "\n"
+                                + anelasticity_description_id.replace("___", "\n").replace("/", "\n")
+                            )
                         if anelasticity_description_id == anelasticity_description_ids[0]:
                             plot.set_ylabel(part + " part")
-                        if part == "imag":
+                        if part == "imaginary":
                             plot.set_xlabel("T (y)")
                     plot.set_xscale("log")
                 if legend:

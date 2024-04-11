@@ -4,8 +4,6 @@
 
 ### TODO
 
-## Equations
+## Examples
 
 ### TODO
-
-$n = \displaystyle\frac{1}{\epsilon}$

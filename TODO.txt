@@ -1,12 +1,7 @@
 
-TODO:
-    README.md infography for code documentation
-    select plots / plots_Love_numbers
-    LaTeX disponible figures
-
-later:
-    Parallelize harmonic load signal computing for descriptions and options on processes
-    Vectorize and implement minimal computing policy for:
-        integration.py: y_system_integration method and subfunctions
-        surface_solutiuons.py
-        system_definitions.py
+add README.md infography and figures
+Parallelize harmonic load signal computing for descriptions and options on processes
+Vectorize and implement minimal computing policy for:
+    integration.py: y_system_integration method and subfunctions
+    surface_solutiuons.py
+    system_definitions.py

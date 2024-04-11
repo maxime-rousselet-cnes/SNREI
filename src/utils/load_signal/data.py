@@ -1,7 +1,8 @@
 from pathlib import Path
 
 import netCDF4
-from numpy import array, expand_dims, flip, ndarray, prod, round, unique
+from cv2 import erode
+from numpy import array, expand_dims, flip, ndarray, ones, prod, round, unique
 from pandas import read_csv
 from pyshtools.expand import MakeGridDH, SHExpandDH
 
@@ -59,7 +60,6 @@ def extract_mask_nc(path: Path = data_masks_path, name: str = "IMERG_land_sea_ma
     lat = array(object=[latitude for latitude in ds.variables["lat"]])
     lon = array(object=[longitude for longitude in ds.variables["lon"]])
     map /= max(map.flatten())  # Normalizes (land = 0, ocean = 1).
-
     # Rejects big lakes from ocean label.
     # Lake Superior.
     map = erase_area(
@@ -91,7 +91,8 @@ def extract_mask_nc(path: Path = data_masks_path, name: str = "IMERG_land_sea_ma
         min_longitude=44.303403,
         max_longitude=60.937192,
     )
-
+    # Dilates continents (100km).
+    map = erode(map, ones(shape=(3, 3)), iterations=10)
     return map
 
 

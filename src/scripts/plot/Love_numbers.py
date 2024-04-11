@@ -39,6 +39,8 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
     # Should have as many elements as 'degrees_to_plot'.
     degrees_colors: list[tuple[float, float, float]] = [(0.0, 0.0, 1.0), (1.0, 0.0, 0.0)],
     figsize: tuple[int, int] = (10, 10),
+    linewidth: int = 2,
+    legend: bool = True,
 ):
     """
     Generates figures of Love numbers.
@@ -93,8 +95,8 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
                 # A grid of plots per Love number type and with/without zoom in.
                 _, plots = plt.subplots(2, len(anelasticity_description_ids), figsize=figsize, sharex=True)
                 for part in ["real", "imaginary"]:
-                    for anelasticity_description_id, plot in zip(
-                        anelasticity_description_ids, plots[0 if part == "real" else 1]
+                    for i_plot, (anelasticity_description_id, plot) in enumerate(
+                        zip(anelasticity_description_ids, plots[0 if part == "real" else 1])
                     ):
                         elastic_values = elastic_results[anelasticity_description_id].values[direction][boundary_condition]
                         for i_degree, degree in zip(degrees_indices, degrees_to_plot):
@@ -127,20 +129,24 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
                                     label="n = " + str(degree) + ": " + options_label(option=option),
                                     color=color,
                                     linestyle=linestyle,
+                                    linewidth=linewidth,
                                 )
                         # Layout.
                         plot.grid()
                         if part == "real":
-                            plot.set_title(anelasticity_description_id.replace("___", "\n").replace("/", "\n"))
+                            plot.set_title("Model " + str(i_plot + 1))
+                            # plot.set_title(anelasticity_description_id.replace("___", "\n").replace("/", "\n"))
                         if anelasticity_description_id == anelasticity_description_ids[0]:
                             plot.set_ylabel(part + " part")
-                    plot.set_xlabel("T (y)")
+                        if part == "imag":
+                            plot.set_xlabel("T (y)")
                     plot.set_xscale("log")
-                plot.legend()
+                if legend:
+                    plot.legend()
                 plt.suptitle("$" + symbol + "/" + symbol + "^E$", fontsize=20)
                 # Saves.
                 plt.savefig(figure_subpath.joinpath(symbol + (" zoom in " if zoom_in else "") + ".png"))
-                plt.clf()
+                plt.close()
 
 
 def plot_Love_numbers_for_options_per_description_per_type(
@@ -154,6 +160,8 @@ def plot_Love_numbers_for_options_per_description_per_type(
     T_max_zoom_in: float = 2.5e3,  # (y)
     degrees_colors: list[tuple[float, float, float]] = [(0.0, 0.0, 1.0), (1.0, 0.0, 0.0)],
     figsize: tuple[int, int] = (10, 10),
+    linewidth: int = 2,
+    legend: bool = True,
 ):
     """
     Generates figures of Love numbers.
@@ -177,4 +185,6 @@ def plot_Love_numbers_for_options_per_description_per_type(
             T_max_zoom_in=T_max_zoom_in,
             degrees_colors=degrees_colors,
             figsize=figsize,
+            linewidth=linewidth,
+            legend=legend,
         )

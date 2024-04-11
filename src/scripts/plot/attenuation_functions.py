@@ -36,6 +36,8 @@ def plot_attenuation_functions(
     asymptotic_mu_ratio_values: dict[int, list[float]] = [1.0, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01],
     n_points_period: int = 50,
     above_CMB_layer_index: int = 0,
+    figsize: tuple[int, int] = (10, 10),
+    linewidth: int = 2,
 ):
     """
     Generates plots of attenuation functions f_r and f_i for a given short-term anelasticity model.
@@ -74,7 +76,7 @@ def plot_attenuation_functions(
     # Loops on constrained variable.
     for variable, constrained_values in zip(["tau_M", "asymptotic_mu_ratio"], [tau_M_years_values, asymptotic_mu_ratio_values]):
         # Iterates on tau_M values.
-        _, plots = plt.subplots(2, 1, sharex=True, figsize=(8, 11))
+        _, plots = plt.subplots(2, 1, sharex=True, figsize=figsize)
         Love_numbers_hyper_parameters.run_hyper_parameters.use_bounded_attenuation_functions = True
         for tau_M_years, variable_value in zip(tau_M_years[variable], constrained_values):
             # Modifies tau_M value in model.
@@ -98,7 +100,11 @@ def plot_attenuation_functions(
             )
             # Plots.
             tau_M_seconds = 1.0 / frequencies_to_periods(frequencies=tau_M_years)
-            plots[0].plot(periods[variable], f_r)
+            plots[0].plot(
+                periods[variable],
+                f_r,
+                linewidth=linewidth,
+            )
             plots[1].plot(
                 periods[variable],
                 f_i,
@@ -106,6 +112,7 @@ def plot_attenuation_functions(
                 + "$\\tau _M=$"
                 + str(round(a=tau_M_years, decimals=4))
                 + " (y)",
+                linewidth=linewidth,
             )
             plots[0].scatter([tau_M_seconds] * 15, linspace(start=min(f_r), stop=max(f_r), num=15), s=5)
             plots[1].scatter([tau_M_seconds] * 15, linspace(start=min(f_i), stop=max(f_i), num=15), s=5)
@@ -117,8 +124,17 @@ def plot_attenuation_functions(
             run_hyper_parameters=Love_numbers_hyper_parameters.run_hyper_parameters,
             above_CMB_layer_index=above_CMB_layer_index,
         )
-        plots[0].plot(periods[variable], f_r_unbounded)
-        plots[1].plot(periods[variable], f_i_unbounded, label="unbounded")
+        plots[0].plot(
+            periods[variable],
+            f_r_unbounded,
+            linewidth=linewidth,
+        )
+        plots[1].plot(
+            periods[variable],
+            f_i_unbounded,
+            label="unbounded",
+            linewidth=linewidth,
+        )
         # Layout.
         plots[0].set_ylabel("$f_r$")
         plots[0].grid()

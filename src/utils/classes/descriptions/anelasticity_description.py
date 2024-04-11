@@ -107,7 +107,7 @@ class AnelasticityDescription(Description):
             spline_number=anelasticity_description_parameters.spline_number,
         )
         # Eventually loads already preprocessed anelasticity description...
-        if load_description and self.get_path().joinpath(self.id).is_file():
+        if load_description and self.get_path().joinpath(self.id + ".json").is_file():
             self.load()
         # ... or builds the description.
         else:

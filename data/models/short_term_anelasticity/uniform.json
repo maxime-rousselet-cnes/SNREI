@@ -11,14 +11,14 @@
         "omega_m",
         "alpha",
         "tau_M",
-        "asymptotic_attenuation"
+        "asymptotic_mu_ratio"
     ],
     "crust_values": {
         "Q_mu": null,
         "omega_m": null,
         "alpha": null,
         "tau_M": null,
-        "asymptotic_attenuation": null
+        "asymptotic_mu_ratio": null
     },
     "polynomials": {
         "omega_m": [

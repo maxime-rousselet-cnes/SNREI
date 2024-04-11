@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Callable, Optional
 
-from numpy import concatenate, flip, ndarray
+from numpy import array, concatenate, expand_dims, flip, ndarray
 from scipy import interpolate
 
 from ...functions import get_degrees_indices
@@ -51,24 +51,26 @@ def interpolate_Love_numbers(
         Result(
             values={
                 direction: {
-                    boundary_condition: [
-                        interpolate.interp1d(
-                            x=symmetric_source_frequencies,
-                            y=build_hermitian(
-                                signal=function(
-                                    (1.0 if direction == Direction.potential else 0.0)
-                                    + (
-                                        anelastic_Love_numbers.values[direction][boundary_condition][degree_index]
-                                        / (1.0 if direction == Direction.radial else degree)
+                    boundary_condition: array(
+                        object=[
+                            interpolate.interp1d(
+                                x=symmetric_source_frequencies,
+                                y=build_hermitian(
+                                    signal=function(
+                                        (1.0 if direction == Direction.potential else 0.0)
+                                        + (
+                                            anelastic_Love_numbers.values[direction][boundary_condition][degree_index]
+                                            / (1.0 if direction == Direction.radial else degree)
+                                        )
                                     )
-                                )
-                            ),
-                            kind="linear",
-                        )(x=target_frequencies)
-                        for degree_index, degree in zip(
-                            get_degrees_indices(degrees=base_degrees, degrees_to_plot=degrees), degrees
-                        )
-                    ]
+                                ),
+                                kind="linear",
+                            )(x=target_frequencies)
+                            for degree_index, degree in zip(
+                                get_degrees_indices(degrees=base_degrees, degrees_to_plot=degrees), degrees
+                            )
+                        ]
+                    )
                     for boundary_condition in boundary_conditions
                 }
                 for direction in directions
@@ -81,7 +83,7 @@ def interpolate_Love_numbers(
                         (1.0 if direction == Direction.potential else 0.0)
                         + (
                             elastic_Love_numbers.values[direction][boundary_condition]
-                            / (1.0 if direction == Direction.radial else degrees)
+                            / (1.0 if direction == Direction.radial else expand_dims(a=degrees, axis=1))
                         )
                     )
                     for boundary_condition in boundary_conditions

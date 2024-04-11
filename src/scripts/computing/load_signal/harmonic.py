@@ -28,6 +28,8 @@ def compute_anelastic_induced_harmonic_load_per_description_per_options(
 
     # Loops on descriptions.
     for anelasticity_description_id in anelasticity_description_ids:
+        # Prints status.
+        print("Description: " + anelasticity_description_id + ":")
         # Loops on options.
         for run_hyper_parameters in options:
             load_signal_hyper_parameters.run_hyper_parameters = run_hyper_parameters
@@ -41,6 +43,8 @@ def compute_anelastic_induced_harmonic_load_per_description_per_options(
                 frequencial_elastic_normalized_load_signal=frequencial_elastic_normalized_load_signal,
                 elastic_load_signal_trend=elastic_load_signal_trend,
             )
+            # Load bar.
+            print("----Run: " + run_hyper_parameters.run_id() + ": Done.")
 
 
 def compute_anelastic_induced_harmonic_load_per_description(

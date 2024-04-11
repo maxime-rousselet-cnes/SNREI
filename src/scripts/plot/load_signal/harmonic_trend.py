@@ -24,9 +24,10 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
     anelasticity_description_ids: list[str],
     load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
     options: list[RunHyperParameters] = OPTIONS,
-    min_saturation: float = -5.0,
-    max_saturation: float = 5.0,
+    min_saturation: float = -4.0,
+    max_saturation: float = 4.0,
     num_colormesh_bins: int = 10,
+    figsize: tuple[int, int] = (10, 10),
 ) -> None:
     """
     Generates figures showing the anelastic induced spatial load signal trend for given descriptions and options:
@@ -64,23 +65,23 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
             }
             for earth_model in ["elastic", "anelastic"]:
                 # Loops on harmonics:
-                for coefficient in ["C", "S"]:
-                    start_index = 0 if coefficient == "C" else 1
-                    for degree in range(start_index, n_max + 1):
-                        for order in range(start_index, degree + 1):
+                for i_order_sign, coefficient in enumerate(["C", "S"]):
+                    for degree in range(i_order_sign, n_max + 1):
+                        for order in range(i_order_sign, degree + 1):
                             harmonic_frequencial_load_signal = load_base_model(
                                 name=harmonic_name(coefficient=coefficient, degree=degree, order=order),
                                 path=result_subpath.joinpath(earth_model + "_harmonic_frequencial_load_signal"),
                             )
                             # Computes harmonic trend.
-                            load_signal_harmonic_trends[earth_model][start_index][degree][order] = signal_trend(
+                            temporal_anelastic_harmonic_signal = real(
+                                ifft(
+                                    x=array(object=harmonic_frequencial_load_signal["real"], dtype=float)
+                                    + 1.0j * array(object=harmonic_frequencial_load_signal["imag"], dtype=float)
+                                )
+                            )
+                            load_signal_harmonic_trends[earth_model][i_order_sign][degree][order] = signal_trend(
                                 trend_dates=trend_dates,
-                                signal=real(
-                                    ifft(
-                                        x=array(object=harmonic_frequencial_load_signal["real"], dtype=float)
-                                        + 1.0j * array(object=harmonic_frequencial_load_signal["imag"], dtype=float)
-                                    )
-                                )[trend_indices],
+                                signal=temporal_anelastic_harmonic_signal[trend_indices],
                             )[0]
 
             # Preprocesses ocean mask.
@@ -106,11 +107,12 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 figure_subpath=figure_subpath,
                 name=load_signal_hyper_parameters.weights_map + "_load_signal_trend",
                 title=load_signal_hyper_parameters.weights_map + " load signal trend",
-                label="(cm/y): ocean mean = " + str(ocean_means["elastic"]),
+                label="(cm/y): ocean mean = " + str(round(number=ocean_means["elastic"], ndigits=4)),
                 ocean_mask=ocean_mask,
-                min_saturation=min_saturation,
-                max_saturation=max_saturation,
-                num_colormesh_bins=num_colormesh_bins,
+                min_saturation=-5.0,
+                max_saturation=5.0,
+                logscale=False,
+                figsize=figsize,
             )
 
             # Output anelastic spatial load signal trend.
@@ -123,11 +125,12 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 title=load_signal_hyper_parameters.weights_map
                 + " anelastic induced load signal trend since "
                 + str(load_signal_hyper_parameters.first_year_for_trend),
-                label="(cm/y): ocean mean = " + str(ocean_means["anelastic"]),
+                label="(cm/y): ocean mean = " + str(round(number=ocean_means["anelastic"], ndigits=4)),
                 ocean_mask=ocean_mask,
                 min_saturation=min_saturation,
                 max_saturation=max_saturation,
-                num_colormesh_bins=num_colormesh_bins,
+                logscale=True,
+                figsize=figsize,
             )
 
             # Differences between elastic and anelastic spatial load signal trend.
@@ -140,11 +143,12 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 title=load_signal_hyper_parameters.weights_map
                 + " anelastic induced load signal trend difference with elastic since "
                 + str(load_signal_hyper_parameters.first_year_for_trend),
-                label="(cm/y): ocean mean = " + str(ocean_means["anelastic"] - ocean_means["elastic"]),
+                label="(cm/y): ocean mean = " + str(round(number=ocean_means["anelastic"] - ocean_means["elastic"], ndigits=4)),
                 ocean_mask=ocean_mask,
                 min_saturation=min_saturation,
                 max_saturation=max_saturation,
-                num_colormesh_bins=num_colormesh_bins,
+                logscale=True,
+                figsize=figsize,
             )
 
             # Load bar.

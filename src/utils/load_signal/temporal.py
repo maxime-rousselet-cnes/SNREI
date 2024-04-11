@@ -52,7 +52,7 @@ def get_trend_dates(
         + load_signal_hyper_parameters.last_year_for_trend
     )
     trend_indices = where(
-        (shift_dates < load_signal_hyper_parameters.last_year_for_trend)
+        (shift_dates <= load_signal_hyper_parameters.last_year_for_trend - 1)
         * (shift_dates >= load_signal_hyper_parameters.first_year_for_trend)
     )[0]
     return trend_indices, shift_dates[trend_indices]
@@ -71,7 +71,7 @@ def signal_trend(trend_dates: ndarray[float], signal: ndarray[float]) -> tuple[f
     ).T
     # Direct least square regression using pseudo-inverse.
     result: ndarray = pinv(A).dot(signal[:, newaxis])
-    return result.flatten()  # Turn the signal into a column vector.
+    return result.flatten()  # Turn the signal into a column vector. (slope, additive_constant)
 
 
 def build_elastic_load_signal(

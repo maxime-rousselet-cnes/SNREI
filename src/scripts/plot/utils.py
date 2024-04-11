@@ -1,13 +1,20 @@
 from pathlib import Path
+from typing import Optional
 
 import matplotlib.pyplot as plt
 from cartopy import crs
-from matplotlib import ticker
-from matplotlib.colors import SymLogNorm, TwoSlopeNorm
-from numpy import Inf, abs, linspace, maximum, minimum, ndarray, round
+from matplotlib import colors
+from numpy import Inf, linspace, maximum, minimum, ndarray, round
 from pyshtools.expand import MakeGridDH
 
-from ...utils import BoundaryCondition, Direction, RunHyperParameters
+from ...utils import (
+    BoundaryCondition,
+    Direction,
+    RunHyperParameters,
+    data_Frederikse_path,
+    extract_temporal_load_signal,
+    figures_path,
+)
 
 SYMBOLS_PER_BOUNDARY_CONDITION = {BoundaryCondition.load: "'", BoundaryCondition.shear: "*", BoundaryCondition.potential: ""}
 SYMBOLS_PER_DIRECTION = {Direction.radial: "h", Direction.tangential: "l", Direction.potential: "k"}
@@ -43,9 +50,11 @@ def plot_harmonics_on_natural_projection(
     title: str,
     label: str,
     ocean_mask: ndarray[float] | float,
-    min_saturation: float,
-    max_saturation: float,
-    num_colormesh_bins: int,
+    min_saturation: Optional[float],
+    max_saturation: Optional[float],
+    decimals: int = 5,
+    logscale: bool = True,
+    figsize: tuple[int, int] = (10, 10),
 ) -> None:
     """
     Creates a world map figure of the given harmonics. Eventually exclude areas with a given mask.
@@ -53,16 +62,14 @@ def plot_harmonics_on_natural_projection(
     """
     for min_saturation_value, max_saturation_value in [[None, None], [min_saturation, max_saturation]]:
         fig = plt.figure(
-            figsize=(16, 9),
+            figsize=figsize,
         )
         ax = fig.add_subplot(1, 1, 1, projection=crs.Robinson(central_longitude=180))
-        plt.title(
-            title + (" saturated" if not (min_saturation_value is None and max_saturation_value is None) else ""), fontsize=20
-        )
+        plt.title(title + (" saturated" if not (min_saturation_value is None and max_saturation_value is None) else ""))
         ax.set_global()
-        spatial_result = round(
+        spatial_result: ndarray[float] = round(
             a=MakeGridDH(harmonics, sampling=2) * ocean_mask,
-            decimals=3,
+            decimals=decimals,
         )
         contour = ax.pcolormesh(
             linspace(start=0, stop=360, num=len(spatial_result[0])),
@@ -73,19 +80,41 @@ def plot_harmonics_on_natural_projection(
             ),
             transform=crs.PlateCarree(),
             cmap="RdBu_r",
-            # levels=num_colormesh_bins,
-            norm=SymLogNorm(linthresh=min(min(abs(spatial_result))), vcenter=0),  # TwoSlopeNorm(vcenter=0), TODO.
+            norm=(
+                colors.SymLogNorm(linthresh=0.1, linscale=1, vmin=min_saturation_value, vmax=max_saturation_value, base=10)
+                if logscale
+                else colors.TwoSlopeNorm(vcenter=0)
+            ),
         )
         ax.coastlines()
-        cbar = plt.colorbar(contour, ax=ax, orientation="horizontal", fraction=0.07)
-        tick_locator = ticker.MaxNLocator(nbins=num_colormesh_bins)
-        cbar.locator = tick_locator
-        cbar.update_ticks()
-        cbar.ax.tick_params(labelsize=14)
-        cbar.set_label(label=label, size=16)
+        cbar = plt.colorbar(contour, ax=ax, orientation="horizontal", fraction=0.06)
+        cbar.set_label(label=label)
         plt.savefig(
             figure_subpath.joinpath(
                 name + ("_saturated" if not (min_saturation_value is None and max_saturation_value is None) else "") + ".png"
             )
         )
-        plt.clf()
+        plt.close()
+
+
+def plot_temporal_load_signal(
+    figsize: tuple[int, int] = (10, 10),
+    linewidth: int = 2,
+    figure_subpath_string: str = "load_functions",
+    path: Path = data_Frederikse_path,
+    name: str = "global_basin_timeseries.csv",
+) -> None:
+    """
+    Plots The uniform elastic load signal history.
+    """
+    plt.figure(figsize=figsize)
+    dates, barystatic = extract_temporal_load_signal(path=path, name=name)
+    plt.plot(dates, barystatic, linewidth=linewidth)
+    plt.title("Load history")
+    plt.xlabel("date (y)")
+    plt.ylabel("Relative sea level rise  (mm)")
+    plt.grid()
+    figure_subpath = figures_path.joinpath(figure_subpath_string)
+    figure_subpath.mkdir(parents=True, exist_ok=True)
+    plt.savefig(figure_subpath.joinpath(path.name + ".png"))
+    plt.close()

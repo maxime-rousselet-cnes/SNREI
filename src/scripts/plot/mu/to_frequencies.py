@@ -30,6 +30,8 @@ def plot_mu_profiles_for_options_to_periods(
     T_max: float = 2.5e3,
     n_period_points: int = 100,
     options: list[RunHyperParameters] = OPTIONS[:3],
+    figsize: tuple[int, int] = (10, 10),
+    linewidth: int = 2,
 ):
     """
     Generates a figure with two plots:
@@ -53,7 +55,7 @@ def plot_mu_profiles_for_options_to_periods(
     figures_subpath = figures_path.joinpath(figure_subpath_string).joinpath(anelasticity_description.id)
     figures_subpath.mkdir(parents=True, exist_ok=True)
 
-    _, plots = plt.subplots(2, 1, figsize=(16, 9), sharex=True)
+    _, plots = plt.subplots(2, 1, figsize=figsize, sharex=True)
     # Iterates on options. A curb per loop.
     for option in options + [
         RunHyperParameters(
@@ -101,6 +103,7 @@ def plot_mu_profiles_for_options_to_periods(
                 ),
                 linestyle=linestyle,
                 label=label,
+                linewidth=linewidth,
             )
             if part == "imag":
                 plot.legend(loc="upper left")

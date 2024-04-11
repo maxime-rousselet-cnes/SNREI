@@ -73,8 +73,12 @@ class Description:
         Loads a Description instance with correctly formatted fields.
         """
         # Gets raw description.
-        description_dict: dict = load_base_model(name=self.id, path=descriptions_path)
-        self.model_part = ModelPart(description_dict["model_part"])
+        description_dict: dict = load_base_model(name=self.id, path=self.get_path())
+        self.model_part = (
+            anelasticity_descriptions_path
+            if description_dict["model_part"] is None
+            else ModelPart(description_dict["model_part"])
+        )
         # Formats attributes.
         for key, value in description_dict.items():
             setattr(self, key, value)

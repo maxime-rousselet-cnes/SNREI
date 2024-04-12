@@ -67,6 +67,8 @@ def plot_harmonics_on_natural_projection(
     negative_saturated_color: tuple[float, float, float] = SMALT_BLUE,
     positive_saturated_color: tuple[float, float, float] = VALENCIA_RED,
     zero_modified_color: tuple[float, float, float] = WHITE,
+    exp_scale_factor: float = 1.0,
+    brightness_saturation_factor: float = 0.85,
 ) -> None:
     """
     Creates a world map figure of the given harmonics. Eventually exclude areas with a given mask.
@@ -85,7 +87,7 @@ def plot_harmonics_on_natural_projection(
         )
         positive_range_colors = array(
             [
-                linspace(zero_code, positive_saturated_code, 256)
+                linspace(zero_code, positive_saturated_code * brightness_saturation_factor, 256)
                 for zero_code, positive_saturated_code in zip(zero_modified_color, positive_saturated_color)
             ]
             + [
@@ -95,14 +97,14 @@ def plot_harmonics_on_natural_projection(
         zero_modified_colors = array([list(zero_modified_color) + [1]])
         negative_range_colors = array(
             [
-                linspace(negative_saturated_code, zero_code, 255)
+                linspace(negative_saturated_code * brightness_saturation_factor, zero_code, 255)
                 for zero_code, negative_saturated_code in zip(zero_modified_color, negative_saturated_color)
             ]
             + [
                 ones(255),
             ]
         ).T
-        colorbar_values = vstack((negative_range_colors, zero_modified_colors, positive_range_colors))
+        colorbar_values = vstack((negative_range_colors, zero_modified_colors, positive_range_colors)) ** exp_scale_factor
         contour = ax.pcolormesh(
             linspace(start=0, stop=360, num=len(spatial_result[0])),
             linspace(start=90, stop=-90, num=len(spatial_result)),
@@ -121,7 +123,7 @@ def plot_harmonics_on_natural_projection(
             ),
         )
         ax.coastlines(color="grey", linewidth=2)
-        ax.add_feature(feature.LAND)
+        ax.add_feature(feature.NaturalEarthFeature("physical", "land", "50m", edgecolor="face", facecolor="grey"))
         cbar = plt.colorbar(contour, ax=ax, orientation="horizontal", fraction=0.06)
         cbar.set_label(label=label)
         plt.savefig(

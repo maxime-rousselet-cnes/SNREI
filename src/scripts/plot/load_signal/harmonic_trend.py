@@ -24,8 +24,8 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
     anelasticity_description_ids: list[str],
     load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
     options: list[RunHyperParameters] = OPTIONS,
-    min_saturation: float = -40,
-    max_saturation: float = 40,
+    min_saturation: float = -50,
+    max_saturation: float = 50,
     figsize: tuple[int, int] = (10, 10),
     ndigits: int = 3,
 ) -> None:

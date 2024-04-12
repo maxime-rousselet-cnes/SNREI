@@ -172,6 +172,7 @@ class LoadSignalHyperParameters(HyperParameters):
     # Trend parameters.
     first_year_for_trend: int
     last_year_for_trend: int
+    unit_factor: int
 
     # Run parameters.
     run_hyper_parameters: Optional[str] | RunHyperParameters

@@ -1,4 +1,3 @@
-from itertools import product
 from typing import Optional
 
 import matplotlib.pyplot as plt
@@ -14,7 +13,7 @@ from ....utils import (
     frequencies_to_periods,
     load_Love_numbers_hyper_parameters,
 )
-from ..utils import option_linestyle, options_label
+from ..utils import option_color, options_label
 
 
 def plot_mu_profiles_for_options_to_periods(
@@ -62,16 +61,8 @@ def plot_mu_profiles_for_options_to_periods(
             use_long_term_anelasticity=False, use_short_term_anelasticity=False, use_bounded_attenuation_functions=False
         )
     ]:
-        label = (
-            "elastic"
-            if (not option.use_long_term_anelasticity and not option.use_short_term_anelasticity)
-            else (options_label(option=option))
-        )
-        linestyle = (
-            "-"
-            if (not option.use_long_term_anelasticity and not option.use_short_term_anelasticity)
-            else option_linestyle(option=option)
-        )
+        label = options_label(option=option)
+        color = option_color(option=option)
         mu = {
             "real": zeros(shape=frequencies.shape, dtype=float),
             "imag": zeros(shape=frequencies.shape, dtype=float),
@@ -96,12 +87,7 @@ def plot_mu_profiles_for_options_to_periods(
             plot.plot(
                 period_values,
                 mu[part],
-                color=(
-                    0.0,
-                    0.0,
-                    1.0,
-                ),
-                linestyle=linestyle,
+                color=color,
                 label=label,
                 linewidth=linewidth,
             )
@@ -113,6 +99,6 @@ def plot_mu_profiles_for_options_to_periods(
         plot.set_xlabel("Period (y)")
     plot.set_xscale("log")
     plot.set_yscale("symlog")
-    plt.suptitle("$\mu_0 / \mu$", fontsize=20)
+    plt.suptitle("$\mu_0 / \mu$")
     plt.savefig(figures_subpath.joinpath("mu_on_mu_0.png"))
     plt.clf()

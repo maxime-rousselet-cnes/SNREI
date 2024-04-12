@@ -100,7 +100,9 @@ def build_elastic_load_signal(
         frequencial_elastic_load_signal = fft(x=temporal_elastic_load_signal)
         frequencies = fftfreq(n=len(frequencial_elastic_load_signal), d=time_step)
         if load_signal_hyper_parameters.weights_map == "GRACE":
-            map = extract_trends_GRACE(name=load_signal_hyper_parameters.GRACE)
+            map = extract_trends_GRACE(
+                name=load_signal_hyper_parameters.GRACE, load_signal_hyper_parameters=load_signal_hyper_parameters
+            )
         else:
             map = map_normalizing(
                 map=(

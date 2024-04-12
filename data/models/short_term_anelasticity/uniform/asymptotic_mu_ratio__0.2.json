@@ -1,0 +1,1 @@
+{"layer_names": ["MANTLE"], "r_limits": [3480000.0, 6371000.0], "variable_names": ["Q_mu", "omega_m", "alpha", "tau_M", "asymptotic_mu_ratio"], "crust_values": {"Q_mu": null, "omega_m": null, "alpha": null, "tau_M": null, "asymptotic_mu_ratio": null}, "polynomials": {"Q_mu": [[312.0]], "omega_m": [[0.000309]], "alpha": [[0.25]], "tau_M": [[0.0]], "asymptotic_mu_ratio": [[0.2]]}}

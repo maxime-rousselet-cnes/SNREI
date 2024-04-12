@@ -2,9 +2,9 @@ from pathlib import Path
 from typing import Optional
 
 import matplotlib.pyplot as plt
-from cartopy import crs
+from cartopy import crs, feature
 from matplotlib import colors
-from numpy import Inf, linspace, maximum, minimum, ndarray, round
+from numpy import Inf, array, linspace, maximum, minimum, ndarray, ones, round, vstack
 from pyshtools.expand import MakeGridDH
 
 from ...utils import (
@@ -18,16 +18,25 @@ from ...utils import (
 
 SYMBOLS_PER_BOUNDARY_CONDITION = {BoundaryCondition.load: "'", BoundaryCondition.shear: "*", BoundaryCondition.potential: ""}
 SYMBOLS_PER_DIRECTION = {Direction.radial: "h", Direction.tangential: "l", Direction.potential: "k"}
+SMALT_BLUE = (0.0, 79.0 / 255.0, 145.0 / 255.0)
+VALENCIA_RED = (217.0 / 255.0, 80.0 / 255.0, 70.0 / 255.0)
+MOON_YELLOW = (236.0 / 255.0, 174.0 / 255.0, 24.0 / 255.0)
+KELLY_GREEN = (66.0 / 255.0, 142.0 / 255.0, 14.0 / 255.0)
+WHITE = (255.0 / 255.0, 255.0 / 255.0, 255.0 / 255.0)
 
 
-def option_linestyle(option: RunHyperParameters) -> str:
+def option_color(option: RunHyperParameters) -> str:
     """
     Chose a linestyle for the given run option.
     """
     return (
-        ":"
-        if option.use_long_term_anelasticity and not option.use_short_term_anelasticity
-        else ("--" if not option.use_long_term_anelasticity else "-.")
+        SMALT_BLUE
+        if (not option.use_long_term_anelasticity) and (not option.use_short_term_anelasticity)
+        else (
+            KELLY_GREEN
+            if not option.use_long_term_anelasticity
+            else (MOON_YELLOW if not option.use_short_term_anelasticity else VALENCIA_RED)
+        )
     )
 
 
@@ -52,9 +61,12 @@ def plot_harmonics_on_natural_projection(
     ocean_mask: ndarray[float] | float,
     min_saturation: Optional[float],
     max_saturation: Optional[float],
-    decimals: int = 5,
+    decimals: int = 4,
     logscale: bool = True,
     figsize: tuple[int, int] = (10, 10),
+    negative_saturated_color: tuple[float, float, float] = SMALT_BLUE,
+    positive_saturated_color: tuple[float, float, float] = VALENCIA_RED,
+    zero_modified_color: tuple[float, float, float] = WHITE,
 ) -> None:
     """
     Creates a world map figure of the given harmonics. Eventually exclude areas with a given mask.
@@ -71,6 +83,26 @@ def plot_harmonics_on_natural_projection(
             a=MakeGridDH(harmonics, sampling=2) * ocean_mask,
             decimals=decimals,
         )
+        positive_range_colors = array(
+            [
+                linspace(zero_code, positive_saturated_code, 256)
+                for zero_code, positive_saturated_code in zip(zero_modified_color, positive_saturated_color)
+            ]
+            + [
+                ones(256),
+            ]
+        ).T
+        zero_modified_colors = array([list(zero_modified_color) + [1]])
+        negative_range_colors = array(
+            [
+                linspace(negative_saturated_code, zero_code, 255)
+                for zero_code, negative_saturated_code in zip(zero_modified_color, negative_saturated_color)
+            ]
+            + [
+                ones(255),
+            ]
+        ).T
+        colorbar_values = vstack((negative_range_colors, zero_modified_colors, positive_range_colors))
         contour = ax.pcolormesh(
             linspace(start=0, stop=360, num=len(spatial_result[0])),
             linspace(start=90, stop=-90, num=len(spatial_result)),
@@ -79,14 +111,17 @@ def plot_harmonics_on_natural_projection(
                 minimum(Inf if max_saturation_value is None else max_saturation_value, spatial_result),
             ),
             transform=crs.PlateCarree(),
-            cmap="RdBu_r",
+            cmap=colors.LinearSegmentedColormap.from_list(
+                name="two_solopes_colorbar_grey_zero", colors=colorbar_values
+            ),  # "RdBu_r",
             norm=(
                 colors.SymLogNorm(linthresh=0.1, linscale=1, vmin=min_saturation_value, vmax=max_saturation_value, base=10)
                 if logscale
                 else colors.TwoSlopeNorm(vcenter=0)
             ),
         )
-        ax.coastlines()
+        ax.coastlines(color="grey", linewidth=2)
+        ax.add_feature(feature.LAND)
         cbar = plt.colorbar(contour, ax=ax, orientation="horizontal", fraction=0.06)
         cbar.set_label(label=label)
         plt.savefig(

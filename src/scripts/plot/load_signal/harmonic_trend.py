@@ -24,10 +24,10 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
     anelasticity_description_ids: list[str],
     load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
     options: list[RunHyperParameters] = OPTIONS,
-    min_saturation: float = -4.0,
-    max_saturation: float = 4.0,
-    num_colormesh_bins: int = 10,
+    min_saturation: float = -40,
+    max_saturation: float = 40,
     figsize: tuple[int, int] = (10, 10),
+    ndigits: int = 3,
 ) -> None:
     """
     Generates figures showing the anelastic induced spatial load signal trend for given descriptions and options:
@@ -107,10 +107,10 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 figure_subpath=figure_subpath,
                 name=load_signal_hyper_parameters.weights_map + "_load_signal_trend",
                 title=load_signal_hyper_parameters.weights_map + " load signal trend",
-                label="(cm/y): ocean mean = " + str(round(number=ocean_means["elastic"], ndigits=4)),
+                label="(mm/yr): ocean mean = " + str(round(number=ocean_means["elastic"], ndigits=ndigits)),
                 ocean_mask=ocean_mask,
-                min_saturation=-5.0,
-                max_saturation=5.0,
+                min_saturation=-50,
+                max_saturation=50,
                 logscale=False,
                 figsize=figsize,
             )
@@ -125,7 +125,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 title=load_signal_hyper_parameters.weights_map
                 + " anelastic induced load signal trend since "
                 + str(load_signal_hyper_parameters.first_year_for_trend),
-                label="(cm/y): ocean mean = " + str(round(number=ocean_means["anelastic"], ndigits=4)),
+                label="(mm/yr): ocean mean = " + str(round(number=ocean_means["anelastic"], ndigits=ndigits)),
                 ocean_mask=ocean_mask,
                 min_saturation=min_saturation,
                 max_saturation=max_saturation,
@@ -143,7 +143,8 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 title=load_signal_hyper_parameters.weights_map
                 + " anelastic induced load signal trend difference with elastic since "
                 + str(load_signal_hyper_parameters.first_year_for_trend),
-                label="(cm/y): ocean mean = " + str(round(number=ocean_means["anelastic"] - ocean_means["elastic"], ndigits=4)),
+                label="(mm/yr): ocean mean = "
+                + str(round(number=ocean_means["anelastic"] - ocean_means["elastic"], ndigits=ndigits)),
                 ocean_mask=ocean_mask,
                 min_saturation=min_saturation,
                 max_saturation=max_saturation,

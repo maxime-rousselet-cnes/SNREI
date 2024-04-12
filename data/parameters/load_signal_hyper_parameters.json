@@ -9,5 +9,6 @@
     "ocean_mask": "",
     "first_year_for_trend": 2003,
     "last_year_for_trend": 2024,
+    "unit_factor": 10,
     "run_hyper_parameters": "run_hyper_parameters"
 }

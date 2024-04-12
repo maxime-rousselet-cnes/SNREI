@@ -21,6 +21,11 @@
         "asymptotic_mu_ratio": null
     },
     "polynomials": {
+        "Q_mu": [
+            [
+                312
+            ]
+        ],
         "omega_m": [
             [
                 0.000309

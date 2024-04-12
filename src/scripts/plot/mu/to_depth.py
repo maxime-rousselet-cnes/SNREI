@@ -13,7 +13,7 @@ from ....utils import (
     frequencies_to_periods,
     load_Love_numbers_hyper_parameters,
 )
-from ..utils import option_linestyle, options_label
+from ..utils import option_color, options_label
 
 
 def plot_mu_profiles_for_options_for_periods_to_depth(
@@ -70,16 +70,8 @@ def plot_mu_profiles_for_options_for_periods_to_depth(
                     use_short_term_anelasticity=option.use_short_term_anelasticity,
                     use_bounded_attenuation_functions=option.use_bounded_attenuation_functions,
                 )
-                label = (
-                    "elastic"
-                    if (not option.use_long_term_anelasticity and not option.use_short_term_anelasticity)
-                    else (options_label(option=option))
-                )
-                linestyle = (
-                    "-"
-                    if (not option.use_long_term_anelasticity and not option.use_short_term_anelasticity)
-                    else option_linestyle(option=option)
-                )
+                label = options_label(option=option)
+                color = option_color(option=option)
                 # Iterates on layers.
                 for k_layer in range(anelasticity_description.below_CMB_layers, len(integration.description_layers)):
                     layer = integration.description_layers[k_layer]
@@ -89,25 +81,15 @@ def plot_mu_profiles_for_options_for_periods_to_depth(
                         plot.plot(
                             layer.evaluate(x=x, variable="mu_" + part) * anelasticity_description.elasticity_unit,
                             (1.0 - x) * anelasticity_description.radius_unit / 1e3,
-                            color=(
-                                0.0,
-                                0.0,
-                                1.0,
-                            ),
+                            color=color,
                             label=label,
-                            linestyle=linestyle,
                             linewidth=linewidth,
                         )
                     else:
                         plot.plot(
                             layer.evaluate(x=x, variable="mu_" + part) * anelasticity_description.elasticity_unit,
                             (1.0 - x) * anelasticity_description.radius_unit / 1e3,
-                            color=(
-                                0.0,
-                                0.0,
-                                1.0,
-                            ),
-                            linestyle=linestyle,
+                            color=color,
                             linewidth=linewidth,
                         )
             if frequency == frequencies[0] and legend:

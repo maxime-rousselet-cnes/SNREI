@@ -21,7 +21,7 @@ from ...utils import (
 from .utils import (
     SYMBOLS_PER_BOUNDARY_CONDITION,
     SYMBOLS_PER_DIRECTION,
-    option_linestyle,
+    option_color,
     options_label,
 )
 
@@ -37,7 +37,7 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
     T_min_zoom_in: float = 1.0,  # (y)
     T_max_zoom_in: float = 2.5e3,  # (y)
     # Should have as many elements as 'degrees_to_plot'.
-    degrees_colors: list[tuple[float, float, float]] = [(0.0, 0.0, 1.0), (1.0, 0.0, 0.0)],
+    degrees_linestyles: list[str] = [":", "-"],
     figsize: tuple[int, int] = (10, 10),
     linewidth: int = 2,
     legend: bool = True,
@@ -100,7 +100,7 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
                     ):
                         elastic_values = elastic_results[anelasticity_description_id].values[direction][boundary_condition]
                         for i_degree, degree in zip(degrees_indices, degrees_to_plot):
-                            color = degrees_colors[degrees_to_plot.index(degree)]
+                            linestyle = degrees_linestyles[degrees_to_plot.index(degree)]
                             for option in options:
                                 # Gets corresponding data.
                                 complex_result_values = anelastic_results[
@@ -117,7 +117,7 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
                                 min_frequency_index = -1 if not zoom_in else where(T >= T_min_zoom_in)[0][-1]
                                 max_frequency_index = 0 if not zoom_in else where(T <= T_max_zoom_in)[0][0]
                                 # Plots.
-                                linestyle = option_linestyle(option=option)
+                                color = option_color(option=option)
                                 result_values = (
                                     real(complex_result_values[i_degree])
                                     if part == "real"
@@ -147,7 +147,7 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
                     plot.set_xscale("log")
                 if legend:
                     plot.legend()
-                plt.suptitle("$" + symbol + "/" + symbol + "^E$", fontsize=20)
+                plt.suptitle("$" + symbol + "/" + symbol + "^E$")
                 # Saves.
                 plt.savefig(figure_subpath.joinpath(symbol + (" zoom in " if zoom_in else "") + ".png"))
                 plt.close()

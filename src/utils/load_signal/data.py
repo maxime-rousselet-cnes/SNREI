@@ -6,7 +6,13 @@ from numpy import array, expand_dims, flip, ndarray, ones, prod, round, unique
 from pandas import read_csv
 from pyshtools.expand import MakeGridDH, SHExpandDH
 
-from ..classes import data_Frederikse_path, data_masks_path, data_trends_GRACE_path
+from ..classes import (
+    LoadSignalHyperParameters,
+    data_Frederikse_path,
+    data_masks_path,
+    data_trends_GRACE_path,
+    load_load_signal_hyper_parameters,
+)
 
 
 def extract_temporal_load_signal(
@@ -97,14 +103,19 @@ def extract_mask_nc(path: Path = data_masks_path, name: str = "IMERG_land_sea_ma
 
 
 def extract_trends_GRACE(
-    path: Path = data_trends_GRACE_path, name: str = "GRACE(-FO)_MSSA_corrected_for_leakage_2003_2022.xyz"
+    path: Path = data_trends_GRACE_path,
+    name: str = "GRACE(-FO)_MSSA_corrected_for_leakage_2003_2022.xyz",
+    load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
 ) -> ndarray:
     """
     Opens and formats GRACE trends CSV datafile.
     """
     # Gets raw data.
     df = read_csv(filepath_or_buffer=path.joinpath(name), skiprows=3 if name.split(".")[-1] == "xyz" else 11, sep=";")
-    return flip(m=[[value for value in df["EWH"][df["lat"] == lat]] for lat in unique(ar=df["lat"])], axis=0)[1:, 1:]
+    return (
+        load_signal_hyper_parameters.unit_factor
+        * flip(m=[[value for value in df["EWH"][df["lat"] == lat]] for lat in unique(ar=df["lat"])], axis=0)[1:, 1:]
+    )
 
 
 def extract_mask_csv(path: Path = data_masks_path, name: str = "ocean_mask_buffer_coast_300km_eq_removed_0_360.csv") -> ndarray:

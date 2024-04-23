@@ -21,6 +21,7 @@ from .paths import (
     descriptions_base_path,
     figures_path,
     models_path,
+    parameters_path,
     results_path,
 )
 from .result import BoundaryCondition, Direction, Result
@@ -47,6 +48,7 @@ from .result import BoundaryCondition, Direction, Result
     descriptions_base_path,
     figures_path,
     models_path,
+    parameters_path,
     results_path,
     BoundaryCondition,
     Direction,

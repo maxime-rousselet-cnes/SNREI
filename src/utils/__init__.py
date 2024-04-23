@@ -18,9 +18,15 @@ from .classes import (
     load_load_signal_hyper_parameters,
     load_Love_numbers_hyper_parameters,
     models_path,
+    parameters_path,
     results_path,
 )
-from .database import get_run_folder_name, load_base_model, save_base_model
+from .database import (
+    generate_degrees_list,
+    get_run_folder_name,
+    load_base_model,
+    save_base_model,
+)
 from .load_signal import (
     anelastic_harmonic_induced_load_signal,
     anelastic_induced_load_signal_per_degree,
@@ -36,7 +42,9 @@ from .load_signal import (
 )
 from .Love_numbers import (
     Love_numbers_for_options_for_models_for_parameters,
+    anelastic_Love_numbers_computing,
     create_model_variation,
+    elastic_Love_numbers_computing,
     interpolate_Love_numbers,
 )
 from .rheological_formulas import find_tau_M, frequencies_to_periods
@@ -72,13 +80,17 @@ from .rheological_formulas import find_tau_M, frequencies_to_periods
     ocean_mean,
     signal_trend,
     Love_numbers_for_options_for_models_for_parameters,
+    anelastic_Love_numbers_computing,
     create_model_variation,
+    elastic_Love_numbers_computing,
     interpolate_Love_numbers,
     data_Frederikse_path,
     descriptions_base_path,
     figures_path,
     models_path,
+    parameters_path,
     results_path,
+    generate_degrees_list,
     find_tau_M,
     frequencies_to_periods,
 ]

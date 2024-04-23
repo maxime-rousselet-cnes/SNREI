@@ -9,8 +9,9 @@ from ..classes import (
     Integration,
     Result,
     YSystemHyperParameters,
+    parameters_path,
 )
-from ..database import save_base_model
+from ..database import generate_degrees_list, load_base_model, save_base_model
 
 
 def save_frequencies(log_frequency_values: ndarray[float], frequency_unit: float, path: Path) -> None:
@@ -140,9 +141,11 @@ def anelastic_Love_number_computing_per_degree_function(
 
 
 def elastic_Love_numbers_computing(
-    y_system_hyper_parameters: YSystemHyperParameters,
-    degrees: list[int],
     anelasticity_description: AnelasticityDescription,
+    degrees: list[int],
+    y_system_hyper_parameters: YSystemHyperParameters = load_base_model(
+        name="Y_system_hyper_parameters", path=parameters_path, base_model_type=YSystemHyperParameters
+    ),
 ) -> ndarray:
     """
     Performs Love numbers computing (n) for elastic case with given anelasticity description and hyper-parameters.
@@ -153,18 +156,20 @@ def elastic_Love_numbers_computing(
         """
         To multiprocess. Returns Love numbers array for a given degree.
         """
-        return [
-            Integration(
-                anelasticity_description=anelasticity_description,
-                log_frequency=Inf,
-                use_long_term_anelasticity=False,
-                use_short_term_anelasticity=False,
-                use_bounded_attenuation_functions=False,
-            ).y_system_integration(
-                n=n,
-                hyper_parameters=y_system_hyper_parameters,
-            )
-        ]
+        return array(
+            object=[
+                Integration(
+                    anelasticity_description=anelasticity_description,
+                    log_frequency=Inf,
+                    use_long_term_anelasticity=False,
+                    use_short_term_anelasticity=False,
+                    use_bounded_attenuation_functions=False,
+                ).y_system_integration(
+                    n=n,
+                    hyper_parameters=y_system_hyper_parameters,
+                )
+            ]
+        )
 
     with Pool() as p:  # Processes for degrees.
-        return array(p.map(func=elastic_Love_number_computing_per_degree, iterable=degrees))
+        return array(object=p.map(func=elastic_Love_number_computing_per_degree, iterable=degrees))

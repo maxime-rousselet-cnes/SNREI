@@ -3,11 +3,13 @@ from typing import Optional
 from numpy import Inf, array, min, ndarray, round
 from scipy import interpolate
 
+from ...database import load_base_model
 from ...rheological_formulas import find_tau_M, mu_k_computing
 from ..constants import SECONDS_PER_YEAR
 from ..description_layer import DescriptionLayer
 from ..hyper_parameters import AnelasticityDescriptionParameters
 from ..model import ModelPart
+from ..paths import parameters_path
 from .description import Description, Spline
 from .elasticity_description import ElasticityDescription
 
@@ -82,7 +84,9 @@ class AnelasticityDescription(Description):
 
     def __init__(
         self,
-        anelasticity_description_parameters: AnelasticityDescriptionParameters,
+        anelasticity_description_parameters: AnelasticityDescriptionParameters = load_base_model(
+            name="anelasticity_description_parameters", path=parameters_path, base_model_type=AnelasticityDescriptionParameters
+        ),
         load_description: bool = False,
         id: Optional[str] = None,
         save: bool = True,

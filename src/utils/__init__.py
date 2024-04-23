@@ -45,6 +45,7 @@ from .Love_numbers import (
     anelastic_Love_numbers_computing,
     create_model_variation,
     elastic_Love_numbers_computing,
+    generate_log_frequency_initial_values,
     interpolate_Love_numbers,
 )
 from .rheological_formulas import find_tau_M, frequencies_to_periods
@@ -83,6 +84,7 @@ from .rheological_formulas import find_tau_M, frequencies_to_periods
     anelastic_Love_numbers_computing,
     create_model_variation,
     elastic_Love_numbers_computing,
+    generate_log_frequency_initial_values,
     interpolate_Love_numbers,
     data_Frederikse_path,
     descriptions_base_path,

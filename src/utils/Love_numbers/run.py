@@ -11,7 +11,7 @@ from ..classes import (
     YSystemHyperParameters,
     parameters_path,
 )
-from ..database import generate_degrees_list, load_base_model, save_base_model
+from ..database import load_base_model, save_base_model
 
 
 def save_frequencies(log_frequency_values: ndarray[float], frequency_unit: float, path: Path) -> None:

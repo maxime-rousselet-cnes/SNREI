@@ -87,7 +87,7 @@ def Love_numbers_for_options_for_models_for_parameters(
     for model_part, model_names in zip(
         ModelPart, [elasticity_model_names, long_term_anelasticity_model_names, short_term_anelasticity_model_names]
     ):
-        if not (model_part in parameters.keys()):
+        if parameters[model_part] == {}:
             model_filenames[model_part] = model_names
         else:
             filename_variations: ndarray = concatenate(

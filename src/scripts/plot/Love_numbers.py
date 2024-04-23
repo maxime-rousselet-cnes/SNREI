@@ -42,6 +42,8 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
     linewidth: int = 2,
     legend: bool = True,
     model_numbers_only: bool = True,
+    title_fontsize: int = 20,
+    grid: bool = True,
 ):
     """
     Generates figures of Love numbers.
@@ -134,7 +136,8 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
                                     linewidth=linewidth,
                                 )
                         # Layout.
-                        plot.grid()
+                        if grid:
+                            plot.grid()
                         if part == "real":
                             plot.set_title(
                                 "Model "
@@ -149,9 +152,9 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
                             plot.set_ylabel(part + " part")
                         if part == "imaginary":
                             plot.set_xlabel("T (y)")
-                if legend:
-                    plot.legend()
-                plt.suptitle("$" + symbol + "/" + symbol + "^E$")
+                        if legend and part == "imaginary" and anelasticity_description_id == anelasticity_description_ids[0]:
+                            plot.legend()
+                plt.suptitle("$" + symbol + "/" + symbol + "^E$", fontsize=title_fontsize)
                 # Saves.
                 plt.savefig(figure_subpath.joinpath(symbol + (" zoom in " if zoom_in else "") + ".png"))
                 plt.close()
@@ -171,6 +174,8 @@ def plot_Love_numbers_for_options_per_description_per_type(
     linewidth: int = 2,
     legend: bool = True,
     model_numbers_only: bool = True,
+    title_fontsize: int = 20,
+    grid: bool = True,
 ):
     """
     Generates figures of Love numbers.
@@ -197,4 +202,6 @@ def plot_Love_numbers_for_options_per_description_per_type(
             linewidth=linewidth,
             legend=legend,
             model_numbers_only=model_numbers_only,
+            title_fontsize=title_fontsize,
+            grid=grid,
         )

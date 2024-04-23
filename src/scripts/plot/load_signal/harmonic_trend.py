@@ -28,6 +28,9 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
     max_saturation: float = 50,
     figsize: tuple[int, int] = (10, 10),
     ndigits: int = 3,
+    exp_scale_factor: float = 1.0,
+    saturation_factor: float = 1.0,
+    continents: bool = False,
 ) -> None:
     """
     Generates figures showing the anelastic induced spatial load signal trend for given descriptions and options:
@@ -85,7 +88,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                             )[0]
 
             # Preprocesses ocean mask.
-            ocean_mask = get_ocean_mask(name=load_signal_hyper_parameters.ocean_mask, n_max=n_max)
+            ocean_mask = 1.0 if continents else get_ocean_mask(name=load_signal_hyper_parameters.ocean_mask, n_max=n_max)
             # Saves ocean rise mean trend.
             ocean_means = {
                 earth_model: ocean_mean(harmonics=load_signal_harmonic_trends[earth_model], ocean_mask=ocean_mask)
@@ -109,10 +112,13 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 title=load_signal_hyper_parameters.weights_map + " load signal trend",
                 label="(mm/yr): ocean mean = " + str(round(number=ocean_means["elastic"], ndigits=ndigits)),
                 ocean_mask=ocean_mask,
-                min_saturation=-50,
-                max_saturation=50,
+                min_saturation=min_saturation,
+                max_saturation=max_saturation,
                 logscale=False,
                 figsize=figsize,
+                exp_scale_factor=1.0,
+                saturation_factor=1.3,
+                continents=continents,
             )
 
             # Output anelastic spatial load signal trend.
@@ -131,6 +137,9 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 max_saturation=max_saturation,
                 logscale=True,
                 figsize=figsize,
+                exp_scale_factor=exp_scale_factor,
+                saturation_factor=saturation_factor,
+                continents=continents,
             )
 
             # Differences between elastic and anelastic spatial load signal trend.
@@ -150,6 +159,9 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 max_saturation=max_saturation,
                 logscale=True,
                 figsize=figsize,
+                exp_scale_factor=exp_scale_factor,
+                saturation_factor=saturation_factor,
+                continents=continents,
             )
 
             # Load bar.

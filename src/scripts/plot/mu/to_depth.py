@@ -30,6 +30,7 @@ def plot_mu_profiles_for_options_for_periods_to_depth(
     figsize: tuple[int, int] = (10, 10),
     linewidth: int = 2,
     legend: bool = True,
+    grid: bool = True,
 ) -> None:
     """
     Generates 2 figures:
@@ -95,7 +96,8 @@ def plot_mu_profiles_for_options_for_periods_to_depth(
             if frequency == frequencies[0] and legend:
                 plot.legend()
             plot.set_xlabel("$\mu_{" + part + "}$ (Pa)")
-            plot.grid()
+            if grid:
+                plot.grid()
             # plot.set_xscale("log")
             plot.set_title("$T=" + str(period) + "$ (y)")
         plot.set_ylabel("Depth (km)")
@@ -113,6 +115,7 @@ def plot_mu_profiles_for_options_for_periods_to_depth_per_description(
     figsize: tuple[int, int] = (10, 10),
     linewidth: int = 2,
     legend: bool = True,
+    grid: bool = True,
 ) -> None:
     """
     Generates 2 figures per description ID:
@@ -132,4 +135,5 @@ def plot_mu_profiles_for_options_for_periods_to_depth_per_description(
             figsize=figsize,
             linewidth=linewidth,
             legend=legend,
+            grid=grid,
         )

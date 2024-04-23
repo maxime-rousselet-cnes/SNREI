@@ -4,7 +4,18 @@ from typing import Optional
 import matplotlib.pyplot as plt
 from cartopy import crs, feature
 from matplotlib import colors
-from numpy import Inf, array, linspace, maximum, minimum, ndarray, ones, round, vstack
+from numpy import (
+    Inf,
+    array,
+    concatenate,
+    linspace,
+    maximum,
+    minimum,
+    ndarray,
+    ones,
+    round,
+    vstack,
+)
 from pyshtools.expand import MakeGridDH
 
 from ...utils import (
@@ -44,10 +55,14 @@ def options_label(option: RunHyperParameters) -> str:
     """
     Builds a label string corresponding to the given run option.
     """
-    return " ".join(
-        (
-            "with long-term visc." if option.use_long_term_anelasticity else "",
-            "with short-term visc." if option.use_short_term_anelasticity else "",
+    return (
+        "elastic"
+        if (not option.use_long_term_anelasticity) and (not option.use_short_term_anelasticity)
+        else " ".join(
+            (
+                "with long-term visc." if option.use_long_term_anelasticity else "",
+                "with short-term visc." if option.use_short_term_anelasticity else "",
+            )
         )
     )
 
@@ -68,7 +83,8 @@ def plot_harmonics_on_natural_projection(
     positive_saturated_color: tuple[float, float, float] = VALENCIA_RED,
     zero_modified_color: tuple[float, float, float] = WHITE,
     exp_scale_factor: float = 1.0,
-    brightness_saturation_factor: float = 0.85,
+    saturation_factor: float = 1.0,
+    continents: bool = False,
 ) -> None:
     """
     Creates a world map figure of the given harmonics. Eventually exclude areas with a given mask.
@@ -87,24 +103,27 @@ def plot_harmonics_on_natural_projection(
         )
         positive_range_colors = array(
             [
-                linspace(zero_code, positive_saturated_code * brightness_saturation_factor, 256)
+                linspace(zero_code, positive_saturated_code, 256)
                 for zero_code, positive_saturated_code in zip(zero_modified_color, positive_saturated_color)
             ]
-            + [
-                ones(256),
-            ]
         ).T
-        zero_modified_colors = array([list(zero_modified_color) + [1]])
+        zero_modified_colors = array([list(zero_modified_color)])
         negative_range_colors = array(
             [
-                linspace(negative_saturated_code * brightness_saturation_factor, zero_code, 255)
+                linspace(negative_saturated_code, zero_code, 255)
                 for zero_code, negative_saturated_code in zip(zero_modified_color, negative_saturated_color)
             ]
-            + [
-                ones(255),
-            ]
         ).T
-        colorbar_values = vstack((negative_range_colors, zero_modified_colors, positive_range_colors)) ** exp_scale_factor
+        colorbar_values = maximum(
+            0.0,
+            minimum(
+                1.0,
+                colors.hsv_to_rgb(
+                    colors.rgb_to_hsv(vstack((negative_range_colors, zero_modified_colors, positive_range_colors)))
+                    * array(object=[[1.0, saturation_factor, exp_scale_factor]])
+                ),
+            ),
+        )
         contour = ax.pcolormesh(
             linspace(start=0, stop=360, num=len(spatial_result[0])),
             linspace(start=90, stop=-90, num=len(spatial_result)),
@@ -114,7 +133,7 @@ def plot_harmonics_on_natural_projection(
             ),
             transform=crs.PlateCarree(),
             cmap=colors.LinearSegmentedColormap.from_list(
-                name="two_solopes_colorbar_grey_zero", colors=colorbar_values
+                name="two_solopes_colorbar_grey_zero", colors=concatenate((colorbar_values, ones(shape=(512, 1))), axis=1)
             ),  # "RdBu_r",
             norm=(
                 colors.SymLogNorm(linthresh=0.1, linscale=1, vmin=min_saturation_value, vmax=max_saturation_value, base=10)
@@ -123,7 +142,8 @@ def plot_harmonics_on_natural_projection(
             ),
         )
         ax.coastlines(color="grey", linewidth=2)
-        ax.add_feature(feature.NaturalEarthFeature("physical", "land", "50m", edgecolor="face", facecolor="grey"))
+        if not continents:
+            ax.add_feature(feature.NaturalEarthFeature("physical", "land", "50m", edgecolor="face", facecolor="grey"))
         cbar = plt.colorbar(contour, ax=ax, orientation="horizontal", fraction=0.06)
         cbar.set_label(label=label)
         plt.savefig(

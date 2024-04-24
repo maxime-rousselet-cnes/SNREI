@@ -1,10 +1,21 @@
 from json import JSONEncoder, dump, load
-from os import symlink
+from os import remove
+from os import symlink as base_symlink
+from os.path import exists
 from pathlib import Path
 from typing import Any, Optional
 
 from numpy import arange, concatenate, ndarray
 from pydantic import BaseModel
+
+
+def symlink(src, dst):
+    """
+    Creates a Symlink, eventually remove a previously existing one.
+    """
+    if exists(path=dst):
+        remove(dst)
+    base_symlink(src=src, dst=dst)
 
 
 def symlinkfolder(src: Path, dst: Path) -> None:

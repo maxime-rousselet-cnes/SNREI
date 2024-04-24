@@ -1,5 +1,4 @@
 from itertools import product
-from os import symlink
 from typing import Optional
 
 from numpy import concatenate, ndarray
@@ -16,7 +15,7 @@ from ..classes import (
     models_path,
     results_path,
 )
-from ..database import load_base_model, save_base_model, symlinkfolder
+from ..database import load_base_model, save_base_model, symlink, symlinkfolder
 from .single import Love_numbers_from_models_for_options
 
 
@@ -87,7 +86,7 @@ def Love_numbers_for_options_for_models_for_parameters(
     for model_part, model_names in zip(
         ModelPart, [elasticity_model_names, long_term_anelasticity_model_names, short_term_anelasticity_model_names]
     ):
-        if parameters[model_part] == {}:
+        if (not model_part in parameters.keys()) or (parameters[model_part] == {}):
             model_filenames[model_part] = model_names
         else:
             filename_variations: ndarray = concatenate(
@@ -159,7 +158,8 @@ def Love_numbers_for_options_for_models_for_parameters(
                 do_elastic_case=do_elastic_case,
             )
         ]
-        # Symlinks.
+
+    # Symlinks.
     if forced_anelasticity_description_id is None:
         for elasticity_model_name, long_term_anelasticity_model_name, short_term_anelasticity_model_name in product(
             model_filenames[ModelPart.elasticity],

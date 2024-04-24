@@ -56,7 +56,7 @@ def erase_area(
     )
 
 
-def extract_mask_nc(path: Path = data_masks_path, name: str = "IMERG_land_sea_mask.nc") -> ndarray:
+def extract_mask_nc(path: Path = data_masks_path, name: str = "IMERG_land_sea_mask.nc", pixels_to_coast: int = 10) -> ndarray:
     """
     Opens NASA's nc file for land/sea mask and formats its data.
     """
@@ -98,7 +98,7 @@ def extract_mask_nc(path: Path = data_masks_path, name: str = "IMERG_land_sea_ma
         max_longitude=60.937192,
     )
     # Dilates continents (100km).
-    map = erode(map, ones(shape=(3, 3)), iterations=10)
+    map = erode(map, ones(shape=(3, 3)), iterations=pixels_to_coast)
     return map
 
 

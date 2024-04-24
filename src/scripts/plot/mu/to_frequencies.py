@@ -1,7 +1,7 @@
 from typing import Optional
 
 import matplotlib.pyplot as plt
-from numpy import linspace, log10, zeros
+from numpy import concatenate, linspace, log10, ndarray, zeros
 
 from ....utils import (
     OPTIONS,
@@ -25,21 +25,25 @@ def plot_mu_profiles_for_options_to_periods(
     Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_Love_numbers_hyper_parameters(),
     overwrite_descriptions: bool = False,
     figure_subpath_string: str = "mu/to_periods",
-    T_min: float = 1.0,
+    layer_name: str = "LVZ__ASTHENOSPHERE__LVZ",
+    T_min: float = 0.5,
     T_max: float = 2.5e3,
     n_period_points: int = 100,
     options: list[RunHyperParameters] = OPTIONS[:3],
     figsize: tuple[int, int] = (10, 10),
     linewidth: int = 2,
+    legend: bool = True,
+    grid: bool = True,
+    periods_to_print: list[float] = [1.0, 3.0, 10.0, 30.0, 100.0, 300.0, 1000.0],
 ):
     """
     Generates a figure with two plots:
-        - mu/mu_0 real part.
-        - mu/mu_0 imaginary part.
-    Each figure has a plot per period value and shows mu with respect to depth. Inverted axis.
+        - mu_0 / mu real part.
+        - mu_0 / mu imaginary part.
     """
     # Initializes.
-    period_values = 10 ** linspace(log10(T_min), log10(T_max), n_period_points)
+    period_values: ndarray[float] = concatenate((10 ** linspace(log10(T_min), log10(T_max), n_period_points), periods_to_print))
+    period_values.sort()
     frequencies = frequencies_to_periods(period_values)  # It is OK to converts years like this. Tested.
     anelasticity_description = AnelasticityDescription(
         anelasticity_description_parameters=Love_numbers_hyper_parameters.anelasticity_description_parameters,
@@ -47,12 +51,14 @@ def plot_mu_profiles_for_options_to_periods(
         id=forced_anelasticity_description_id,
         save=False,
         overwrite_descriptions=overwrite_descriptions,
-        elasticity_model_name=elasticity_model_name,
-        long_term_anelasticity_model_name=long_term_anelasticity_model_name,
-        short_term_anelasticity_model_name=short_term_anelasticity_model_name,
+        elasticity_name=elasticity_model_name,
+        long_term_anelasticity_name=long_term_anelasticity_model_name,
+        short_term_anelasticity_name=short_term_anelasticity_model_name,
     )
     figures_subpath = figures_path.joinpath(figure_subpath_string).joinpath(anelasticity_description.id)
     figures_subpath.mkdir(parents=True, exist_ok=True)
+    layer_names = [description_layer.name for description_layer in anelasticity_description.description_layers]
+    layer_index = layer_names.index(layer_name)
 
     _, plots = plt.subplots(2, 1, figsize=figsize, sharex=True)
     # Iterates on options. A curb per loop.
@@ -63,12 +69,9 @@ def plot_mu_profiles_for_options_to_periods(
     ]:
         label = options_label(option=option)
         color = option_color(option=option)
-        mu = {
-            "real": zeros(shape=frequencies.shape, dtype=float),
-            "imag": zeros(shape=frequencies.shape, dtype=float),
-        }
-
-        for i_f, frequency in enumerate(frequencies):
+        mu = zeros(shape=frequencies.shape, dtype=complex)
+        print(option)
+        for i_f, (frequency, period) in enumerate(zip(frequencies, period_values)):
             # Preprocesses.
             integration = Integration(
                 anelasticity_description=anelasticity_description,
@@ -77,28 +80,79 @@ def plot_mu_profiles_for_options_to_periods(
                 use_short_term_anelasticity=option.use_short_term_anelasticity,
                 use_bounded_attenuation_functions=option.use_bounded_attenuation_functions,
             )
-            # Plots mu_real and mu_imag.
-            for part in ["real", "imag"]:
-                mu[part][i_f] = integration.description_layers[integration.below_CMB_layers].evaluate(
-                    x=integration.x_CMB, variable="mu_" + part
-                ) / integration.description_layers[integration.below_CMB_layers].evaluate(x=integration.x_CMB, variable="mu_0")
+            mu_0 = integration.description_layers[layer_index].evaluate(
+                x=integration.description_layers[layer_index].x_inf, variable="mu_0"
+            )
+            mu[i_f] = (
+                integration.description_layers[layer_index].evaluate(
+                    x=integration.description_layers[layer_index].x_inf, variable="mu_real"
+                )
+                + integration.description_layers[layer_index].evaluate(
+                    x=integration.description_layers[layer_index].x_inf, variable="mu_imag"
+                )
+                * 1.0j
+            ) / mu_0
+            if period in periods_to_print:
+                print("----period (y):", period)
+                print("--------mu_0:", mu_0 * anelasticity_description.elasticity_unit)
+                print("--------mu/mu_0:", mu[i_f])
         # Plots mu_real and mu_imag.
         for part, plot in zip(["real", "imag"], plots):
             plot.plot(
                 period_values,
-                mu[part],
+                (1.0 / mu).real if part == "real" else (1.0 / mu).imag,
                 color=color,
                 label=label,
                 linewidth=linewidth,
             )
-            if part == "imag":
+            if part == "imag" and legend:
                 plot.legend(loc="upper left")
             plot.set_ylabel(part + " part")
-            plot.grid()
-            # plot.set_xscale("log")
+            if grid:
+                plot.grid(True)
         plot.set_xlabel("Period (y)")
     plot.set_xscale("log")
-    plot.set_yscale("symlog")
     plt.suptitle("$\mu_0 / \mu$")
-    plt.savefig(figures_subpath.joinpath("mu_on_mu_0.png"))
+    plt.savefig(figures_subpath.joinpath("mu_0_on_mu.png"))
     plt.clf()
+
+
+def plot_mu_profiles_for_options_to_periods_per_description(
+    anelasticity_description_ids: list[Optional[str]] = None,
+    Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_Love_numbers_hyper_parameters(),
+    figure_subpath_string: str = "mu/to_periods",
+    layer_name: str = "LVZ__ASTHENOSPHERE__LVZ",
+    T_min: float = 0.5,
+    T_max: float = 2.5e3,
+    n_period_points: int = 100,
+    options: list[RunHyperParameters] = OPTIONS[:3],
+    figsize: tuple[int, int] = (10, 10),
+    linewidth: int = 2,
+    legend: bool = True,
+    grid: bool = True,
+    periods_to_print: list[float] = [1.0, 3.0, 10.0, 30.0, 100.0, 300.0, 1000.0],
+) -> None:
+    """
+    Generates 2 figures per description ID:
+        - mu real part.
+        - mu imaginary part.
+    Each figure has a plot per period value and shows mu with respect to depth. Inverted axis.
+    """
+
+    for anelasticity_description_id in anelasticity_description_ids:
+        plot_mu_profiles_for_options_to_periods(
+            load_description=True,
+            forced_anelasticity_description_id=anelasticity_description_id,
+            Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+            figure_subpath_string=figure_subpath_string,
+            layer_name=layer_name,
+            T_min=T_min,
+            T_max=T_max,
+            n_period_points=n_period_points,
+            options=options,
+            figsize=figsize,
+            linewidth=linewidth,
+            legend=legend,
+            grid=grid,
+            periods_to_print=periods_to_print,
+        )

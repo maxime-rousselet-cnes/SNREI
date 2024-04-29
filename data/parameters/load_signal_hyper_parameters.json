@@ -8,7 +8,7 @@
     "load_signal": "ocean_load",
     "ocean_load": "Frederikse/global_basin_timeseries.csv",
     "case": "mean",
-    "little_isostatic_adjustment": true,
+    "little_isostatic_adjustment": false,
     "weights_map": "GRACE",
     "opposite_load_on_continents": true,
     "n_max": 100,

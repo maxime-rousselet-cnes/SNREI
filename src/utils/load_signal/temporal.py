@@ -9,6 +9,7 @@ from numpy import (
     flip,
     linspace,
     log2,
+    mean,
     ndarray,
     newaxis,
     ones,
@@ -119,27 +120,16 @@ def build_elastic_load_signal(
                         else extract_mask_nc(name=load_signal_hyper_parameters.ocean_mask)
                     )
                 )
-            map, load_signal_hyper_parameters.n_max = map_sampling(
-                map=map,
-                n_max=load_signal_hyper_parameters.n_max,
-            )
             # Loads the continents with opposite value, such that global mean is null.
             if load_signal_hyper_parameters.opposite_load_on_continents:
-                ocean_mask = get_ocean_mask(
-                    name=load_signal_hyper_parameters.ocean_mask, n_max=load_signal_hyper_parameters.n_max
-                )
-                print(territorial_mean(grid=map, territorial_mask=ocean_mask))
+                ocean_mask = get_ocean_mask(name=load_signal_hyper_parameters.ocean_mask, n_max=(len(map) - 1) // 2)
                 map = map * ocean_mask - (1.0 - ocean_mask) * (
                     territorial_mean(grid=map, territorial_mask=ocean_mask)
                     * sum(surface_ponderation(territorial_mask=ocean_mask).flatten())
                     / sum(surface_ponderation(territorial_mask=(1.0 - ocean_mask)).flatten())
                 )
 
-            harmonic_weights = SHExpandDH(
-                map,
-                sampling=2,
-                lmax_calc=load_signal_hyper_parameters.n_max,
-            )
+            harmonic_weights = map_sampling(map, n_max=load_signal_hyper_parameters.n_max, harmonic_domain=True)[0]
         else:
             harmonic_weights = None
         # Eventually gets harmonics.

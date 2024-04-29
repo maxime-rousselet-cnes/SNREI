@@ -87,7 +87,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                             )[0]
 
             # Preprocesses ocean mask.
-            ocean_mask = [[1.0]] if continents else get_ocean_mask(name=load_signal_hyper_parameters.ocean_mask, n_max=n_max)
+            ocean_mask = get_ocean_mask(name=load_signal_hyper_parameters.ocean_mask, n_max=n_max)
             # Saves ocean rise mean trend.
             territorial_means = {
                 earth_model: territorial_mean(harmonics=load_signal_harmonic_trends[earth_model], territorial_mask=ocean_mask)
@@ -112,7 +112,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 name=load_signal_hyper_parameters.weights_map + "_load_signal_trend",
                 title=load_signal_hyper_parameters.weights_map + " load signal trend",
                 label="(mm/yr): ocean mean = " + str(round(number=territorial_means["elastic"], ndigits=ndigits)),
-                ocean_mask=ocean_mask,
+                ocean_mask=[[1.0]] if continents else ocean_mask,
                 min_saturation=min_saturation,
                 max_saturation=max_saturation,
                 logscale=False,
@@ -133,7 +133,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 + " anelastic induced load signal trend since "
                 + str(load_signal_hyper_parameters.first_year_for_trend),
                 label="(mm/yr): ocean mean = " + str(round(number=territorial_means["anelastic"], ndigits=ndigits)),
-                ocean_mask=ocean_mask,
+                ocean_mask=[[1.0]] if continents else ocean_mask,
                 min_saturation=min_saturation,
                 max_saturation=max_saturation,
                 logscale=True,
@@ -155,7 +155,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 + str(load_signal_hyper_parameters.first_year_for_trend),
                 label="(mm/yr): ocean mean = "
                 + str(round(number=territorial_means["anelastic"] - territorial_means["elastic"], ndigits=ndigits)),
-                ocean_mask=ocean_mask,
+                ocean_mask=[[1.0]] if continents else ocean_mask,
                 min_saturation=min_saturation,
                 max_saturation=max_saturation,
                 logscale=True,

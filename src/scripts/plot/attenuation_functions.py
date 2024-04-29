@@ -80,11 +80,18 @@ def plot_attenuation_functions(
         Love_numbers_hyper_parameters.run_hyper_parameters.use_bounded_attenuation_functions = True
         for tau_M_years, variable_value in zip(tau_M_years[variable], constrained_values):
             # Modifies tau_M value in model.
+            model: Model = load_base_model(
+                name=short_term_anelasticity_model_name,
+                path=models_path[ModelPart.short_term_anelasticity],
+                base_model_type=Model,
+            )
             create_model_variation(
                 model_part=ModelPart.short_term_anelasticity,
-                model_base_name=short_term_anelasticity_model_name,
-                parameter_names=[variable],
-                parameter_values_per_layer=[[[variable_value]] * len(short_term_anelasticity_model.layer_names)],
+                base_model=model,
+                base_model_name=short_term_anelasticity_model_name,
+                parameter_values_per_layer=[
+                    (variable, layer_name, [variable_value]) for layer_name in short_term_anelasticity_model.layer_names
+                ],
             )
             anelasticity_description = AnelasticityDescription(
                 anelasticity_description_parameters=Love_numbers_hyper_parameters.anelasticity_description_parameters,

@@ -21,29 +21,39 @@ from .single import Love_numbers_from_models_for_options
 
 def create_model_variation(
     model_part: ModelPart,
-    model_base_name: Optional[str],
-    parameter_names: list[str],
-    parameter_values_per_layer: list[list[list[float]]],
+    base_model: Model,
+    base_model_name: Optional[str],
+    parameter_values: list[tuple[str, str, list[float]]],
 ) -> str:
     """
     Gets an initial model file and creates a new version of it by modifying the specified parameters with specified polynomials
     per layer.
     """
-    model: Model = load_base_model(name=model_base_name, path=models_path[model_part], base_model_type=Model)
-    for parameter_name, parameter_values in zip(parameter_names, parameter_values_per_layer):
-        model.polynomials[parameter_name] = parameter_values
+    for parameter_name, layer_name, polynomial in parameter_values:
+        base_model.polynomials[parameter_name][base_model.layer_names.index(layer_name)] = polynomial
     name = "___".join(
         [
-            "__".join([parameter_name] + ["_".join((str(value) for value in values)) for values in parameter_values])
-            for parameter_name, parameter_values in zip(parameter_names, parameter_values_per_layer)
+            "__".join([parameter_name, layer_name] + [str(value) for value in polynomial])
+            for parameter_name, layer_name, polynomial in parameter_values
         ]
     )
     save_base_model(
-        obj=model,
+        obj=base_model,
         name=name,
-        path=models_path[model_part].joinpath(model_base_name),
+        path=models_path[model_part].joinpath(base_model_name),
     )
     return name
+
+
+def sum_lists(lists: list[list]) -> list:
+    """
+    Concatenates lists.
+    """
+    concatenated_list = []
+    for elt in lists:
+        for sub_elt in elt:
+            concatenated_list += sub_elt
+    return concatenated_list
 
 
 def Love_numbers_for_options_for_models_for_parameters(
@@ -52,7 +62,7 @@ def Love_numbers_for_options_for_models_for_parameters(
     elasticity_model_names: list[Optional[str]] = [None],
     long_term_anelasticity_model_names: list[Optional[str]] = [None],
     short_term_anelasticity_model_names: list[Optional[str]] = [None],
-    parameters: dict[ModelPart, dict[str, list[list[list[float]]]]] = {model_part: {} for model_part in ModelPart},
+    parameters: dict[ModelPart, dict[str, dict[str, list[list[float]]]]] = {model_part: {} for model_part in ModelPart},
     options: list[RunHyperParameters] = OPTIONS,
     Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_Love_numbers_hyper_parameters(),
 ) -> list[str]:
@@ -66,51 +76,64 @@ def Love_numbers_for_options_for_models_for_parameters(
         - specified parameters, when the options allow it.
     Returns the list of anelasticity description IDs.
 
-    The 'parameters' input corresponds to parameters polynomial coefficients per layer (list[list[float]]) per model part, per
-    parameter name and per possibility.Here is an example with two possibilites for a short term anelasticity model with 5
-    layers: {
+    The 'parameters' input corresponds to parameters polynomial coefficients (list[float]) per model part, per
+    parameter name, per layer name and per possibility. Here is an example that tests two possibilities for polynomials of
+    mu_asymptotic_ratio in the lower mantle: {
         ModelPart.short_term_anelasticity: {
-            "asymptotic_mu_ratio": [
-                [
-                    [0.2], [0.2], [0.2], [0.2], [1.0]
-                ],
-                [
-                    [1.0], [1.0], [1.0], [1.0], [1.0]
+            "asymptotic_mu_ratio": {
+                "LOWER_MANTLE": [
+                    [
+                        [0.2, 1e-2],
+                    ],
+                    [
+                        [1.0],
+                    ]
                 ]
-            ]
+            }
         }
     }
+    Here the first polynmial is 0.2 + 1e-2 X and the second one is constant at 1.0.
     """
     # Creates all model files variations.
     model_filenames: dict[ModelPart, list[str]] = {}
     for model_part, model_names in zip(
         ModelPart, [elasticity_model_names, long_term_anelasticity_model_names, short_term_anelasticity_model_names]
     ):
-        if (not model_part in parameters.keys()) or (parameters[model_part] == {}):
-            model_filenames[model_part] = model_names
-        else:
-            filename_variations: ndarray = concatenate(
-                [
-                    [
-                        model_name
-                        + "/"
-                        + create_model_variation(
-                            model_part=model_part,
-                            model_base_name=model_name,
-                            parameter_names=parameters[model_part].keys(),
-                            parameter_values_per_layer=list(parameter_values),
-                        )
-                        for parameter_values in product(
-                            *(
-                                parameter_values_per_possibility
-                                for _, parameter_values_per_possibility in parameters[model_part].items()
+        if (model_part in parameters.keys()) and (parameters[model_part] != {}):
+            for model_name in model_names:
+                model: Model = load_base_model(name=model_name, path=models_path[model_part], base_model_type=Model)
+                # Adds all possible combinations.
+                model_filenames[model_part] = [
+                    model_name
+                    + "/"
+                    + create_model_variation(
+                        model_part=model_part,
+                        base_model=model,
+                        base_model_name=model_name,
+                        parameter_values=sum_lists(lists=parameter_values),
+                    )
+                    for parameter_values in product(
+                        *(
+                            product(
+                                *(
+                                    product(
+                                        (
+                                            (parameter_name, layer_name, parameter_values_possibility)
+                                            for parameter_values_possibility in [
+                                                model.polynomials[parameter_name][model.layer_names.index(layer_name)]
+                                            ]
+                                            + parameter_values_per_possibility  # Adds default values in the list of values to iterate on.
+                                        )
+                                    )
+                                    for layer_name, parameter_values_per_possibility in parameter_values_per_layer.items()
+                                )
                             )
+                            for parameter_name, parameter_values_per_layer in parameters[model_part].items()
                         )
-                    ]
-                    for model_name in model_names
+                    )
                 ]
-            )
-            model_filenames[model_part] = filename_variations.tolist()
+        else:
+            model_filenames[model_part] = model_names
 
     anelasticity_description_ids = []
     # Loops on all possible triplet of model files to launch runs.

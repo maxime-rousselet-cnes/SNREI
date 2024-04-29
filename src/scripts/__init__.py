@@ -1,6 +1,5 @@
 from .clear import clear_subs
 from .computing import (
-    Love_numbers_for_options_for_models_for_asymptotic_mu_ratios,
     Love_numbers_single_run,
     compute_anelastic_induced_harmonic_load_per_description_per_options,
 )
@@ -17,7 +16,6 @@ from .plot import (
 
 [
     clear_subs,
-    Love_numbers_for_options_for_models_for_asymptotic_mu_ratios,
     Love_numbers_single_run,
     compute_anelastic_induced_harmonic_load_per_description_per_options,
     get_single_float_Love_number,

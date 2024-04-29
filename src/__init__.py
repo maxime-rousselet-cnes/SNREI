@@ -1,5 +1,4 @@
 from .scripts import (
-    Love_numbers_for_options_for_models_for_asymptotic_mu_ratios,
     Love_numbers_single_run,
     clear_subs,
     compute_anelastic_induced_harmonic_load_per_description_per_options,
@@ -17,6 +16,7 @@ from .utils import (
     BoundaryCondition,
     Direction,
     Love_numbers_for_options_for_models_for_parameters,
+    ModelPart,
     Result,
     RunHyperParameters,
     anelastic_Love_numbers_computing,
@@ -36,7 +36,6 @@ from .utils import (
 )
 
 [
-    Love_numbers_for_options_for_models_for_asymptotic_mu_ratios,
     Love_numbers_single_run,
     clear_subs,
     compute_anelastic_induced_harmonic_load_per_description_per_options,
@@ -52,6 +51,7 @@ from .utils import (
     BoundaryCondition,
     Direction,
     Love_numbers_for_options_for_models_for_parameters,
+    ModelPart,
     Result,
     RunHyperParameters,
     anelastic_Love_numbers_computing,

@@ -62,48 +62,6 @@ def Love_numbers_single_run(
     )
 
 
-def Love_numbers_for_options_for_models_for_asymptotic_mu_ratios(
-    asymptotic_mu_ratios: list[float],
-    elasticity_model_names: list[Optional[str]] = [None],
-    long_term_anelasticity_model_names: list[Optional[str]] = [None],
-    short_term_anelasticity_model_names: list[Optional[str]] = [None],
-    options: list[RunHyperParameters] = OPTIONS,
-    Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_Love_numbers_hyper_parameters(),
-) -> list[str]:
-    """
-    Computes anelastic Love numbers by iterating on:
-        - models: An anelasticity description is used per triplet of:
-            - 'elasticity_model_name'
-            - 'anelasticity_model_name'
-            - 'attenuation_model_name'
-        - options
-        - asymptotic_mu_ratios: loops on its value in the Mantle.
-    Returns the anelasticity description IDs.
-    """
-    # Finds the number of mantle layers and the number of crust layers in a short term anelasticity model.
-    example_model_layers = load_base_model(
-        name=short_term_anelasticity_model_names[0], path=models_path[ModelPart.short_term_anelasticity]
-    )["layer_names"]
-    n_crust_layers = len([layer_name for layer_name in example_model_layers if "CRUST" in layer_name])
-    n_mantle_layers = len(example_model_layers) - n_crust_layers
-    # Computes.
-    return Love_numbers_for_options_for_models_for_parameters(
-        elasticity_model_names=elasticity_model_names,
-        long_term_anelasticity_model_names=long_term_anelasticity_model_names,
-        short_term_anelasticity_model_names=short_term_anelasticity_model_names,
-        parameters={
-            ModelPart.short_term_anelasticity: {
-                "asymptotic_mu_ratio": [
-                    [[asymptotic_mu_ratio]] * n_mantle_layers + [[1.0]] * n_crust_layers
-                    for asymptotic_mu_ratio in asymptotic_mu_ratios
-                ]
-            }
-        },
-        options=options,
-        Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
-    )
-
-
 def Love_numbers_for_samplings(
     spline_number_sampling_options: list[int] = [10, 100, 1000],
     spline_degree_sampling_options: list[int] = [1, 2, 3],

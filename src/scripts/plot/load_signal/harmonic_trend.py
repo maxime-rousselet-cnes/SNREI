@@ -12,10 +12,11 @@ from ....utils import (
     harmonic_name,
     load_base_model,
     load_load_signal_hyper_parameters,
-    ocean_mean,
+    load_subpath,
     results_path,
     save_base_model,
     signal_trend,
+    territorial_mean,
 )
 from ..utils import plot_harmonics_on_natural_projection
 
@@ -48,12 +49,10 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
 
             # Gets already computed anelastic induced harmonic load signal.
             run_id = run_hyper_parameters.run_id()
-            run_folder_name = (
-                get_run_folder_name(anelasticity_description_id=anelasticity_description_id, run_id=run_id)
-                + "/load/"
-                + load_signal_hyper_parameters.load_signal
+            run_folder_name = get_run_folder_name(anelasticity_description_id=anelasticity_description_id, run_id=run_id)
+            result_subpath = load_subpath(
+                path=results_path.joinpath(run_folder_name), load_signal_hyper_parameters=load_signal_hyper_parameters
             )
-            result_subpath = results_path.joinpath(run_folder_name)
             signal_dates = load_base_model(name="signal_dates", path=result_subpath)
             trend_indices, trend_dates = get_trend_dates(
                 signal_dates=signal_dates, load_signal_hyper_parameters=load_signal_hyper_parameters
@@ -88,20 +87,22 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                             )[0]
 
             # Preprocesses ocean mask.
-            ocean_mask = 1.0 if continents else get_ocean_mask(name=load_signal_hyper_parameters.ocean_mask, n_max=n_max)
+            ocean_mask = [[1.0]] if continents else get_ocean_mask(name=load_signal_hyper_parameters.ocean_mask, n_max=n_max)
             # Saves ocean rise mean trend.
-            ocean_means = {
-                earth_model: ocean_mean(harmonics=load_signal_harmonic_trends[earth_model], ocean_mask=ocean_mask)
+            territorial_means = {
+                earth_model: territorial_mean(harmonics=load_signal_harmonic_trends[earth_model], territorial_mask=ocean_mask)
                 for earth_model in ["elastic", "anelastic"]
             }
             save_base_model(
-                obj=ocean_means,
+                obj=territorial_means,
                 name="ocean_rise_mean_trend",
                 path=result_subpath,
             )
 
             # Saves the figures.
-            figure_subpath = figures_path.joinpath(run_folder_name)
+            figure_subpath = load_subpath(
+                path=figures_path.joinpath(run_folder_name), load_signal_hyper_parameters=load_signal_hyper_parameters
+            )
             figure_subpath.mkdir(parents=True, exist_ok=True)
 
             # Input elastic spatial load signal trend.
@@ -110,7 +111,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 figure_subpath=figure_subpath,
                 name=load_signal_hyper_parameters.weights_map + "_load_signal_trend",
                 title=load_signal_hyper_parameters.weights_map + " load signal trend",
-                label="(mm/yr): ocean mean = " + str(round(number=ocean_means["elastic"], ndigits=ndigits)),
+                label="(mm/yr): ocean mean = " + str(round(number=territorial_means["elastic"], ndigits=ndigits)),
                 ocean_mask=ocean_mask,
                 min_saturation=min_saturation,
                 max_saturation=max_saturation,
@@ -131,7 +132,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 title=load_signal_hyper_parameters.weights_map
                 + " anelastic induced load signal trend since "
                 + str(load_signal_hyper_parameters.first_year_for_trend),
-                label="(mm/yr): ocean mean = " + str(round(number=ocean_means["anelastic"], ndigits=ndigits)),
+                label="(mm/yr): ocean mean = " + str(round(number=territorial_means["anelastic"], ndigits=ndigits)),
                 ocean_mask=ocean_mask,
                 min_saturation=min_saturation,
                 max_saturation=max_saturation,
@@ -153,7 +154,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 + " anelastic induced load signal trend difference with elastic since "
                 + str(load_signal_hyper_parameters.first_year_for_trend),
                 label="(mm/yr): ocean mean = "
-                + str(round(number=ocean_means["anelastic"] - ocean_means["elastic"], ndigits=ndigits)),
+                + str(round(number=territorial_means["anelastic"] - territorial_means["elastic"], ndigits=ndigits)),
                 ocean_mask=ocean_mask,
                 min_saturation=min_saturation,
                 max_saturation=max_saturation,

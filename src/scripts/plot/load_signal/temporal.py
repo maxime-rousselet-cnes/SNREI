@@ -11,6 +11,7 @@ from ....utils import (
     get_trend_dates,
     load_base_model,
     load_load_signal_hyper_parameters,
+    load_subpath,
     results_path,
     signal_trend,
 )
@@ -35,14 +36,12 @@ def plot_anelastic_induced_load_per_degree_per_description_per_options(
         for run_hyper_parameters in options:
             load_signal_hyper_parameters.run_hyper_parameters = run_hyper_parameters
             # Gets already computed anelastic induced load signal per degree.
-            run_folder_name = (
-                get_run_folder_name(
-                    anelasticity_description_id=anelasticity_description_id, run_id=run_hyper_parameters.run_id()
-                )
-                + "/load/"
-                + load_signal_hyper_parameters.load_signal
+            run_folder_name = get_run_folder_name(
+                anelasticity_description_id=anelasticity_description_id, run_id=run_hyper_parameters.run_id()
             )
-            result_subpath = results_path.joinpath(run_folder_name)
+            result_subpath = load_subpath(
+                path=results_path.joinpath(run_folder_name), load_signal_hyper_parameters=load_signal_hyper_parameters
+            )
             signal_dates = load_base_model(name="signal_dates", path=result_subpath)
             elastic_load_signal_trend = load_base_model(name="elastic_load_signal_trend", path=result_subpath)
             frequencial_elastic_normalized_load_signal = load_base_model(
@@ -88,7 +87,9 @@ def plot_anelastic_induced_load_per_degree_per_description_per_options(
             }
 
             # Saves the figures.
-            figure_subpath = figures_path.joinpath(run_folder_name)
+            figure_subpath = load_subpath(
+                path=figures_path.joinpath(run_folder_name), load_signal_hyper_parameters=load_signal_hyper_parameters
+            )
             figure_subpath.mkdir(parents=True, exist_ok=True)
 
             # Whole signal.

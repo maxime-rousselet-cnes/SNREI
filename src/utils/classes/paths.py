@@ -4,7 +4,7 @@ from .model import ModelPart
 
 data_path = Path("data")
 
-data_Frederikse_path = data_path.joinpath("data_Frederikse")
+GMSL_data_path = data_path.joinpath("GMSL_data")
 data_masks_path = data_path.joinpath("masks")
 data_trends_GRACE_path = data_path.joinpath("trends_GRACE")
 

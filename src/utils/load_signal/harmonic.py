@@ -1,8 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
-from numpy import arange, cos, expand_dims, linspace, ndarray, pi, transpose
-from pyshtools.expand import MakeGridDH
+from numpy import arange, ndarray, transpose
 from scipy import interpolate
 from tqdm import tqdm
 
@@ -18,30 +17,19 @@ def harmonic_name(coefficient: str, degree: int, order: int) -> str:
     return "_".join((coefficient, str(degree), str(order)))
 
 
-def ocean_mean(harmonics: ndarray[float], ocean_mask: ndarray[float]) -> float:
-    """
-    Computes mean value over ocean surface. Uses a given mask.
-    """
-    grid: ndarray[float] = MakeGridDH(harmonics, sampling=2)
-    surface = ocean_mask * expand_dims(a=cos(linspace(start=-pi / 2, stop=pi / 2, num=len(grid))), axis=1)
-    weighted_values = grid * surface
-    return sum(weighted_values.flatten()) / sum(surface.flatten())
-
-
 def anelastic_harmonic_induced_load_signal(
-    harmonic_weights: Optional[ndarray[float]],
     anelasticity_description_id: str,
     load_signal_hyper_parameters: LoadSignalHyperParameters,
     signal_dates: ndarray[float],
     frequencies: ndarray[float],  # (y^-1).
-    frequencial_elastic_normalized_load_signal: ndarray[complex],
-    elastic_load_signal_trend: float,
+    load_signal_informations: Path | tuple[ndarray[complex], float, Optional[ndarray[float]]],
 ) -> Path:
     """
     Computes the anelastic induced harmonic load and saves it in (.JSON) files.
     """
-    if load_signal_hyper_parameters.load_signal == "ocean_load_Frederikse":
-
+    if load_signal_hyper_parameters.load_signal == "ocean_load":
+        # Unpack load signal informations.
+        frequencial_elastic_normalized_load_signal, elastic_load_signal_trend, harmonic_weights = load_signal_informations
         # Gets Love numbers, computes anelastic induced load signal and saves.
         path: Path
         degrees: ndarray[int]

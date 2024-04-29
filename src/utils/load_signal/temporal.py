@@ -18,6 +18,7 @@ from numpy import (
     zeros,
 )
 from numpy.linalg import pinv
+from pyshtools.expand import SHExpandDH
 from scipy import interpolate
 from scipy.fft import fft, fftfreq
 
@@ -34,8 +35,12 @@ from .data import (
     extract_mask_nc,
     extract_temporal_load_signal,
     extract_trends_GRACE,
+    get_ocean_mask,
+    load_subpath,
     map_normalizing,
     map_sampling,
+    surface_ponderation,
+    territorial_mean,
 )
 
 
@@ -76,7 +81,7 @@ def signal_trend(trend_dates: ndarray[float], signal: ndarray[float]) -> tuple[f
 
 def build_elastic_load_signal(
     load_signal_hyper_parameters: LoadSignalHyperParameters, get_harmonic_weights: bool = False
-) -> tuple[ndarray[float], ndarray[float], Path | tuple[float, ndarray[float], ndarray[complex], Optional[ndarray[float]]]]:
+) -> tuple[ndarray[float], ndarray[float], Path | tuple[ndarray[complex], float, Optional[ndarray[float]]]]:
     """
     Builds load history in frequential domain, eventually in frequential-harmonic domain.
     Returns:
@@ -89,37 +94,54 @@ def build_elastic_load_signal(
             - elastic load signal trend
             - static harmonic weights if needed.
     """
-    if load_signal_hyper_parameters.load_signal == "ocean_load_Frederikse":
+    if load_signal_hyper_parameters.load_signal == "ocean_load":
         # Builds frequencial signal.
-        dates_Frederikse, load_signal_Frederikse = extract_temporal_load_signal()
+        dates, load_signal = extract_temporal_load_signal(
+            name=load_signal_hyper_parameters.case, filename=load_signal_hyper_parameters.ocean_load
+        )
         signal_dates, temporal_elastic_load_signal, time_step, elastic_load_signal_trend = build_elastic_load_signal_history(
-            signal_dates=dates_Frederikse,
-            load_signal=load_signal_Frederikse,
+            signal_dates=dates,
+            load_signal=load_signal,
             load_signal_hyper_parameters=load_signal_hyper_parameters,
         )  # (y).
         frequencial_elastic_load_signal = fft(x=temporal_elastic_load_signal)
         frequencies = fftfreq(n=len(frequencial_elastic_load_signal), d=time_step)
-        if load_signal_hyper_parameters.weights_map == "GRACE":
-            map = extract_trends_GRACE(
-                name=load_signal_hyper_parameters.GRACE, load_signal_hyper_parameters=load_signal_hyper_parameters
-            )
-        else:
-            map = map_normalizing(
-                map=(
-                    extract_mask_csv(name=load_signal_hyper_parameters.ocean_mask)
-                    if load_signal_hyper_parameters.ocean_mask.split(".")[-1] == "csv"
-                    else extract_mask_nc(name=load_signal_hyper_parameters.ocean_mask)
+        if get_harmonic_weights:
+            if load_signal_hyper_parameters.weights_map == "GRACE":
+                map = extract_trends_GRACE(
+                    name=load_signal_hyper_parameters.GRACE, load_signal_hyper_parameters=load_signal_hyper_parameters
                 )
-            )
-        harmonic_weights = (
-            None
-            if not get_harmonic_weights
-            else map_sampling(
+            else:
+                map = map_normalizing(
+                    map=(
+                        extract_mask_csv(name=load_signal_hyper_parameters.ocean_mask)
+                        if load_signal_hyper_parameters.ocean_mask.split(".")[-1] == "csv"
+                        else extract_mask_nc(name=load_signal_hyper_parameters.ocean_mask)
+                    )
+                )
+            map, load_signal_hyper_parameters.n_max = map_sampling(
                 map=map,
                 n_max=load_signal_hyper_parameters.n_max,
-                harmonic_domain=True,
             )
-        )
+            # Loads the continents with opposite value, such that global mean is null.
+            if load_signal_hyper_parameters.opposite_load_on_continents:
+                ocean_mask = get_ocean_mask(
+                    name=load_signal_hyper_parameters.ocean_mask, n_max=load_signal_hyper_parameters.n_max
+                )
+                print(territorial_mean(grid=map, territorial_mask=ocean_mask))
+                map = map * ocean_mask - (1.0 - ocean_mask) * (
+                    territorial_mean(grid=map, territorial_mask=ocean_mask)
+                    * sum(surface_ponderation(territorial_mask=ocean_mask).flatten())
+                    / sum(surface_ponderation(territorial_mask=(1.0 - ocean_mask)).flatten())
+                )
+
+            harmonic_weights = SHExpandDH(
+                map,
+                sampling=2,
+                lmax_calc=load_signal_hyper_parameters.n_max,
+            )
+        else:
+            harmonic_weights = None
         # Eventually gets harmonics.
         return (
             signal_dates,
@@ -147,13 +169,32 @@ def build_elastic_load_signal_history(
     )
     extend_part_dates = arange(signal_dates[-1] + 1, load_signal_hyper_parameters.last_year_for_trend + 1)
     extend_part_load_signal = elastic_load_signal_trend * extend_part_dates + elastic_load_signal_additive_constant
+    # Eventually includes a LIA effect.
+    if load_signal_hyper_parameters.little_isostatic_adjustment:
+        LIA_value = load_signal[-1] * load_signal_hyper_parameters.little_isostatic_adjustment_effect
+        # Cubic spline beforeLIA for no Gibbs effect.
+        load_signal = (
+            concatenate(
+                (
+                    linspace(
+                        start=LIA_value,
+                        stop=0.0,
+                        num=load_signal_hyper_parameters.little_isostatic_adjustment_duration,
+                    ),
+                    zeros(shape=(load_signal_hyper_parameters.mid_zero_duration)),
+                    load_signal,
+                )
+            )
+            - LIA_value
+        )
+        extend_part_load_signal -= LIA_value
     # Creates cubic spline for antisymetry.
     mean_slope = extend_part_load_signal[-1] / load_signal_hyper_parameters.spline_time
     spline = lambda T: mean_slope / (2.0 * load_signal_hyper_parameters.spline_time**2.0) * T**3.0 - 3.0 * mean_slope / 2 * T
     # Builds signal history / Creates a constant step at zero value.
     extended_time_serie_past = concatenate(
         (
-            zeros(shape=(load_signal_hyper_parameters.zero_duration)),
+            zeros(shape=(load_signal_hyper_parameters.previous_zero_duration)),
             load_signal,
             extend_part_load_signal,
             spline(T=arange(start=-load_signal_hyper_parameters.spline_time, stop=0)),
@@ -218,7 +259,7 @@ def anelastic_induced_load_signal_per_degree(
     )
 
     # Saves the needed informations.
-    path: Path = Love_numbers_path.joinpath("load").joinpath(load_signal_hyper_parameters.load_signal)
+    path: Path = load_subpath(path=Love_numbers_path, load_signal_hyper_parameters=load_signal_hyper_parameters)
     save_base_model(obj=elastic_load_signal_trend, name="elastic_load_signal_trend", path=path)
     save_base_model(
         obj={"real": frequencial_elastic_normalized_load_signal.real, "imag": frequencial_elastic_normalized_load_signal.imag},

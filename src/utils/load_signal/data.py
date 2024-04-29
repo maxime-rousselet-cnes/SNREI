@@ -1,40 +1,109 @@
 from pathlib import Path
+from typing import Optional
 
 import netCDF4
 from cv2 import erode
-from numpy import array, expand_dims, flip, ndarray, ones, prod, round, unique
+from numpy import (
+    array,
+    cos,
+    expand_dims,
+    flip,
+    linspace,
+    ndarray,
+    ones,
+    pi,
+    prod,
+    round,
+    unique,
+)
 from pandas import read_csv
 from pyshtools.expand import MakeGridDH, SHExpandDH
 
 from ..classes import (
+    GMSL_data_path,
     LoadSignalHyperParameters,
-    data_Frederikse_path,
     data_masks_path,
     data_trends_GRACE_path,
     load_load_signal_hyper_parameters,
 )
 
+COLUMNS = ["lower", "mean", "upper"]
+
 
 def extract_temporal_load_signal(
-    path: Path = data_Frederikse_path, name: str = "global_basin_timeseries.csv"
+    name: str, path: Path = GMSL_data_path, filename: str = "Frederikse/global_basin_timeseries.csv"
 ) -> tuple[ndarray[float], ndarray[float]]:
     """
     Opens Frederikse et al.'s file and formats its data. Mean load in equivalent water height with respect to time.
     """
     # Gets raw data.
-    df = read_csv(filepath_or_buffer=path.joinpath(name), sep=",")
+    df = read_csv(filepath_or_buffer=path.joinpath(filename), sep=",")
     signal_dates = df["Unnamed: 0"].values
-    # Formats.
-    sum_values = array(
-        object=[float(item.split(",")[0] + "." + item.split(",")[1]) for item in df["Sum of contributors [mean]"].values],
-        dtype=float,
+    # Formats. Barystatic = Sum - Steric.
+    barystatic: dict[str, ndarray[float]] = {
+        column: array(
+            object=[
+                float(item.split(",")[0] + "." + item.split(",")[1])
+                for item in df["Sum of contributors [" + column + "]"].values
+            ],
+            dtype=float,
+        )
+        - array(
+            object=[float(item.split(",")[0] + "." + item.split(",")[1]) for item in df["Steric [" + column + "]"].values],
+            dtype=float,
+        )
+        for column in COLUMNS
+    }
+    # For worst/best case, build the maximum/minimum slope barystatic curb.
+    if name == "best" or name == "worst":
+        if name == "best":
+            start, end = "upper", "lower"
+        elif name == "worst":
+            start, end = "lower", "upper"
+        a = (barystatic[start][-1] - barystatic[end][0]) / (barystatic["mean"][-1] - barystatic["mean"][0])
+        b = barystatic[end][0] - a * barystatic["mean"][0]
+        barystatic[name] = a * barystatic["mean"] + b
+    return signal_dates, barystatic[name] - barystatic[name][0]
+
+
+def surface_ponderation(
+    territorial_mask: ndarray[float],
+) -> ndarray[float]:
+    """
+    Gets the surface of a (latitude * longitude) array.
+    """
+    return territorial_mask * expand_dims(a=cos(linspace(start=-pi / 2, stop=pi / 2, num=len(territorial_mask))), axis=1)
+
+
+def territorial_mean(
+    territorial_mask: ndarray[float], harmonics: Optional[ndarray[float]] = None, grid: Optional[ndarray[float]] = None
+) -> float:
+    """
+    Computes mean value over a given surface. Uses a given mask.
+    """
+    if grid is None:
+        grid: ndarray[float] = MakeGridDH(harmonics, sampling=2)
+    surface = surface_ponderation(territorial_mask=territorial_mask)
+    weighted_values = grid * surface
+    return sum(weighted_values.flatten()) / sum(surface.flatten())
+
+
+def load_subpath(path: Path, load_signal_hyper_parameters: LoadSignalHyperParameters) -> Path:
+    """
+    Creates a subpath for results depending on load function.
+    """
+    return (
+        path.joinpath("load")
+        .joinpath(load_signal_hyper_parameters.load_signal)
+        .joinpath(load_signal_hyper_parameters.ocean_load.split("/")[0])
+        .joinpath(load_signal_hyper_parameters.case)
+        .joinpath("with" + ("" if load_signal_hyper_parameters.little_isostatic_adjustment else "out") + "_LIA")
+        .joinpath(
+            "with"
+            + ("out" if load_signal_hyper_parameters.opposite_load_on_continents else "")
+            + "_opposite_load_on_continents"
+        )
     )
-    steric_values = array(
-        object=[float(item.split(",")[0] + "." + item.split(",")[1]) for item in df["Steric [mean]"].values],
-        dtype=float,
-    )
-    barystatic = sum_values - steric_values
-    return signal_dates, barystatic - barystatic[0]
 
 
 def erase_area(
@@ -139,22 +208,26 @@ def map_normalizing(
     return map / (max_map - sum_map / n_t) + sum_map / (sum_map - max_map * n_t)
 
 
-def map_sampling(map: ndarray[float], n_max: int, harmonic_domain: bool = False) -> ndarray[float]:
+def map_sampling(map: ndarray[float], n_max: int, harmonic_domain: bool = False) -> tuple[ndarray[float], int]:
     """
     Redefined a (latitude, longitude) map definition. Eventually returns it in harmonic domain.
     """
+    n_max = min(n_max, (len(map) - 1) // 2)
     harmonics = SHExpandDH(
         map,
         sampling=2,
-        lmax_calc=min(n_max, (len(map) - 1) // 2),
+        lmax_calc=n_max,
     )
     return (
-        harmonics
-        if harmonic_domain
-        else MakeGridDH(
-            harmonics,
-            sampling=2,
-        )
+        (
+            harmonics
+            if harmonic_domain
+            else MakeGridDH(
+                harmonics,
+                sampling=2,
+            )
+        ),
+        n_max,
     )
 
 
@@ -173,5 +246,5 @@ def get_ocean_mask(name: str, n_max: int) -> ndarray[float]:
             a=map_sampling(
                 map=ocean_mask,
                 n_max=n_max,
-            )
+            )[0]
         )

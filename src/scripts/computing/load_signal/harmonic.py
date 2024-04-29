@@ -23,7 +23,7 @@ def compute_anelastic_induced_harmonic_load_per_description_per_options(
     (
         signal_dates,
         frequencies,
-        (frequencial_elastic_normalized_load_signal, elastic_load_signal_trend, harmonic_weights),
+        load_signal_informations,
     ) = build_elastic_load_signal(load_signal_hyper_parameters=load_signal_hyper_parameters, get_harmonic_weights=True)
 
     # Loops on descriptions.
@@ -35,13 +35,11 @@ def compute_anelastic_induced_harmonic_load_per_description_per_options(
             load_signal_hyper_parameters.run_hyper_parameters = run_hyper_parameters
             # Computes anelastic induced harmonic load signal.
             anelastic_harmonic_induced_load_signal(
-                harmonic_weights=harmonic_weights,
                 anelasticity_description_id=anelasticity_description_id,
                 load_signal_hyper_parameters=load_signal_hyper_parameters,
                 signal_dates=signal_dates,
                 frequencies=frequencies,
-                frequencial_elastic_normalized_load_signal=frequencial_elastic_normalized_load_signal,
-                elastic_load_signal_trend=elastic_load_signal_trend,
+                load_signal_informations=load_signal_informations,
             )
             # Load bar.
             print("----Run: " + run_hyper_parameters.run_id() + ": Done.")

@@ -21,8 +21,8 @@ from pyshtools.expand import MakeGridDH
 from ...utils import (
     BoundaryCondition,
     Direction,
+    GMSL_data_path,
     RunHyperParameters,
-    data_Frederikse_path,
     extract_temporal_load_signal,
     figures_path,
 )
@@ -155,22 +155,25 @@ def plot_harmonics_on_natural_projection(
 
 
 def plot_temporal_load_signal(
+    names: str,
     figsize: tuple[int, int] = (10, 10),
     linewidth: int = 2,
     figure_subpath_string: str = "load_functions",
-    path: Path = data_Frederikse_path,
-    name: str = "global_basin_timeseries.csv",
+    path: Path = GMSL_data_path,
+    filename: str = "Frederikse/global_basin_timeseries.csv",
 ) -> None:
     """
     Plots The uniform elastic load signal history.
     """
     plt.figure(figsize=figsize)
-    dates, barystatic = extract_temporal_load_signal(path=path, name=name)
-    plt.plot(dates, barystatic, linewidth=linewidth)
+    for name in names:
+        dates, barystatic = extract_temporal_load_signal(path=path, name=name, filename=filename)
+        plt.plot(dates, barystatic, label=name, linewidth=linewidth)
     plt.title("Load history")
     plt.xlabel("date (y)")
     plt.ylabel("Relative sea level rise  (mm)")
     plt.grid()
+    plt.legend()
     figure_subpath = figures_path.joinpath(figure_subpath_string)
     figure_subpath.mkdir(parents=True, exist_ok=True)
     plt.savefig(figure_subpath.joinpath(path.name + ".png"))

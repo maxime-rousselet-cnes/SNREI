@@ -159,12 +159,19 @@ class LoadSignalHyperParameters(HyperParameters):
 
     # Parameters describing the extended load signal.
     spline_time: int
-    zero_duration: int
+    previous_zero_duration: int
+    mid_zero_duration: int
+    little_isostatic_adjustment_duration: int
+    little_isostatic_adjustment_effect: float
     anti_Gibbs_effect_factor: int
     load_signal: str
+    ocean_load: str
+    case: str
+    little_isostatic_adjustment: bool
 
     # Parameters describing spacially-dependent load signal.
     weights_map: str
+    opposite_load_on_continents: bool
     n_max: int
     GRACE: Optional[str]
     ocean_mask: Optional[str]

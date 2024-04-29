@@ -15,7 +15,7 @@ from .hyper_parameters import (
 )
 from .model import Model, ModelPart
 from .paths import (
-    data_Frederikse_path,
+    GMSL_data_path,
     data_masks_path,
     data_trends_GRACE_path,
     descriptions_base_path,
@@ -42,7 +42,7 @@ from .result import BoundaryCondition, Direction, Result
     load_Love_numbers_hyper_parameters,
     Model,
     ModelPart,
-    data_Frederikse_path,
+    GMSL_data_path,
     data_masks_path,
     data_trends_GRACE_path,
     descriptions_base_path,

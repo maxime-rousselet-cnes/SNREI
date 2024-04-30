@@ -1,22 +1,11 @@
-from numpy import array, real, sqrt, zeros
-from scipy.fft import ifft
-
 from ....utils import (
     OPTIONS,
     LoadSignalHyperParameters,
     RunHyperParameters,
     figures_path,
-    get_ocean_mask,
-    get_run_folder_name,
-    get_trend_dates,
-    harmonic_name,
-    load_base_model,
+    get_load_signal_harmonic_trends,
     load_load_signal_hyper_parameters,
     load_subpath,
-    results_path,
-    save_base_model,
-    signal_trend,
-    territorial_mean,
 )
 from ..utils import plot_harmonics_on_natural_projection
 
@@ -45,58 +34,13 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
         print("Description: " + anelasticity_description_id + ":")
         # Loops on options.
         for run_hyper_parameters in options:
-            load_signal_hyper_parameters.run_hyper_parameters = run_hyper_parameters
-
-            # Gets already computed anelastic induced harmonic load signal.
-            run_id = run_hyper_parameters.run_id()
-            run_folder_name = get_run_folder_name(anelasticity_description_id=anelasticity_description_id, run_id=run_id)
-            result_subpath = load_subpath(
-                path=results_path.joinpath(run_folder_name), load_signal_hyper_parameters=load_signal_hyper_parameters
-            )
-            signal_dates = load_base_model(name="signal_dates", path=result_subpath)
-            trend_indices, trend_dates = get_trend_dates(
-                signal_dates=signal_dates, load_signal_hyper_parameters=load_signal_hyper_parameters
-            )
-            n_max = min(
-                load_signal_hyper_parameters.n_max,
-                int(sqrt(len([f for f in result_subpath.joinpath("elastic_harmonic_frequencial_load_signal").iterdir()]))) - 1,
-            )
-            load_signal_harmonic_trends = {
-                "elastic": zeros(shape=(2, n_max + 1, n_max + 1)),
-                "anelastic": zeros(shape=(2, n_max + 1, n_max + 1)),
-            }
-            for earth_model in ["elastic", "anelastic"]:
-                # Loops on harmonics:
-                for i_order_sign, coefficient in enumerate(["C", "S"]):
-                    for degree in range(i_order_sign, n_max + 1):
-                        for order in range(i_order_sign, degree + 1):
-                            harmonic_frequencial_load_signal = load_base_model(
-                                name=harmonic_name(coefficient=coefficient, degree=degree, order=order),
-                                path=result_subpath.joinpath(earth_model + "_harmonic_frequencial_load_signal"),
-                            )
-                            # Computes harmonic trend.
-                            temporal_anelastic_harmonic_signal = real(
-                                ifft(
-                                    x=array(object=harmonic_frequencial_load_signal["real"], dtype=float)
-                                    + 1.0j * array(object=harmonic_frequencial_load_signal["imag"], dtype=float)
-                                )
-                            )
-                            load_signal_harmonic_trends[earth_model][i_order_sign][degree][order] = signal_trend(
-                                trend_dates=trend_dates,
-                                signal=temporal_anelastic_harmonic_signal[trend_indices],
-                            )[0]
-
-            # Preprocesses ocean mask.
-            ocean_mask = get_ocean_mask(name=load_signal_hyper_parameters.ocean_mask, n_max=n_max)
-            # Saves ocean rise mean trend.
-            territorial_means = {
-                earth_model: territorial_mean(harmonics=load_signal_harmonic_trends[earth_model], territorial_mask=ocean_mask)
-                for earth_model in ["elastic", "anelastic"]
-            }
-            save_base_model(
-                obj=territorial_means,
-                name="ocean_rise_mean_trend",
-                path=result_subpath,
+            _, run_folder_name, run_id, load_signal_harmonic_trends, territorial_means, ocean_mask = (
+                get_load_signal_harmonic_trends(
+                    do_elastic=True,
+                    load_signal_hyper_parameters=load_signal_hyper_parameters,
+                    run_hyper_parameters=run_hyper_parameters,
+                    anelasticity_description_id=anelasticity_description_id,
+                )
             )
 
             # Saves the figures.

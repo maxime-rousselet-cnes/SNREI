@@ -92,6 +92,7 @@ def plot_attenuation_functions(
                 parameter_values_per_layer=[
                     (variable, layer_name, [variable_value]) for layer_name in short_term_anelasticity_model.layer_names
                 ],
+                create=True,
             )
             anelasticity_description = AnelasticityDescription(
                 anelasticity_description_parameters=Love_numbers_hyper_parameters.anelasticity_description_parameters,

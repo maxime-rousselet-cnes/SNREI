@@ -6,7 +6,7 @@ from scipy import interpolate
 from tqdm import tqdm
 
 from ..classes import LoadSignalHyperParameters
-from ..database import save_base_model
+from ..database import save_base_model, symlink
 from .temporal import anelastic_induced_load_signal_per_degree
 
 
@@ -23,9 +23,12 @@ def anelastic_harmonic_induced_load_signal(
     signal_dates: ndarray[float],
     frequencies: ndarray[float],  # (y^-1).
     load_signal_informations: Path | tuple[ndarray[complex], float, Optional[ndarray[float]]],
+    do_elastic: bool = True,
+    src_directory: Optional[Path] = None,
 ) -> Path:
     """
     Computes the anelastic induced harmonic load and saves it in (.JSON) files.
+    If 'do_elastic' is False, 'src_directory' has to be specified.
     """
     if load_signal_hyper_parameters.load_signal == "ocean_load":
         # Unpack load signal informations.
@@ -71,18 +74,24 @@ def anelastic_harmonic_induced_load_signal(
                 ):  # Because S_n0 does not exist.
                     name = harmonic_name(coefficient=coefficient, degree=degree, order=order)
                     complex_anelastic_result: ndarray[complex] = frequencial_load_signals[degree] * harmonic_weight
-                    complex_elastic_result: ndarray[complex] = frequencial_elastic_normalized_load_signal * harmonic_weight
                     # Saves results in (.JSON) files.
                     save_base_model(
                         obj={"real": complex_anelastic_result.real, "imag": complex_anelastic_result.imag},
                         name=name,
                         path=anelastic_subpath,
                     )
-                    save_base_model(
-                        obj={"real": complex_elastic_result.real, "imag": complex_elastic_result.imag},
-                        name=name,
-                        path=elastic_subpath,
-                    )
+                    if do_elastic:
+                        complex_elastic_result: ndarray[complex] = frequencial_elastic_normalized_load_signal * harmonic_weight
+                        save_base_model(
+                            obj={"real": complex_elastic_result.real, "imag": complex_elastic_result.imag},
+                            name=name,
+                            path=elastic_subpath,
+                        )
+                    else:
+                        symlink(
+                            src=src_directory.joinpath("elastic_harmonic_frequencial_load_signal").joinpath(name + ".json"),
+                            dst=elastic_subpath.joinpath(name + ".json"),
+                        )
 
         return anelastic_subpath
     else:  # TODO: manage GRACE's full data.

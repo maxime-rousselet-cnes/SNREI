@@ -9,7 +9,6 @@ from numpy import (
     flip,
     linspace,
     log2,
-    mean,
     ndarray,
     newaxis,
     ones,
@@ -19,7 +18,6 @@ from numpy import (
     zeros,
 )
 from numpy.linalg import pinv
-from pyshtools.expand import SHExpandDH
 from scipy import interpolate
 from scipy.fft import fft, fftfreq
 

@@ -101,7 +101,14 @@ def load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(
         )
 
     # Preprocessing to revere anelasticity_descriptions/options loop orders.
-    selected_anelasticity_descriptions: dict[tuple, list[str]] = {run_hyper_parameters: [] for run_hyper_parameters in options}
+    selected_anelasticity_descriptions: dict[tuple, list[str]] = {
+        (
+            run_hyper_parameters.use_long_term_anelasticity,
+            run_hyper_parameters.use_short_term_anelasticity,
+            run_hyper_parameters.use_bounded_attenuation_functions,
+        ): []
+        for run_hyper_parameters in options
+    }
     for anelasticity_description_id in anelasticity_description_ids[1:]:
 
         # Finds minimal computing options.

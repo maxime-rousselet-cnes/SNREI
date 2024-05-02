@@ -163,15 +163,27 @@ def load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(
 
             # Compute load signals for all considered options.
             compute_anelastic_induced_harmonic_load_per_description_per_options(
-                anelasticity_description_ids=selected_anelasticity_descriptions,
+                anelasticity_description_ids=selected_anelasticity_descriptions[
+                    (
+                        run_hyper_parameters.use_long_term_anelasticity,
+                        run_hyper_parameters.use_short_term_anelasticity,
+                        run_hyper_parameters.use_bounded_attenuation_functions,
+                    )
+                ],
                 load_signal_hyper_parameters=load_signal_hyper_parameters,
-                options=run_hyper_parameters,
+                options=[run_hyper_parameters],
                 do_elastic=False,
                 src_directory=load_result_folder_elastic,
             )
 
             # Compute mean trends.
-            for anelasticity_description_id in selected_anelasticity_descriptions:
+            for anelasticity_description_id in selected_anelasticity_descriptions[
+                (
+                    run_hyper_parameters.use_long_term_anelasticity,
+                    run_hyper_parameters.use_short_term_anelasticity,
+                    run_hyper_parameters.use_bounded_attenuation_functions,
+                )
+            ]:
                 result_subpath, _, _, _, territorial_means, _ = get_load_signal_harmonic_trends(
                     do_elastic=False,
                     load_signal_hyper_parameters=load_signal_hyper_parameters,

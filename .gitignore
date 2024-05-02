@@ -2,3 +2,4 @@ data/descriptions
 data/results
 data/figures
 __pycache__
+models/*/*/*

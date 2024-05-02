@@ -145,7 +145,7 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
                                 + (
                                     ""
                                     if model_numbers_only
-                                    else "\n" + anelasticity_description_id.replace("___", "\n").replace("/", "\n")
+                                    else "\n" + anelasticity_description_id.replace("__", "\n").replace("/", "\n")
                                 )
                             )
                         if anelasticity_description_id == anelasticity_description_ids[0]:

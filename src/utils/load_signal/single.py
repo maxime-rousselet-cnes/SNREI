@@ -36,8 +36,6 @@ def compute_anelastic_induced_harmonic_load_per_description_per_options(
     # Loops on descriptions.
     load_result_folders = []
     for anelasticity_description_id in anelasticity_description_ids:
-        # Prints status.
-        print("Description: " + anelasticity_description_id + ":")
         # Loops on options.
         for run_hyper_parameters in options:
             load_signal_hyper_parameters.run_hyper_parameters = run_hyper_parameters
@@ -53,7 +51,9 @@ def compute_anelastic_induced_harmonic_load_per_description_per_options(
                     src_directory=src_directory,
                 ).parent
             ]
-            # Load bar.
-            print("----Run: " + run_hyper_parameters.run_id() + ": Done.")
+        # Load bar.
+        print("Done: " + anelasticity_description_id + ":")
+        for load_result_folder in load_result_folders:
+            print(str(load_result_folder))
 
     return load_result_folders

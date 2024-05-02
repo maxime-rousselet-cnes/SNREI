@@ -31,6 +31,7 @@ def load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(
     options: list[RunHyperParameters] = OPTIONS,
     base_load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
     load_signal_hyper_parameter_variations: dict[str, list] = {},
+    symlinks: bool = True,
 ) -> tuple[list[Path], : dict[Path, dict[str, float]]]:
     """
     Computes anelastic load signal from Love numbers by iterating on:
@@ -70,9 +71,9 @@ def load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(
         # Reconstructs all model filenames from anelasticity description IDs.
         model_filenames = {model_part: [] for model_part in ModelPart}
         for anelasticity_description_id in anelasticity_description_ids:
-            for model_part, model_name in zip(ModelPart, anelasticity_description_id.split("____")):
-                if not model_name in model_filenames[model_part]:
-                    model_filenames[model_part] += [model_name]
+            for model_part, model_name in zip(ModelPart, anelasticity_description_id.split("_____")):
+                if not model_name.replace("____", "/") in model_filenames[model_part]:
+                    model_filenames[model_part] += [model_name.replace("____", "/")]
 
     if anelasticity_description_ids is None:
         anelasticity_description_ids = []
@@ -99,16 +100,16 @@ def load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(
             load_signal_hyper_parameter_variations=load_signal_hyper_parameter_variations,
         )
 
-    load_result_folders: list[Path] = []
-    means_per_path: dict[Path, dict[str, float]] = {}
-    anelasticity_description_id: str
-    for anelasticity_description_id, load_signal_hyper_parameters in product(
-        anelasticity_description_ids, load_signal_hyper_parameters_list
-    ):
+    # Preprocessing to revere anelasticity_descriptions/options loop orders.
+    selected_anelasticity_descriptions: dict[RunHyperParameters, list[str]] = {
+        run_hyper_parameters: [] for run_hyper_parameters in options
+    }
+    for anelasticity_description_id in anelasticity_description_ids[1:]:
+
         # Finds minimal computing options.
-        do_elastic, do_long_term_only_case, do_short_term_only_case = find_minimal_computing_options(
-            long_term_anelasticity_model_name=anelasticity_description_id.split("____")[1],
-            short_term_anelasticity_model_name=anelasticity_description_id.split("____")[2],
+        _, do_long_term_only_case, do_short_term_only_case = find_minimal_computing_options(
+            long_term_anelasticity_model_name=anelasticity_description_id.split("_____")[1].replace("____", "/"),
+            short_term_anelasticity_model_name=anelasticity_description_id.split("_____")[2].replace("____", "/"),
             model_filenames=model_filenames,
         )
         minimal_options = minimal_computing_options(
@@ -116,28 +117,61 @@ def load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(
             do_long_term_only_case=do_long_term_only_case,
             do_short_term_only_case=do_short_term_only_case,
         )
+        for option in minimal_options:
+            selected_anelasticity_descriptions[option] += [anelasticity_description_id]
 
-        # Compute load signals for all considered options.
-        load_result_folders += compute_anelastic_induced_harmonic_load_per_description_per_options(
-            anelasticity_description_ids=[anelasticity_description_id],
+    means_per_path: dict[Path, dict[str, float]] = {}
+    # Iterates on load signal possibilities.
+    for load_signal_hyper_parameters in load_signal_hyper_parameters_list:
+
+        # For the very first description:
+        # Computes load signals for all considered options.
+        load_result_folder_elastic = compute_anelastic_induced_harmonic_load_per_description_per_options(
+            anelasticity_description_ids=[anelasticity_description_ids[0]],
             load_signal_hyper_parameters=load_signal_hyper_parameters,
-            options=minimal_options,
-            do_elastic=do_elastic,
-            src_directory=None if do_elastic else load_result_folders[0],
-        )
+            options=options,
+            do_elastic=True,
+            src_directory=None,
+        )[
+            0
+        ]  # Memorizes result's path for elastic load values.
+        # Loops on options. Loops only on the anelasticity descriptions that need to be taken into account by the current
+        # option.
+        for run_hyper_parameters in options:
 
-        # Compute mean trends.
-        for run_hyper_parameters in minimal_options:
-            result_subpath, _, _, _, territorial_means, _ = get_load_signal_harmonic_trends(
-                do_elastic=do_elastic,
+            # For the very first description:
+            # Compute mean trends.
+            result_subpath_elastic, _, _, _, territorial_means, _ = get_load_signal_harmonic_trends(
+                do_elastic=True,
                 load_signal_hyper_parameters=load_signal_hyper_parameters,
                 run_hyper_parameters=run_hyper_parameters,
-                anelasticity_description_id=anelasticity_description_id,
-                src_diretory=None if do_elastic else result_subpath,
+                anelasticity_description_id=anelasticity_description_ids[0],
+                src_diretory=None,
+            )  # Memorizes result's path for elastic load values.
+            means_per_path[result_subpath_elastic] = territorial_means
+
+            # Compute load signals for all considered options.
+            compute_anelastic_induced_harmonic_load_per_description_per_options(
+                anelasticity_description_ids=selected_anelasticity_descriptions,
+                load_signal_hyper_parameters=load_signal_hyper_parameters,
+                options=run_hyper_parameters,
+                do_elastic=False,
+                src_directory=load_result_folder_elastic,
             )
-            means_per_path[result_subpath] = territorial_means
+
+            # Compute mean trends.
+            for anelasticity_description_id in selected_anelasticity_descriptions:
+                result_subpath, _, _, _, territorial_means, _ = get_load_signal_harmonic_trends(
+                    do_elastic=False,
+                    load_signal_hyper_parameters=load_signal_hyper_parameters,
+                    run_hyper_parameters=run_hyper_parameters,
+                    anelasticity_description_id=anelasticity_description_id,
+                    src_diretory=result_subpath_elastic,
+                )
+                means_per_path[result_subpath] = territorial_means
 
     # Symlinks.
-    create_symlinks_to_results(model_filenames=model_filenames, options=options)
+    if symlinks:
+        create_symlinks_to_results(model_filenames=model_filenames, options=options)
 
-    return load_result_folders, means_per_path
+    return means_per_path

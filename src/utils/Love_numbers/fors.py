@@ -26,6 +26,7 @@ def Love_numbers_for_options_for_models_for_parameters(
     parameters: dict[ModelPart, dict[str, dict[str, list[list[float]]]]] = {model_part: {} for model_part in ModelPart},
     options: list[RunHyperParameters] = OPTIONS,
     Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_Love_numbers_hyper_parameters(),
+    symlinks: bool = True,
 ) -> tuple[list[str], dict[ModelPart, list[str]]]:
     """
     Computes anelastic Love numbers by iterating on:
@@ -99,7 +100,7 @@ def Love_numbers_for_options_for_models_for_parameters(
         ]
 
     # Symlinks.
-    if forced_anelasticity_description_id is None:
+    if forced_anelasticity_description_id is None and symlinks:
         create_symlinks_to_results(model_filenames=model_filenames, options=options)
 
     return anelasticity_description_ids, model_filenames

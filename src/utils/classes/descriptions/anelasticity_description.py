@@ -20,7 +20,7 @@ def anelasticity_description_id_from_part_names(
     """
     Builds an id for an anelasticity description given the names of its components.
     """
-    return "____".join(
+    return "_____".join(
         (
             part_name.replace("/", "____")
             for part_name in (elasticity_name, long_term_anelasticity_name, short_term_anelasticity_name)

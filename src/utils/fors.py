@@ -1,3 +1,4 @@
+from copy import deepcopy
 from itertools import product
 from typing import Any, Optional
 
@@ -117,9 +118,10 @@ def create_load_signal_hyper_parameter_variation(
     """
     Creates a variation of load signal hyper parameters.
     """
+    load_signal_hyper_parameters = deepcopy(base_load_signal_hyper_parameters)
     for parameter_tuple in parameter_values:
-        setattr(base_load_signal_hyper_parameters, parameter_tuple[0][0], parameter_tuple[0][1])
-    return base_load_signal_hyper_parameters
+        setattr(load_signal_hyper_parameters, parameter_tuple[0][0], parameter_tuple[0][1])
+    return load_signal_hyper_parameters
 
 
 def create_all_load_signal_hyper_parameters_variations(
@@ -221,14 +223,11 @@ def create_symlinks_to_results(model_filenames: dict[ModelPart, list[str]], opti
                     short_term_anelasticity_name=model_filenames[ModelPart.short_term_anelasticity][0],
                 )
             )
-            symlink(
-                src=src_path.joinpath("elastic_Love_numbers.json").absolute(),
-                dst=anelasticity_description_result_path.joinpath("elastic_Love_numbers.json"),
-            )
-            symlink(
-                src=src_path.joinpath("degrees.json").absolute(),
-                dst=anelasticity_description_result_path.joinpath("degrees.json"),
-            )
+            for filename in ["degrees", "elastic_Love_numbers"]:
+                symlink(
+                    src=src_path.joinpath(filename + ".json").absolute(),
+                    dst=anelasticity_description_result_path.joinpath(filename + ".json"),
+                )
 
         # Creates a symlink to equivalent long term anelasticity model's results for long term anelasticity only run.
         if not do_long_term_only_case:
@@ -260,7 +259,7 @@ def create_symlinks_to_results(model_filenames: dict[ModelPart, list[str]], opti
                     use_long_term_anelasticity=False,
                     use_short_term_anelasticity=True,
                     use_bounded_attenuation_functions=use_bounded_attenuation_functions,
-                ).run_id()
+                )
                 if run_hyper_parameters in options:
                     run_id = run_hyper_parameters.run_id()
                     src_path = (

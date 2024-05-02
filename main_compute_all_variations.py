@@ -3,6 +3,7 @@ from pathlib import Path
 from src import (
     Love_numbers_for_options_for_models_for_parameters,
     ModelPart,
+    RunHyperParameters,
     clear_subs,
     load_signal_for_options_for_models_for_parameters_for_elastic_load_signals,
 )
@@ -11,12 +12,17 @@ clear_subs()
 
 anelasticity_description_ids, model_filenames = Love_numbers_for_options_for_models_for_parameters(
     elasticity_model_names=["PREM"],
-    long_term_anelasticity_model_names=["VM7"],
+    long_term_anelasticity_model_names=["VM7"],  # ["Caron", "Lambeck_2017", "Lau_2016", "VM5a", "VM7"],
     short_term_anelasticity_model_names=[
         "Benjamin_Q_Resovsky",
-    ],
+    ],  # ["Benjamin_Q_PAR3P", "Benjamin_Q_PREM", "Benjamin_Q_QL6", "Benjamin_Q_QM1", "Benjamin_Q_Resovsky"],
     parameters={ModelPart.long_term_anelasticity: {"eta_m": {"ASTHENOSPHERE": [[3e19]]}}},
     symlinks=False,
+    options=[
+        RunHyperParameters(
+            use_long_term_anelasticity=True, use_short_term_anelasticity=True, use_bounded_attenuation_functions=True
+        ),
+    ],
 )
 load_result_folders: list[Path] = load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(
     anelasticity_description_ids=anelasticity_description_ids,
@@ -27,4 +33,9 @@ load_result_folders: list[Path] = load_signal_for_options_for_models_for_paramet
         "opposite_load_on_continents": [False, True],
     },
     symlinks=True,
+    options=[
+        RunHyperParameters(
+            use_long_term_anelasticity=True, use_short_term_anelasticity=True, use_bounded_attenuation_functions=True
+        ),
+    ],
 )

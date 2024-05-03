@@ -68,7 +68,7 @@ def create_all_model_variations(
     Creates all possible variations of parameters for the wanted models and creates the corresponding files accordingly.
     Returns all their IDs.
     """
-    model_filenames: dict[ModelPart, list[str]] = {}
+    model_filenames: dict[ModelPart, list[str]] = {model_part: [] for model_part in ModelPart}
     for model_part, model_names in zip(
         ModelPart, [elasticity_model_names, long_term_anelasticity_model_names, short_term_anelasticity_model_names]
     ):
@@ -76,7 +76,7 @@ def create_all_model_variations(
             for model_name in model_names:
                 model: Model = load_base_model(name=model_name, path=models_path[model_part], base_model_type=Model)
                 # Adds all possible combinations.
-                model_filenames[model_part] = list(
+                model_filenames[model_part] += list(
                     set(
                         [
                             model_name

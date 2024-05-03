@@ -28,8 +28,10 @@ def create_model_variation(
     per layer.
     """
     if create:
-        for parameter_name, layer_name, polynomial in parameter_values:
-            base_model.polynomials[parameter_name][base_model.layer_names.index(layer_name)] = polynomial
+        for parameter_name, layer_name_part, polynomial in parameter_values:
+            for layer_name in base_model.layer_names:
+                if layer_name_part in layer_name:
+                    base_model.polynomials[parameter_name][base_model.layer_names.index(layer_name)] = polynomial
     name = "___".join(
         [
             "__".join([parameter_name, layer_name] + [str(value) for value in polynomial])
@@ -37,8 +39,7 @@ def create_model_variation(
         ]
     )
     if create:
-        save_base_model(
-            obj=base_model,
+        base_model.save(
             name=name,
             path=models_path[model_part].joinpath(base_model_name),
         )
@@ -75,36 +76,42 @@ def create_all_model_variations(
             for model_name in model_names:
                 model: Model = load_base_model(name=model_name, path=models_path[model_part], base_model_type=Model)
                 # Adds all possible combinations.
-                model_filenames[model_part] = [
-                    model_name
-                    + "/"
-                    + create_model_variation(
-                        model_part=model_part,
-                        base_model=model,
-                        base_model_name=model_name,
-                        parameter_values=sum_lists(lists=parameter_values),
-                        create=create,
-                    )
-                    for parameter_values in product(
-                        *(
-                            product(
+                model_filenames[model_part] = list(
+                    set(
+                        [
+                            model_name
+                            + "/"
+                            + create_model_variation(
+                                model_part=model_part,
+                                base_model=model,
+                                base_model_name=model_name,
+                                parameter_values=sum_lists(lists=parameter_values),
+                                create=create,
+                            )
+                            for parameter_values in product(
                                 *(
                                     product(
-                                        (
-                                            (parameter_name, layer_name, parameter_values_possibility)
-                                            for parameter_values_possibility in [
-                                                model.polynomials[parameter_name][model.layer_names.index(layer_name)]
-                                            ]
-                                            + parameter_values_per_possibility  # Adds default values in the list of values to iterate on.
+                                        *(
+                                            product(
+                                                (
+                                                    (parameter_name, layer_name_part, parameter_values_possibility)
+                                                    for parameter_values_possibility in [
+                                                        model.polynomials[parameter_name][model.layer_names.index(layer_name)]
+                                                        for layer_name in model.layer_names
+                                                        if layer_name_part in layer_name
+                                                    ]
+                                                    + parameter_values_per_possibility  # Adds default values in the list of values to iterate on.
+                                                )
+                                            )
+                                            for layer_name_part, parameter_values_per_possibility in parameter_values_per_layer.items()
                                         )
                                     )
-                                    for layer_name, parameter_values_per_possibility in parameter_values_per_layer.items()
+                                    for parameter_name, parameter_values_per_layer in parameters[model_part].items()
                                 )
                             )
-                            for parameter_name, parameter_values_per_layer in parameters[model_part].items()
-                        )
+                        ]
                     )
-                ]
+                )
         else:
             model_filenames[model_part] = model_names
 

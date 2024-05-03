@@ -40,7 +40,7 @@ def Love_numbers_for_options_for_models_for_parameters(
 
     The 'parameters' input corresponds to parameters polynomial coefficients (list[float]) per model part, per
     parameter name, per layer name and per possibility. Here is an example that tests two possibilities for polynomials of
-    mu_asymptotic_ratio in the lower mantle: {
+    mu_asymptotic_ratio in the LOWER_MANTLE: {
         ModelPart.short_term_anelasticity: {
             "asymptotic_mu_ratio": {
                 "LOWER_MANTLE": [

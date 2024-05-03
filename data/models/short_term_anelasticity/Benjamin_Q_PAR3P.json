@@ -1,11 +1,11 @@
 {
     "layer_names": [
-        "LOWER MANTLE 1",
-        "LOWER MANTLE 2",
-        "LOWER MANTLE 3",
-        "TRANSITION_ZONE",
-        "LVZ",
-        "LID",
+        "LOWER_MANTLE_1",
+        "LOWER_MANTLE_2",
+        "LOWER_MANTLE_3",
+        "MANTLE_TRANSITION_ZONE",
+        "MANTLE_LVZ",
+        "MANTLE_LID",
         "CRUST"
     ],
     "r_limits": [

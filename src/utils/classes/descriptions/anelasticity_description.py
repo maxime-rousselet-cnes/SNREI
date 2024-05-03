@@ -199,7 +199,7 @@ class AnelasticityDescription(Description):
             # Checks which layer ends first.
             x_sup_per_part: dict[ModelPart, float] = {
                 model_part: round(
-                    a=description_parts[model_part].description_layers[layer_indices_per_part[model_part]].x_sup, decimals=8
+                    a=description_parts[model_part].description_layers[layer_indices_per_part[model_part]].x_sup, decimals=5
                 )
                 for model_part in ModelPart
             }
@@ -304,7 +304,7 @@ class AnelasticityDescription(Description):
                 }
             )
             # Eventually finds tau_M profile that constrains mu(omega -> Inf) = asymptotic_ratio * mu_0:
-            if round(a=1.0 - variable_values["asymptotic_mu_ratio"], decimals=4).any():
+            if round(a=1.0 - variable_values["asymptotic_mu_ratio"], decimals=5).any():
                 for i_x, (omega_m, alpha, asymptotic_mu_ratio, Q_mu) in enumerate(
                     zip(
                         variable_values["omega_m"],

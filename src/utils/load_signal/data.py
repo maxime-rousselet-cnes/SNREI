@@ -85,7 +85,7 @@ def territorial_mean(
         grid: ndarray[float] = MakeGridDH(harmonics, sampling=2)
     surface = surface_ponderation(territorial_mask=territorial_mask)
     weighted_values = grid * surface
-    return round(a=sum(weighted_values.flatten()) / sum(surface.flatten()), decimals=2)
+    return round(a=sum(weighted_values.flatten()) / sum(surface.flatten()), decimals=5)
 
 
 def load_subpath(path: Path, load_signal_hyper_parameters: LoadSignalHyperParameters) -> Path:

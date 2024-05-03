@@ -93,7 +93,7 @@ def anelastic_harmonic_induced_load_signal(
                             dst=elastic_subpath.joinpath(name + ".json"),
                         )
 
-        return anelastic_subpath
+        return anelastic_subpath.parent
     else:  # TODO: manage GRACE's full data.
         pass
 

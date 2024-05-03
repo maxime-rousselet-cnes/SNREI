@@ -1,10 +1,12 @@
 from enum import Enum
+from pathlib import Path
 from typing import Optional
 
 from numpy import Inf, linspace, ndarray, sum
 from pydantic import BaseModel
 from scipy import interpolate
 
+from ..database import save_base_model
 from .description_layer import DescriptionLayer, Spline
 
 
@@ -51,6 +53,12 @@ class Model(BaseModel):
     #       - asymptotic_mu_ratio: Defines mu(omega -> 0.0) / mu_0 (Unitless).
     #       - Q_mu: Quality factor (unitless).
     polynomials: dict[str, list[list[float | str]]]
+
+    def save(self, name: str, path: Path):
+        """
+        Method to save in (.JSON) file.
+        """
+        save_base_model(obj=self, name=name, path=path)
 
     def build_description_layers_list(self, radius_unit: float, spline_number: int, real_crust: bool) -> list[DescriptionLayer]:
         """

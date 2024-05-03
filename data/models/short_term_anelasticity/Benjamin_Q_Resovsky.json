@@ -3,10 +3,10 @@
         "LOWER MANTLE 1",
         "LOWER MANTLE 2",
         "LOWER MANTLE 3",
-        "TRANSITION_ZONE 1",
-        "TRANSITION_ZONE 2",
-        "LVZ",
-        "LID",
+        "MANTLE_TRANSITION_ZONE_1",
+        "MANTLE_TRANSITION_ZONE_2",
+        "MANTLE_LVZ",
+        "MANTLE_LID",
         "CRUST"
     ],
     "r_limits": [

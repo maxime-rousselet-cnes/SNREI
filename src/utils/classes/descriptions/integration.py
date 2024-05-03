@@ -15,13 +15,13 @@ from ...rheological_formulas import (
 )
 from ...y_system import (
     fluid_system,
-    fluid_to_solid,
+    fluid_to_soMANTLE_LID,
     load_surface_solution,
     potential_surface_solution,
     shear_surface_solution,
-    solid_homogeneous_system,
-    solid_system,
-    solid_to_fluid,
+    soMANTLE_LID_homogeneous_system,
+    soMANTLE_LID_system,
+    soMANTLE_LID_to_fluid,
 )
 from ..description_layer import DescriptionLayer
 from ..hyper_parameters import YSystemHyperParameters
@@ -182,10 +182,10 @@ class Integration(Description):
     ) -> tuple[ndarray, ndarray]:
         """
         Proceeds to the numerical integration of the wanted system along the planet's unitless radius.
-        The 'system' input may corresponds to 'fluid_system' or 'solid_system'. It should always be a callable. Its first inputs
+        The 'system' input may corresponds to 'fluid_system' or 'soMANTLE_LID_system'. It should always be a callable. Its first inputs
         are x and Y vector and its output is the dY/dx vector.
         """
-        with errstate(divide="ignore", invalid="ignore"):
+        with errstate(divide="ignore", invaMANTLE_LID="ignore"):
             solver: OdeSolution = integrate.solve_ivp(
                 fun=system,
                 t_span=(integration_start, integration_stop),
@@ -232,7 +232,7 @@ class Integration(Description):
             integration_start = hyper_parameters.minimal_radius / self.radius_unit
             if hyper_parameters.homogeneous_solution:
                 # Gets analytical homogeneous solution from r = 0 m to r = minimal_radius...
-                Y = solid_homogeneous_system(
+                Y = soMANTLE_LID_homogeneous_system(
                     x=integration_start,
                     n=n,
                     layer=self.description_layers[0],
@@ -266,7 +266,7 @@ class Integration(Description):
                     hyper_parameters=hyper_parameters,
                     n=n,
                     n_layer=n_layer,
-                    system=solid_system,
+                    system=soMANTLE_LID_system,
                 )
                 Y2, _ = self.integration(
                     Y_i=Y2,
@@ -275,7 +275,7 @@ class Integration(Description):
                     hyper_parameters=hyper_parameters,
                     n=n,
                     n_layer=n_layer,
-                    system=solid_system,
+                    system=soMANTLE_LID_system,
                 )
                 Y3, _ = self.integration(
                     Y_i=Y3,
@@ -284,14 +284,14 @@ class Integration(Description):
                     hyper_parameters=hyper_parameters,
                     n=n,
                     n_layer=n_layer,
-                    system=solid_system,
+                    system=soMANTLE_LID_system,
                 )
                 Y1, Y2, Y3 = Y1[:, -1], Y2[:, -1], Y3[:, -1]
                 integration_start = integration_stop
 
             # ICB Boundary conditions.
             if self.below_ICB_layers > 0:
-                Y = solid_to_fluid(
+                Y = soMANTLE_LID_to_fluid(
                     Y1=Y1.real,
                     Y2=Y2.real,
                     Y3=Y3.real,
@@ -320,7 +320,7 @@ class Integration(Description):
 
             # CMB Boundary conditions.
             if self.below_CMB_layers > 0:
-                Y1cmb, Y2cmb, Y3cmb = fluid_to_solid(
+                Y1cmb, Y2cmb, Y3cmb = fluid_to_soMANTLE_LID(
                     Yf1=Y,
                     x=integration_stop,
                     last_fluid_layer=self.description_layers[self.below_CMB_layers - 1],
@@ -335,7 +335,7 @@ class Integration(Description):
                 where((array([layer.x_inf for layer in self.description_layers]) ** n) > (self.x_CMB**n))[0][0] + 1
             )
             if hyper_parameters.homogeneous_solution:
-                Y = solid_homogeneous_system(
+                Y = soMANTLE_LID_homogeneous_system(
                     x=self.description_layers[n_start_layer].x_inf,
                     n=n,
                     layer=self.description_layers[n_start_layer],
@@ -370,7 +370,7 @@ class Integration(Description):
                 hyper_parameters=hyper_parameters,
                 n=n,
                 n_layer=n_layer,
-                system=solid_system,
+                system=soMANTLE_LID_system,
             )
             Y2, _ = self.integration(
                 Y_i=Y2,
@@ -379,7 +379,7 @@ class Integration(Description):
                 hyper_parameters=hyper_parameters,
                 n=n,
                 n_layer=n_layer,
-                system=solid_system,
+                system=soMANTLE_LID_system,
             )
             Y3, _ = self.integration(
                 Y_i=Y3,
@@ -388,7 +388,7 @@ class Integration(Description):
                 hyper_parameters=hyper_parameters,
                 n=n,
                 n_layer=n_layer,
-                system=solid_system,
+                system=soMANTLE_LID_system,
             )
             Y1, Y2, Y3 = Y1[:, -1], Y2[:, -1], Y3[:, -1]
 

@@ -1,9 +1,9 @@
 {
     "layer_names": [
-        "LOWER MANTLE",
-        "UPPER MANTLE",
-        "ASTHENOSPHERE",
-        "LITHOSPHERE",
+        "LOWER_MANTLE",
+        "UPPER_MANTLE",
+        "MANTLE_ASTHENOSPHERE",
+        "MANTLE_LITHOSPHERE",
         "CRUST"
     ],
     "r_limits": [

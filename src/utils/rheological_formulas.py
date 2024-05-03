@@ -151,7 +151,7 @@ def f_attenuation_computing(
         Y = lambda tau_log, alpha: (tau(tau_log=tau_log) ** alpha)
         denom = lambda tau_log, omega: (1.0 + (omega * tau(tau_log=tau_log) * 1.0j))
         integrand = lambda tau_log, omega, alpha: Y(tau_log=tau_log, alpha=alpha) / denom(tau_log=tau_log, omega=omega)
-        with errstate(invalid="ignore", divide="ignore"):
+        with errstate(invaMANTLE_LID="ignore", divide="ignore"):
             return array(
                 [
                     (
@@ -171,7 +171,7 @@ def f_attenuation_computing(
     else:
         high_frequency_domain: ndarray[bool] = frequency >= omega_m_tab
         omega_0 = 1.0 / frequency_unit  # (Unitless frequency).
-        with errstate(invalid="ignore", divide="ignore"):
+        with errstate(invaMANTLE_LID="ignore", divide="ignore"):
             return nan_to_num(  # Alpha or omega_m may be equal to 0.0, meaning no attenuation should be taken into account.
                 x=((2.0 / pi) * log(frequency / omega_0) + 1.0j) * high_frequency_domain
                 + (
@@ -188,7 +188,7 @@ def delta_mu_computing(mu_0: ndarray, Q_mu: ndarray, f: ndarray[complex]) -> nda
     Computes the first order frequency dependent variation from elasticity delta_mu at frequency value frequency, given the real
     elastic modulus mu_0, the elasticicty's quality factor Q_mu and attenuation function f.
     """
-    with errstate(invalid="ignore", divide="ignore"):
+    with errstate(invaMANTLE_LID="ignore", divide="ignore"):
         return nan_to_num(  # Q_mu may be equal to infinity, meaning no attenuation should be taken into account.
             x=(mu_0 / Q_mu) * f,
             nan=0.0,
@@ -199,9 +199,9 @@ def find_tau_M(omega_m: float, alpha: float, asymptotic_mu_ratio: float, Q_mu: f
     """
     Uses asymptotic equation to find tau_M such as
     """
-    with errstate(invalid="ignore"):
+    with errstate(invaMANTLE_LID="ignore"):
         return (
             0.0
-            if round(number=asymptotic_mu_ratio, ndigits=8) == 1.0 or alpha == 0.0
+            if round(number=asymptotic_mu_ratio, ndigits=5) == 1.0 or alpha == 0.0
             else (alpha * (1.0 - asymptotic_mu_ratio) * Q_mu + omega_m ** (-alpha)) ** (1.0 / alpha)
         )

@@ -49,7 +49,7 @@ def compute_anelastic_induced_harmonic_load_per_description_per_options(
                     load_signal_informations=load_signal_informations,
                     do_elastic=do_elastic,
                     src_directory=src_directory,
-                ).parent
+                )
             ]
         # Load bar.
         print("Done: " + anelasticity_description_id + ":")

@@ -185,7 +185,7 @@ class Integration(Description):
         The 'system' input may corresponds to 'fluid_system' or 'soMANTLE_LID_system'. It should always be a callable. Its first inputs
         are x and Y vector and its output is the dY/dx vector.
         """
-        with errstate(divide="ignore", invaMANTLE_LID="ignore"):
+        with errstate(divide="ignore", invalid="ignore"):
             solver: OdeSolution = integrate.solve_ivp(
                 fun=system,
                 t_span=(integration_start, integration_stop),

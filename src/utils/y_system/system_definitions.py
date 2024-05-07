@@ -7,7 +7,7 @@ from ..classes import DescriptionLayer
 # TODO: Vectorize and implement minimal computing policy.
 
 
-def soMANTLE_LID_system(
+def solid_system(
     x: float,
     Y: ndarray,
     n: int,
@@ -128,9 +128,7 @@ def fluid_system(
     return YP
 
 
-def soMANTLE_LID_to_fluid(
-    Y1: ndarray, Y2: ndarray, Y3: ndarray, x: float, first_fluid_layer: DescriptionLayer, piG: float
-) -> ndarray:
+def solid_to_fluid(Y1: ndarray, Y2: ndarray, Y3: ndarray, x: float, first_fluid_layer: DescriptionLayer, piG: float) -> ndarray:
     # Interpolate Parameters at Current Radius
     rndi = first_fluid_layer.evaluate(x=x, variable="rho_0")
     gndi = first_fluid_layer.evaluate(x=x, variable="g_0")
@@ -149,9 +147,7 @@ def soMANTLE_LID_to_fluid(
     return Yf1
 
 
-def fluid_to_soMANTLE_LID(
-    Yf1: ndarray, x: float, last_fluid_layer: DescriptionLayer, piG: float
-) -> tuple[ndarray, ndarray, ndarray]:
+def fluid_to_solid(Yf1: ndarray, x: float, last_fluid_layer: DescriptionLayer, piG: float) -> tuple[ndarray, ndarray, ndarray]:
     # Interpolate Parameters at Current Radius
     rndi = last_fluid_layer.evaluate(x=x, variable="rho_0")
     gndi = last_fluid_layer.evaluate(x=x, variable="g_0")
@@ -165,7 +161,7 @@ def fluid_to_soMANTLE_LID(
 
 
 # TODO: verify/redo analytic developments.
-def soMANTLE_LID_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: float):
+def solid_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: float):
     """
     Computes analytical solution to homogeneous sphere system of radius x, with n_layer-th layer elastic rheology.
     """

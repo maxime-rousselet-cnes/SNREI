@@ -13,7 +13,7 @@ region_info.xlsx				List of all tide-gauge stations and VLM estimates used for e
 
 GMSL_ensembles.nc				All 5000 ensemble members of GMSL and the contributing processes. The variable 'likelihood' provides the normalized likelihood of each ensemble member.
 
-                              - Spatial patterns in relative sea level and soMANTLE_LID-Earth deformation and the standard deviation due to each barystatic process are provided for each process individually -
+                              - Spatial patterns in relative sea level and solid-Earth deformation and the standard deviation due to each barystatic process are provided for each process individually -
 AIS.nc		                    Antarctic Ice Sheet
 GrIS.nc		                    Greenland Ice Sheet
 glac.nc                         Glaciers (excluding Greenland periphery)

@@ -59,7 +59,7 @@ def anelastic_Love_numbers_computing(
             save_result_per_degree=save_result_per_degree,
         )
 
-    with Pool() as p:  # Processes for degrees.
+    with Pool() as p:  # Processes for degrees. # TODO. remove 1.
         anelastic_Love_numbers_tuples: list[tuple[ndarray[float], ndarray[complex]]] = p.map(
             func=anelastic_Love_number_computing_per_degree, iterable=degrees
         )

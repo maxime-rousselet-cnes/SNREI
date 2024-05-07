@@ -27,7 +27,11 @@ from .database import (
     load_base_model,
     save_base_model,
 )
-from .fors import create_model_variation
+from .fors import (
+    create_all_model_variations,
+    create_model_variation,
+    create_symlinks_to_results,
+)
 from .load_signal import (
     anelastic_harmonic_induced_load_signal,
     anelastic_induced_load_signal_per_degree,
@@ -73,7 +77,9 @@ from .rheological_formulas import find_tau_M, frequencies_to_periods
     get_run_folder_name,
     load_base_model,
     save_base_model,
+    create_all_model_variations,
     create_model_variation,
+    create_symlinks_to_results,
     build_elastic_load_signal,
     compute_anelastic_induced_harmonic_load_per_description_per_options,
     extract_temporal_load_signal,

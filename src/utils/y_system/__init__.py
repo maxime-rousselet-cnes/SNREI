@@ -5,19 +5,19 @@ from .surface_solutions import (
 )
 from .system_definitions import (
     fluid_system,
-    fluid_to_soMANTLE_LID,
-    soMANTLE_LID_homogeneous_system,
-    soMANTLE_LID_system,
-    soMANTLE_LID_to_fluid,
+    fluid_to_solid,
+    solid_homogeneous_system,
+    solid_system,
+    solid_to_fluid,
 )
 
 [
     fluid_system,
-    fluid_to_soMANTLE_LID,
+    fluid_to_solid,
     load_surface_solution,
     potential_surface_solution,
     shear_surface_solution,
-    soMANTLE_LID_homogeneous_system,
-    soMANTLE_LID_system,
-    soMANTLE_LID_to_fluid,
+    solid_homogeneous_system,
+    solid_system,
+    solid_to_fluid,
 ]

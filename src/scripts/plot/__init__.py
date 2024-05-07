@@ -8,7 +8,8 @@ from .mu import (
     plot_mu_profiles_for_options_to_periods,
     plot_mu_profiles_for_options_to_periods_per_description,
 )
-from .utils import plot_temporal_load_signal
+from .to_depth import plot_viscosity_profiles_for_descriptions_to_depth
+from .utils import plot_load_signal
 
 [
     plot_anelastic_induced_load_per_degree_per_description_per_options,
@@ -17,5 +18,6 @@ from .utils import plot_temporal_load_signal
     plot_mu_profiles_for_options_for_periods_to_depth_per_description,
     plot_mu_profiles_for_options_to_periods,
     plot_mu_profiles_for_options_to_periods_per_description,
-    plot_temporal_load_signal,
+    plot_viscosity_profiles_for_descriptions_to_depth,
+    plot_load_signal,
 ]

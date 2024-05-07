@@ -81,6 +81,7 @@ class Integration(Description):
         for i_layer, (variables, layer) in enumerate(
             zip(anelasticity_description.variable_values_per_layer, anelasticity_description.description_layers)
         ):
+
             # First gets the needed real variable splines.
             description_layer = DescriptionLayer(
                 name=layer.name,
@@ -104,68 +105,67 @@ class Integration(Description):
 
             # Computes complex mu and lambda.
             if i_layer >= self.below_CMB_layers:
-                if i_layer >= self.below_CMB_layers:
 
-                    # Attenuation.
-                    if use_short_term_anelasticity:
-                        # Updates with attenuation functions f_r and f_i.
-                        f = f_attenuation_computing(
-                            omega_m_tab=variables["omega_m"],
-                            tau_M_tab=variables["tau_M"],
-                            alpha_tab=variables["alpha"],
-                            omega=self.omega,
-                            frequency=self.frequency,
-                            frequency_unit=anelasticity_description.frequency_unit,
-                            use_bounded_attenuation_functions=use_bounded_attenuation_functions,
-                        )
-                        description_layer.splines.update(
-                            {
-                                "f_r": interpolate.splrep(x=variables["x"], y=f.real),
-                                "f_i": interpolate.splrep(x=variables["x"], y=f.imag),
-                            }
-                        )
-                        # Adds delta mu, computed using f_r and f_i.
-                        delta_mu = delta_mu_computing(
-                            mu_0=variables["mu_0"],
-                            Q_mu=variables["Q_mu"],
-                            f=f,
-                        )
-                        variables["lambda"] = variables["lambda_0"] - 2.0 / 3.0 * delta_mu
-                        variables["mu"] = variables["mu_0"] + delta_mu
-                    else:
-                        # No attenuation: mu = mu_0 and lambda = lambda_0.
-                        variables["lambda"] = array(variables["lambda_0"], dtype=complex)
-                        variables["mu"] = array(variables["mu_0"], dtype=complex)
-
-                    # Complex cut frequency variables.
-                    variables.update(build_cutting_omegas(variables=variables))
-
-                    # Anelasticity.
-                    if use_long_term_anelasticity:
-                        m_prime = m_prime_computing(omega_cut_m=variables["omega_cut_m"], omega_j=self.omega_j)
-                        b = b_computing(
-                            omega_cut_m=variables["omega_cut_m"],
-                            omega_cut_k=variables["omega_cut_k"],
-                            omega_cut_b=variables["omega_cut_b"],
-                            omega_j=self.omega_j,
-                        )
-                        variables["lambda"] = lambda_computing(
-                            mu_complex=variables["mu"],
-                            lambda_complex=variables["lambda"],
-                            m_prime=m_prime,
-                            b=b,
-                        )
-                        variables["mu"] = mu_computing(mu_complex=variables["mu"], m_prime=m_prime, b=b)
-
-                    # Updates.
+                # Attenuation.
+                if use_short_term_anelasticity:
+                    # Updates with attenuation functions f_r and f_i.
+                    f = f_attenuation_computing(
+                        omega_m_tab=variables["omega_m"],
+                        tau_M_tab=variables["tau_M"],
+                        alpha_tab=variables["alpha"],
+                        omega=self.omega,
+                        frequency=self.frequency,
+                        frequency_unit=anelasticity_description.frequency_unit,
+                        use_bounded_attenuation_functions=use_bounded_attenuation_functions,
+                    )
                     description_layer.splines.update(
                         {
-                            "lambda_real": interpolate.splrep(x=variables["x"], y=variables["lambda"].real),
-                            "lambda_imag": interpolate.splrep(x=variables["x"], y=variables["lambda"].imag),
-                            "mu_real": interpolate.splrep(x=variables["x"], y=variables["mu"].real),
-                            "mu_imag": interpolate.splrep(x=variables["x"], y=variables["mu"].imag),
-                        },
+                            "f_r": interpolate.splrep(x=variables["x"], y=f.real),
+                            "f_i": interpolate.splrep(x=variables["x"], y=f.imag),
+                        }
                     )
+                    # Adds delta mu, computed using f_r and f_i.
+                    delta_mu = delta_mu_computing(
+                        mu_0=variables["mu_0"],
+                        Q_mu=variables["Q_mu"],
+                        f=f,
+                    )
+                    variables["lambda"] = variables["lambda_0"] - 2.0 / 3.0 * delta_mu
+                    variables["mu"] = variables["mu_0"] + delta_mu
+                else:
+                    # No attenuation: mu = mu_0 and lambda = lambda_0.
+                    variables["lambda"] = array(variables["lambda_0"], dtype=complex)
+                    variables["mu"] = array(variables["mu_0"], dtype=complex)
+
+                # Complex cut frequency variables.
+                variables.update(build_cutting_omegas(variables=variables))
+
+                # Anelasticity.
+                if use_long_term_anelasticity:
+                    m_prime = m_prime_computing(omega_cut_m=variables["omega_cut_m"], omega_j=self.omega_j)
+                    b = b_computing(
+                        omega_cut_m=variables["omega_cut_m"],
+                        omega_cut_k=variables["omega_cut_k"],
+                        omega_cut_b=variables["omega_cut_b"],
+                        omega_j=self.omega_j,
+                    )
+                    variables["lambda"] = lambda_computing(
+                        mu_complex=variables["mu"],
+                        lambda_complex=variables["lambda"],
+                        m_prime=m_prime,
+                        b=b,
+                    )
+                    variables["mu"] = mu_computing(mu_complex=variables["mu"], m_prime=m_prime, b=b)
+
+                # Updates.
+                description_layer.splines.update(
+                    {
+                        "lambda_real": interpolate.splrep(x=variables["x"], y=variables["lambda"].real),
+                        "lambda_imag": interpolate.splrep(x=variables["x"], y=variables["lambda"].imag),
+                        "mu_real": interpolate.splrep(x=variables["x"], y=variables["mu"].real),
+                        "mu_imag": interpolate.splrep(x=variables["x"], y=variables["mu"].imag),
+                    },
+                )
 
             # Updates.
             self.description_layers += [description_layer]

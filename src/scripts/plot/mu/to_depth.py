@@ -31,6 +31,7 @@ def plot_mu_profiles_for_options_for_periods_to_depth(
     linewidth: int = 2,
     legend: bool = True,
     grid: bool = True,
+    inverse: bool = False,
 ) -> None:
     """
     Generates 2 figures:
@@ -59,11 +60,17 @@ def plot_mu_profiles_for_options_for_periods_to_depth(
         # Iterates on frequencies. A plot per loop.
         for frequency, period, plot in zip(frequencies, period_values, plots):
             # Iterates on options. A curb per loop.
-            for option in options + [
-                RunHyperParameters(
-                    use_long_term_anelasticity=False, use_short_term_anelasticity=False, use_bounded_attenuation_functions=False
-                )
-            ]:
+            for option, linestyle in zip(
+                options
+                + [
+                    RunHyperParameters(
+                        use_long_term_anelasticity=False,
+                        use_short_term_anelasticity=False,
+                        use_bounded_attenuation_functions=False,
+                    )
+                ],
+                ["-", "-.", "--", ":"],
+            ):
                 integration = Integration(
                     anelasticity_description=anelasticity_description,
                     log_frequency=log10(frequency / anelasticity_description.frequency_unit),
@@ -77,29 +84,36 @@ def plot_mu_profiles_for_options_for_periods_to_depth(
                 for k_layer in range(anelasticity_description.below_CMB_layers, len(integration.description_layers)):
                     layer = integration.description_layers[k_layer]
                     x = linspace(start=layer.x_inf, stop=layer.x_sup, num=anelasticity_description.spline_number)
-
+                    mu = layer.evaluate(x=x, variable="mu_real") + 1.0j * layer.evaluate(x=x, variable="mu_imag")
+                    if inverse:
+                        variable = layer.evaluate(x=x, variable="mu_0") / mu
+                    else:
+                        variable = mu * anelasticity_description.elasticity_unit
                     if k_layer == anelasticity_description.below_CMB_layers:
                         plot.plot(
-                            layer.evaluate(x=x, variable="mu_" + part) * anelasticity_description.elasticity_unit,
+                            variable.real if part == "real" else variable.imag,
                             (1.0 - x) * anelasticity_description.radius_unit / 1e3,
                             color=color,
                             label=label,
                             linewidth=linewidth,
+                            linestyle=linestyle,
                         )
                     else:
                         plot.plot(
-                            layer.evaluate(x=x, variable="mu_" + part) * anelasticity_description.elasticity_unit,
+                            variable.real if part == "real" else variable.imag,
                             (1.0 - x) * anelasticity_description.radius_unit / 1e3,
                             color=color,
                             linewidth=linewidth,
+                            linestyle=linestyle,
                         )
             if frequency == frequencies[0] and legend:
                 plot.legend()
-            plot.set_xlabel("$\mu_{" + part + "}$ (Pa)")
+            plot.set_xlabel("$\mu_0 / \mu$" if inverse else "$\mu_{" + part + "}$ (Pa)")
             if grid:
                 plot.grid()
             # plot.set_xscale("log")
             plot.set_title("$T=" + str(period) + "$ (y)")
+        plt.suptitle(("Real" if part == "real" else "Imaginary") + " part")
         plot.set_ylabel("Depth (km)")
         plot.invert_yaxis()
         plt.savefig(figures_subpath.joinpath("mu_" + part + ".png"))
@@ -116,6 +130,7 @@ def plot_mu_profiles_for_options_for_periods_to_depth_per_description(
     linewidth: int = 2,
     legend: bool = True,
     grid: bool = True,
+    inverse: bool = False,
 ) -> None:
     """
     Generates 2 figures per description ID:
@@ -136,4 +151,5 @@ def plot_mu_profiles_for_options_for_periods_to_depth_per_description(
             linewidth=linewidth,
             legend=legend,
             grid=grid,
+            inverse=inverse,
         )

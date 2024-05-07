@@ -1,3 +1,0 @@
-Min tolerance on degree CMB computed with x**n?
-R_sc = rho_0(CMB+)?
-Instable homogeneous solution at high degrees?

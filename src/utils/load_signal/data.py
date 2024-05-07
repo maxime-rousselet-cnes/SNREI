@@ -31,7 +31,10 @@ COLUMNS = ["lower", "mean", "upper"]
 
 
 def extract_temporal_load_signal(
-    name: str, path: Path = GMSL_data_path, filename: str = "Frederikse/global_basin_timeseries.csv"
+    name: str,
+    path: Path = GMSL_data_path,
+    filename: str = "Frederikse/global_basin_timeseries.csv",
+    zero: bool = True,
 ) -> tuple[ndarray[float], ndarray[float]]:
     """
     Opens Frederikse et al.'s file and formats its data. Mean load in equivalent water height with respect to time.
@@ -63,7 +66,7 @@ def extract_temporal_load_signal(
         a = (barystatic[start][-1] - barystatic[end][0]) / (barystatic["mean"][-1] - barystatic["mean"][0])
         b = barystatic[end][0] - a * barystatic["mean"][0]
         barystatic[name] = a * barystatic["mean"] + b
-    return signal_dates, barystatic[name] - barystatic[name][0]
+    return signal_dates, barystatic[name] - (barystatic[name][0] if zero else 0)
 
 
 def surface_ponderation(

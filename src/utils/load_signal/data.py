@@ -103,7 +103,7 @@ def load_subpath(path: Path, load_signal_hyper_parameters: LoadSignalHyperParame
         .joinpath("with" + ("" if load_signal_hyper_parameters.little_isostatic_adjustment else "out") + "_LIA")
         .joinpath(
             "with"
-            + ("out" if load_signal_hyper_parameters.opposite_load_on_continents else "")
+            + ("" if load_signal_hyper_parameters.opposite_load_on_continents else "out")
             + "_opposite_load_on_continents"
         )
     )

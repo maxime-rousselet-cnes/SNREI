@@ -51,9 +51,5 @@ def compute_anelastic_induced_harmonic_load_per_description_per_options(
                     src_directory=src_directory,
                 )
             ]
-        # Load bar.
-        print("Done: " + anelasticity_description_id + ":")
-        for load_result_folder in load_result_folders:
-            print(str(load_result_folder))
 
     return load_result_folders

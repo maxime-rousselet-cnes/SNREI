@@ -5,7 +5,7 @@ from os.path import exists
 from pathlib import Path
 from typing import Any, Optional
 
-from numpy import arange, concatenate, ndarray
+from numpy import arange, complex128, concatenate, fromfile, ndarray
 from pydantic import BaseModel
 
 
@@ -70,6 +70,23 @@ def load_base_model(
     with open(path.joinpath(name + ".json"), "r") as file:
         loaded_content = load(fp=file)
         return loaded_content if not base_model_type else base_model_type(**loaded_content)
+
+
+def save_complex_array_to_binary(array: ndarray, name: str, path: Path) -> None:
+    """
+    Saves a complex NumPy array to a binary file.
+    """
+    path.mkdir(parents=True, exist_ok=True)
+    with open(path.joinpath(name), "wb") as f:
+        array.tofile(f)
+
+
+def load_complex_array_from_binary(name: str, path: Path) -> ndarray[complex128]:
+    """
+    Loads a complex NumPy array from a binary file.
+    """
+    # Load the array from binary file
+    return fromfile(path.joinpath(name), dtype=complex128)
 
 
 def generate_degrees_list(

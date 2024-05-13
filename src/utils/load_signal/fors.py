@@ -2,6 +2,8 @@ from itertools import product
 from pathlib import Path
 from typing import Optional
 
+from tqdm import tqdm
+
 from ..classes import (
     OPTIONS,
     LoadSignalHyperParameters,
@@ -132,8 +134,19 @@ def load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(
             ] += [anelasticity_description_id]
 
     means_per_path: dict[Path, dict[str, float]] = {}
+    print(anelasticity_description_ids[0])  # TODO.
     # Iterates on load signal possibilities.
     for load_signal_hyper_parameters in load_signal_hyper_parameters_list:
+
+        # Log status.
+        print(
+            "case=",
+            load_signal_hyper_parameters.case,
+            "LIA=",
+            load_signal_hyper_parameters.little_isostatic_adjustment,
+            "continents=",
+            load_signal_hyper_parameters.opposite_load_on_continents,
+        )
 
         # For the very first description:
         # Computes load signals for all considered options.
@@ -149,6 +162,16 @@ def load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(
         # Loops on options. Loops only on the anelasticity descriptions that need to be taken into account by the current
         # option.
         for run_hyper_parameters in options:
+
+            # Log status.
+            print(
+                "long_term=",
+                run_hyper_parameters.use_long_term_anelasticity,
+                "short_term=",
+                run_hyper_parameters.use_short_term_anelasticity,
+                "bounded=",
+                run_hyper_parameters.use_bounded_attenuation_functions,
+            )
 
             # For the very first description:
             # Compute mean trends.
@@ -177,13 +200,15 @@ def load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(
             )
 
             # Compute mean trends.
-            for anelasticity_description_id in selected_anelasticity_descriptions[
-                (
-                    run_hyper_parameters.use_long_term_anelasticity,
-                    run_hyper_parameters.use_short_term_anelasticity,
-                    run_hyper_parameters.use_bounded_attenuation_functions,
-                )
-            ]:
+            for anelasticity_description_id in tdqm(
+                selected_anelasticity_descriptions[
+                    (
+                        run_hyper_parameters.use_long_term_anelasticity,
+                        run_hyper_parameters.use_short_term_anelasticity,
+                        run_hyper_parameters.use_bounded_attenuation_functions,
+                    )
+                ]
+            ):
                 result_subpath, _, _, _, territorial_means, _ = get_load_signal_harmonic_trends(
                     do_elastic=False,
                     load_signal_hyper_parameters=load_signal_hyper_parameters,

@@ -3,10 +3,9 @@ from typing import Optional
 
 from numpy import arange, ndarray, transpose
 from scipy import interpolate
-from tqdm import tqdm
 
 from ..classes import LoadSignalHyperParameters
-from ..database import save_base_model, symlink
+from ..database import save_complex_array_to_binary, symlink
 from .temporal import anelastic_induced_load_signal_per_degree
 
 
@@ -64,10 +63,8 @@ def anelastic_harmonic_induced_load_signal(
 
         # Loops on harmonics:
         for coefficient, (i_order_sign, weights_per_degree) in zip(["C", "S"], enumerate(harmonic_weights)):
-            for degree, weights_per_order in tqdm(
-                total=len(weights_per_degree) - i_order_sign,
-                desc="----" + ("C" if i_order_sign == 0 else "S"),
-                iterable=zip(range(i_order_sign, len(weights_per_degree)), weights_per_degree[i_order_sign:]),
+            for degree, weights_per_order in zip(
+                range(i_order_sign, len(weights_per_degree)), weights_per_degree[i_order_sign:]
             ):  # Because S_00 does not exist.
                 for order, harmonic_weight in zip(
                     range(i_order_sign, degree + 1), weights_per_order[i_order_sign : degree + 1]
@@ -75,15 +72,15 @@ def anelastic_harmonic_induced_load_signal(
                     name = harmonic_name(coefficient=coefficient, degree=degree, order=order)
                     complex_anelastic_result: ndarray[complex] = frequencial_load_signals[degree] * harmonic_weight
                     # Saves results in (.JSON) files.
-                    save_base_model(
-                        obj={"real": complex_anelastic_result.real, "imag": complex_anelastic_result.imag},
+                    save_complex_array_to_binary(
+                        array=complex_anelastic_result,
                         name=name,
                         path=anelastic_subpath,
                     )
                     if do_elastic:
                         complex_elastic_result: ndarray[complex] = frequencial_elastic_normalized_load_signal * harmonic_weight
-                        save_base_model(
-                            obj={"real": complex_elastic_result.real, "imag": complex_elastic_result.imag},
+                        save_complex_array_to_binary(
+                            array=complex_elastic_result,
                             name=name,
                             path=elastic_subpath,
                         )

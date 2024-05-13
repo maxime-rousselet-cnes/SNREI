@@ -1,11 +1,16 @@
 from pathlib import Path
 from typing import Optional
 
-from numpy import array, ndarray, real, sqrt, zeros
+from numpy import ndarray, real, sqrt, zeros
 from scipy.fft import ifft
 
 from ..classes import LoadSignalHyperParameters, RunHyperParameters, results_path
-from ..database import get_run_folder_name, load_base_model, save_base_model
+from ..database import (
+    get_run_folder_name,
+    load_base_model,
+    load_complex_array_from_binary,
+    save_base_model,
+)
 from .data import get_ocean_mask, load_subpath, territorial_mean
 from .harmonic import harmonic_name
 from .temporal import get_trend_dates, signal_trend
@@ -41,21 +46,17 @@ def get_load_signal_harmonic_trends(
     )
     load_signal_harmonic_trends = {earth_model: zeros(shape=(2, n_max + 1, n_max + 1)) for earth_model in earth_models}
     for earth_model in earth_models:
+        result_full_path = result_subpath.joinpath(earth_model + "_harmonic_frequencial_load_signal")
         # Loops on harmonics:
         for i_order_sign, coefficient in enumerate(["C", "S"]):
             for degree in range(i_order_sign, n_max + 1):
                 for order in range(i_order_sign, degree + 1):
-                    harmonic_frequencial_load_signal = load_base_model(
+                    harmonic_frequencial_load_signal = load_complex_array_from_binary(
                         name=harmonic_name(coefficient=coefficient, degree=degree, order=order),
-                        path=result_subpath.joinpath(earth_model + "_harmonic_frequencial_load_signal"),
+                        path=result_full_path,
                     )
                     # Computes harmonic trend.
-                    temporal_anelastic_harmonic_signal = real(
-                        ifft(
-                            x=array(object=harmonic_frequencial_load_signal["real"], dtype=float)
-                            + 1.0j * array(object=harmonic_frequencial_load_signal["imag"], dtype=float)
-                        )
-                    )
+                    temporal_anelastic_harmonic_signal = real(ifft(x=harmonic_frequencial_load_signal))
                     load_signal_harmonic_trends[earth_model][i_order_sign][degree][order] = signal_trend(
                         trend_dates=trend_dates,
                         signal=temporal_anelastic_harmonic_signal[trend_indices],

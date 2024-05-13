@@ -1,4 +1,5 @@
 from pathlib import Path
+from shutil import rmtree
 from typing import Optional
 
 from numpy import ndarray, real, sqrt, zeros
@@ -61,6 +62,9 @@ def get_load_signal_harmonic_trends(
                         trend_dates=trend_dates,
                         signal=temporal_anelastic_harmonic_signal[trend_indices],
                     )[0]
+
+    # Empty space.
+    rmtree(path=result_subpath.joinpath("anelastic_harmonic_frequencial_load_signal"))
 
     # Preprocesses ocean mask.
     ocean_mask = get_ocean_mask(name=load_signal_hyper_parameters.ocean_mask, n_max=n_max)

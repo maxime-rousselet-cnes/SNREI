@@ -24,10 +24,10 @@ model_filenames = create_all_model_variations(
     long_term_anelasticity_model_names=["VM7", "Lambeck_2017", "Caron", "Lau_2016", "VM5a"],
     short_term_anelasticity_model_names=[
         "Benjamin_Q_Resovsky",
-        # "Benjamin_Q_PAR3P",
-        # "Benjamin_Q_PREM",
-        # "Benjamin_Q_QL6",
-        # "Benjamin_Q_QM1",
+        "Benjamin_Q_PAR3P",
+        "Benjamin_Q_PREM",
+        "Benjamin_Q_QL6",
+        "Benjamin_Q_QM1",
     ],
     parameters={
         ModelPart.long_term_anelasticity: {"eta_m": {"ASTHENOSPHERE": [[3e19]]}},

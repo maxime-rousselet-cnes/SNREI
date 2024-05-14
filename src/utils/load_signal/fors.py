@@ -16,8 +16,6 @@ from ..fors import (
     create_all_load_signal_hyper_parameters_variations,
     create_all_model_variations,
     create_symlinks_to_results,
-    find_minimal_computing_options,
-    minimal_computing_options,
 )
 from .single import compute_anelastic_induced_harmonic_load_per_description_per_options
 from .trend import get_load_signal_harmonic_trends

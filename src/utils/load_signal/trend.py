@@ -65,6 +65,7 @@ def get_load_signal_harmonic_trends(
 
     # Empty space.
     rmtree(path=result_subpath.joinpath("anelastic_harmonic_frequencial_load_signal"))
+    rmtree(path=result_subpath.joinpath("anelastic_induced_frequencial_load_signal_per_degree"))
 
     # Preprocesses ocean mask.
     ocean_mask = get_ocean_mask(name=load_signal_hyper_parameters.ocean_mask, n_max=n_max)

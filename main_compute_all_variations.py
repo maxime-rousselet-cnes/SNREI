@@ -39,9 +39,9 @@ model_filenames = create_all_model_variations(
 load_result_folders: list[Path] = load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(
     model_filenames=model_filenames,
     load_signal_hyper_parameter_variations={
-        "case": ["mean", "upper", "lower"],
-        "little_isostatic_adjustment": [True, False],
-        "opposite_load_on_continents": [False, True],
+        "case": ["lower"],
+        "little_isostatic_adjustment": [False],
+        "opposite_load_on_continents": [True],
     },
     symlinks=True,
     options=options,

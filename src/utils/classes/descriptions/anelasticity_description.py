@@ -16,7 +16,7 @@ from .elasticity_description import ElasticityDescription
 
 def anelasticity_description_id_from_part_names(
     elasticity_name: str, long_term_anelasticity_name: str, short_term_anelasticity_name: str
-):
+) -> str:
     """
     Builds an id for an anelasticity description given the names of its components.
     """

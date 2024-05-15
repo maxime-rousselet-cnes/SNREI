@@ -170,8 +170,4 @@ def load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(
                 )
                 means_per_path[result_subpath] = territorial_means
 
-    # Symlinks.
-    if symlinks:
-        create_symlinks_to_results(model_filenames=model_filenames, options=options)
-
     return means_per_path

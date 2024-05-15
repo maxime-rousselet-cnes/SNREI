@@ -13,8 +13,9 @@ def symlink(src, dst):
     """
     Creates a Symlink, eventually remove a previously existing one.
     """
-    if exists(path=dst):
-        remove(dst)
+    for path in [src, dst]:
+        if exists(path=path):
+            remove(path)
     base_symlink(src=src, dst=dst)
 
 
@@ -67,7 +68,11 @@ def load_base_model(
     """
     Loads a JSON serializable type.
     """
-    with open(path.joinpath(name + ".json"), "r") as file:
+    filepath = path.joinpath(name + ("" if ".json" in name else ".json"))
+    while filepath.is_symlink():
+
+        filepath = filepath.resolve()
+    with open(filepath, "r") as file:
         loaded_content = load(fp=file)
         return loaded_content if not base_model_type else base_model_type(**loaded_content)
 

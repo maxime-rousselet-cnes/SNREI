@@ -19,6 +19,6 @@ descriptions_path: dict[ModelPart, Path] = {
 }
 anelasticity_descriptions_path = data_path.joinpath("descriptions").joinpath("anelasticity_descriptions")
 
-results_path = data_path.joinpath("results")
+results_path = data_path.absolute().parent.parent.joinpath("data/results")
 
 figures_path = data_path.joinpath("figures")

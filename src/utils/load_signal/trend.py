@@ -21,8 +21,9 @@ def get_load_signal_harmonic_trends(
     do_elastic: bool,
     load_signal_hyper_parameters: LoadSignalHyperParameters,
     anelasticity_description_id: str,
-    src_diretory: Optional[Path],
+    src_diretory: Optional[Path] = None,
     run_hyper_parameters: Optional[RunHyperParameters] = None,
+    remove: bool = True,
 ) -> tuple[Path, str, str, dict[str, ndarray], dict[str, float], ndarray]:
     """
     Computes harmonic load signal trends. Saves territorial mean value.
@@ -64,8 +65,9 @@ def get_load_signal_harmonic_trends(
                     )[0]
 
     # Empty space.
-    rmtree(path=result_subpath.joinpath("anelastic_harmonic_frequencial_load_signal"))
-    rmtree(path=result_subpath.joinpath("anelastic_induced_frequencial_load_signal_per_degree"))
+    if remove:
+        rmtree(path=result_subpath.joinpath("anelastic_harmonic_frequencial_load_signal"))
+        rmtree(path=result_subpath.joinpath("anelastic_induced_frequencial_load_signal_per_degree"))
 
     # Preprocesses ocean mask.
     ocean_mask = get_ocean_mask(name=load_signal_hyper_parameters.ocean_mask, n_max=n_max)

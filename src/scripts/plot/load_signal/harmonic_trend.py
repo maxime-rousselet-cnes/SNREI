@@ -40,6 +40,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                     load_signal_hyper_parameters=load_signal_hyper_parameters,
                     run_hyper_parameters=run_hyper_parameters,
                     anelasticity_description_id=anelasticity_description_id,
+                    remove=False,
                 )
             )
 

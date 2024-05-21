@@ -1,7 +1,7 @@
+from contextlib import suppress
 from json import JSONEncoder, dump, load
 from os import remove
 from os import symlink as base_symlink
-from os.path import exists
 from pathlib import Path
 from typing import Any, Optional
 
@@ -9,13 +9,12 @@ from numpy import arange, complex128, concatenate, fromfile, ndarray
 from pydantic import BaseModel
 
 
-def symlink(src, dst):
+def symlink(src: Path, dst: Path):
     """
     Creates a Symlink, eventually remove a previously existing one.
     """
-    for path in [src, dst]:
-        if exists(path=path):
-            remove(path)
+    with suppress(FileNotFoundError):
+        remove(dst)
     base_symlink(src=src, dst=dst)
 
 
@@ -70,7 +69,6 @@ def load_base_model(
     """
     filepath = path.joinpath(name + ("" if ".json" in name else ".json"))
     while filepath.is_symlink():
-
         filepath = filepath.resolve()
     with open(filepath, "r") as file:
         loaded_content = load(fp=file)
@@ -82,7 +80,8 @@ def save_complex_array_to_binary(array: ndarray, name: str, path: Path) -> None:
     Saves a complex NumPy array to a binary file.
     """
     path.mkdir(parents=True, exist_ok=True)
-    with open(path.joinpath(name), "wb") as f:
+    filename = path.joinpath(name)
+    with open(filename, "wb") as f:
         array.tofile(f)
 
 
@@ -91,7 +90,8 @@ def load_complex_array_from_binary(name: str, path: Path) -> ndarray[complex128]
     Loads a complex NumPy array from a binary file.
     """
     # Load the array from binary file
-    return fromfile(path.joinpath(name), dtype=complex128)
+    filename = path.joinpath(name)
+    return fromfile(filename, dtype=complex128)
 
 
 def generate_degrees_list(

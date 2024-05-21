@@ -33,7 +33,6 @@ anelasticity_description_ids, model_filenames = Love_numbers_for_options_for_mod
         ModelPart.long_term_anelasticity: {"eta_m": {"ASTHENOSPHERE": [[3e19]]}},
         ModelPart.short_term_anelasticity: {"asymptotic_mu_ratio": {"MANTLE": [[0.1], [0.2]]}},
     },
-    create=False,
 )
 
 load_result_folders: list[Path] = load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(

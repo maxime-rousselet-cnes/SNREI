@@ -58,7 +58,6 @@ def anelastic_harmonic_induced_load_signal(
         ) + 1.0j * interpolate_on_degrees(
             load_signal_per_degree=frequencial_load_signal_per_degree.imag, degrees=degrees, new_degrees=all_degrees
         )
-        # TODO.
         frequencial_load_signals[0] = frequencial_elastic_normalized_load_signal
 
         # Loops on harmonics:
@@ -86,8 +85,8 @@ def anelastic_harmonic_induced_load_signal(
                         )
                     else:
                         symlink(
-                            src=src_directory.joinpath("elastic_harmonic_frequencial_load_signal").joinpath(name + ".json"),
-                            dst=elastic_subpath.joinpath(name + ".json"),
+                            src=src_directory.joinpath("elastic_harmonic_frequencial_load_signal").joinpath(name),
+                            dst=elastic_subpath.joinpath(name),
                         )
 
         return anelastic_subpath.parent

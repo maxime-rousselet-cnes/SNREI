@@ -15,7 +15,6 @@ from ..classes import (
 from ..fors import (
     create_all_load_signal_hyper_parameters_variations,
     create_all_model_variations,
-    create_symlinks_to_results,
 )
 from .single import compute_anelastic_induced_harmonic_load_per_description_per_options
 from .trend import get_load_signal_harmonic_trends
@@ -31,7 +30,7 @@ def load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(
     options: list[RunHyperParameters] = OPTIONS,
     base_load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
     load_signal_hyper_parameter_variations: dict[str, list] = {},
-    symlinks: bool = True,
+    remove: bool = True,
 ) -> tuple[list[Path], : dict[Path, dict[str, float]]]:
     """
     Computes anelastic load signal from Love numbers by iterating on:
@@ -147,6 +146,7 @@ def load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(
                 run_hyper_parameters=run_hyper_parameters,
                 anelasticity_description_id=anelasticity_description_ids[0],
                 src_diretory=None,
+                remove=remove,
             )  # Memorizes result's path for elastic load values.
             means_per_path[result_subpath_elastic] = territorial_means
 
@@ -167,6 +167,7 @@ def load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(
                     run_hyper_parameters=run_hyper_parameters,
                     anelasticity_description_id=anelasticity_description_id,
                     src_diretory=result_subpath_elastic,
+                    remove=remove,
                 )
                 means_per_path[result_subpath] = territorial_means
 

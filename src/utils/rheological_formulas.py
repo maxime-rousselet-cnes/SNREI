@@ -189,7 +189,7 @@ def delta_mu_computing(mu_0: ndarray, Q_mu: ndarray, f: ndarray[complex]) -> nda
     elastic modulus mu_0, the elasticicty's quality factor Q_mu and attenuation function f.
     """
     with errstate(invalid="ignore", divide="ignore"):
-        return nan_to_num(  # Q_mu may be equal to infinity, meaning no attenuation should be taken into account.
+        return nan_to_num(  # Q_mu may be infinite, meaning no attenuation should be taken into account.
             x=(mu_0 / Q_mu) * f,
             nan=0.0,
         )

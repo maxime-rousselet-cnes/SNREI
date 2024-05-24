@@ -21,7 +21,7 @@ options = [
 
 anelasticity_description_ids, model_filenames = Love_numbers_for_options_for_models_for_parameters(
     elasticity_model_names=["PREM"],
-    long_term_anelasticity_model_names=["VM7", "Lambeck_2017", "Caron", "Lau_2016", "VM5a"],
+    long_term_anelasticity_model_names=["Mao_Zhong"],
     short_term_anelasticity_model_names=[
         "Benjamin_Q_Resovsky",
         "Benjamin_Q_PAR3P",
@@ -34,7 +34,7 @@ anelasticity_description_ids, model_filenames = Love_numbers_for_options_for_mod
         ModelPart.short_term_anelasticity: {"asymptotic_mu_ratio": {"MANTLE": [[0.1], [0.2]]}},
     },
 )
-
+"""
 load_result_folders: list[Path] = load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(
     anelasticity_description_ids=anelasticity_description_ids,
     model_filenames=model_filenames,
@@ -46,3 +46,4 @@ load_result_folders: list[Path] = load_signal_for_options_for_models_for_paramet
     symlinks=True,
     options=options,
 )
+"""

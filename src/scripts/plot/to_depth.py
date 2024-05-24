@@ -13,7 +13,7 @@ from ...utils import (
 
 def plot_viscosity_profiles_for_descriptions_to_depth(
     elasticity_model_name: str = "PREM",
-    long_term_anelasticity_model_names: Optional[list[str]] = ["VM7", "Lambeck_2017", "Caron", "Lau_2016", "VM5a"],
+    long_term_anelasticity_model_names: Optional[list[str]] = ["VM7", "Lambeck_2017", "Caron", "Lau_2016", "VM5a", "Mao_Zhong"],
     short_term_anelasticity_model_names: Optional[list[str]] = [
         "Benjamin_Q_PAR3P",
         "Benjamin_Q_PREM",
@@ -32,6 +32,7 @@ def plot_viscosity_profiles_for_descriptions_to_depth(
         (3 / 255, 134 / 255, 0 / 255),
         (184 / 255, 134 / 255, 6 / 255),
         (253 / 255, 0 / 255, 2 / 255),
+        (66 / 255, 105 / 255, 228 / 255),
         (66 / 255, 105 / 255, 228 / 255),
     ],
     Q_colors: Optional[list[tuple[float, float, float]]] = [

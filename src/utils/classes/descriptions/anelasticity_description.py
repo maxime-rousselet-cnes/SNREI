@@ -5,11 +5,16 @@ from scipy import interpolate
 
 from ...database import load_base_model
 from ...rheological_formulas import find_tau_M, mu_k_computing
-from ..constants import SECONDS_PER_YEAR
+from ..constants import ASYMPTOTIC_MU_RATIO_DECIMALS, SECONDS_PER_YEAR
 from ..description_layer import DescriptionLayer
 from ..hyper_parameters import AnelasticityDescriptionParameters
 from ..model import ModelPart
 from ..paths import parameters_path
+from ..separators import (
+    DESCRIPTION_PART_NAME_FROM_PARAMETERS_SEPARATOR,
+    DESCRIPTION_PART_NAMES_SEPARATOR,
+    LAYER_NAMES_SEPARATOR,
+)
 from .description import Description, Spline
 from .elasticity_description import ElasticityDescription
 
@@ -20,9 +25,9 @@ def anelasticity_description_id_from_part_names(
     """
     Builds an id for an anelasticity description given the names of its components.
     """
-    return "_____".join(
+    return DESCRIPTION_PART_NAMES_SEPARATOR.join(
         (
-            part_name.replace("/", "____")
+            part_name.replace("/", DESCRIPTION_PART_NAME_FROM_PARAMETERS_SEPARATOR)
             for part_name in (elasticity_name, long_term_anelasticity_name, short_term_anelasticity_name)
         )
     )
@@ -62,10 +67,11 @@ class AnelasticityDescription(Description):
         Loads an Anelasticity Description instance with correctly formatted fields.
         """
         super().load()
+
         # Formats variable array values.
         layer_values_list: list[dict[str, list[float]]] = self.variable_values_per_layer
         self.variable_values_per_layer: list[dict[str, ndarray]] = [
-            {variable_name: array(values, dtype=float) for variable_name, values in layer_values.items()}
+            {variable_name: array(object=values, dtype=float) for variable_name, values in layer_values.items()}
             for layer_values in layer_values_list
         ]
 
@@ -74,18 +80,21 @@ class AnelasticityDescription(Description):
         Replace carrefully infinite values by strings in proper fields for convenient (.JSON) writing, then save and replace
         back by infinite values.
         """
+
         # Replace infinite values by strings.
         for i_layer, variable_values in enumerate(self.variable_values_per_layer):
             for variable_name, values in variable_values.items():
                 if Inf in values:
-                    self.variable_values_per_layer[i_layer][variable_name] = array(["Inf"] * len(values))
+                    self.variable_values_per_layer[i_layer][variable_name] = array(object=["Inf"] * len(values))
+
         # Saves to (.JSON) file.
         super().save(overwrite_description=overwrite_description)
+
         # Replace back strings by infinite values.
         for i_layer, variable_values in enumerate(self.variable_values_per_layer):
             for variable_name, values in variable_values.items():
                 if "Inf" in values:
-                    self.variable_values_per_layer[i_layer][variable_name] = array([Inf] * len(values))
+                    self.variable_values_per_layer[i_layer][variable_name] = array(object=[Inf] * len(values))
 
     def __init__(
         self,
@@ -100,6 +109,7 @@ class AnelasticityDescription(Description):
         long_term_anelasticity_name: Optional[str] = None,
         short_term_anelasticity_name: Optional[str] = None,
     ) -> None:
+
         # Updates inherited fields.
         super().__init__(
             id=(
@@ -115,11 +125,15 @@ class AnelasticityDescription(Description):
             real_crust=anelasticity_description_parameters.real_crust,
             spline_number=anelasticity_description_parameters.spline_number,
         )
+
         # Eventually loads already preprocessed anelasticity description...
         if load_description and self.get_path().joinpath(self.id + ".json").is_file():
+
             self.load()
+
         # ... or builds the description.
         else:
+
             # Initializes all model description parts.
             description_parts: dict[ModelPart, Description | ElasticityDescription] = {}
             part_names: dict[ModelPart, str] = {
@@ -127,7 +141,9 @@ class AnelasticityDescription(Description):
                 ModelPart.long_term_anelasticity: long_term_anelasticity_name,
                 ModelPart.short_term_anelasticity: short_term_anelasticity_name,
             }
+
             for model_part, (_, part_name) in zip(ModelPart, part_names.items()):
+
                 # Initializes.
                 if model_part == ModelPart.elasticity:
                     description_parts[model_part] = ElasticityDescription(
@@ -149,15 +165,17 @@ class AnelasticityDescription(Description):
                         real_crust=anelasticity_description_parameters.real_crust,
                         spline_number=anelasticity_description_parameters.spline_number,
                     )
+
                 # Eventually loads the model description part ...
                 if (not overwrite_descriptions) and description_parts[model_part].get_path().joinpath(
                     description_parts[model_part].id
                 ).is_file():
 
                     description_parts[model_part].load()
+
                 # ... or builds it.
                 else:
-                    description_parts[model_part].build(overwrite_description=True, save=save)
+                    description_parts[model_part].build(model_part=model_part, overwrite_description=True, save=save)
 
             # Updates fields from elasticity description.
             self.x_CMB = description_parts[ModelPart.elasticity].x_CMB
@@ -188,14 +206,18 @@ class AnelasticityDescription(Description):
         """
         Merges all model description parts with unitless variables only.
         """
+
         # Initializes with Core elastic and liquid layers.
         self.description_layers = description_parts[ModelPart.elasticity].description_layers[: self.below_CMB_layers]
+
         # Initializes accumulators.
         x_inf: float = self.x_CMB
         layer_indices_per_part: dict[ModelPart, int] = {model_part: 0 for model_part in ModelPart}
         layer_indices_per_part[ModelPart.elasticity] = self.below_CMB_layers
+
         # Checks all layers from CMB to surface and merges their descrptions.
         while x_inf < 1.0:
+
             # Checks which layer ends first.
             x_sup_per_part: dict[ModelPart, float] = {
                 model_part: round(
@@ -204,6 +226,7 @@ class AnelasticityDescription(Description):
                 for model_part in ModelPart
             }
             x_sup: float = min([value for _, value in x_sup_per_part.items()])
+
             # Updates.
             self.description_layers += [
                 self.merge_layers(
@@ -215,6 +238,7 @@ class AnelasticityDescription(Description):
                     },
                 )
             ]
+
             x_inf = x_sup
             for model_part in ModelPart:
                 if x_sup == x_sup_per_part[model_part]:
@@ -229,9 +253,10 @@ class AnelasticityDescription(Description):
         """
         Merges elasticity, anelasticity, and attenuation description layers with unitless variables only.
         """
+
         # Creates corresponding minimal length layer with elasticity variables.
         description_layer = DescriptionLayer(
-            name="__".join((layer.name for _, layer in layers_per_part.items())),
+            name=LAYER_NAMES_SEPARATOR.join((layer.name for _, layer in layers_per_part.items())),
             x_inf=x_inf,
             x_sup=x_sup,
             splines=layers_per_part[ModelPart.elasticity].splines.copy(),
@@ -278,14 +303,18 @@ class AnelasticityDescription(Description):
         """
         Computes the needed explicit variable values for a single layer.
         """
+
         x = layer.x_profile(spline_number=self.spline_number)
+
         # Variables needed for all layers.
         variable_values: dict[str, ndarray] = {
             "x": x,
             "mu_0": layer.evaluate(x=x, variable="mu_0"),
             "lambda_0": layer.evaluate(x=x, variable="lambda_0"),
         }
+
         if i_layer >= self.below_CMB_layers:
+
             # Variables needed above the Core-Mantle Boundary.
             variable_values.update(
                 {
@@ -303,8 +332,9 @@ class AnelasticityDescription(Description):
                     "asymptotic_mu_ratio": layer.evaluate(x=x, variable="asymptotic_mu_ratio"),
                 }
             )
+
             # Eventually finds tau_M profile that constrains mu(omega -> Inf) = asymptotic_ratio * mu_0:
-            if round(a=1.0 - variable_values["asymptotic_mu_ratio"], decimals=5).any():
+            if round(a=1.0 - variable_values["asymptotic_mu_ratio"], decimals=ASYMPTOTIC_MU_RATIO_DECIMALS).any():
                 for i_x, (omega_m, alpha, asymptotic_mu_ratio, Q_mu) in enumerate(
                     zip(
                         variable_values["omega_m"],
@@ -320,6 +350,7 @@ class AnelasticityDescription(Description):
                         asymptotic_mu_ratio=asymptotic_mu_ratio,
                         Q_mu=Q_mu,
                     )
+
                 # Updates spline.
                 self.description_layers[i_layer].splines.update(
                     {

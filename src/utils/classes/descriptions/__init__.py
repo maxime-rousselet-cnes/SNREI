@@ -1,7 +1,4 @@
-from .anelasticity_description import (
-    AnelasticityDescription,
-    anelasticity_description_id_from_part_names,
-)
+from .anelasticity_description import AnelasticityDescription
 from .integration import Integration
 
-[AnelasticityDescription, anelasticity_description_id_from_part_names, Integration]
+[AnelasticityDescription, Integration]

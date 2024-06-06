@@ -113,8 +113,8 @@ class Result:
         self.values = Values(
             {
                 Direction(int(direction)): {
-                    (BoundaryCondition(int(boundary_condition))): array(sub_values["real"])
-                    + (0.0 if not ("imag" in sub_values.keys()) else array(sub_values["imag"])) * 1.0j
+                    (BoundaryCondition(int(boundary_condition))): array(object=sub_values["real"])
+                    + (0.0 if not ("imag" in sub_values.keys()) else array(object=sub_values["imag"])) * 1.0j
                     for boundary_condition, sub_values in values.items()
                 }
                 for direction, values in result_values.items()

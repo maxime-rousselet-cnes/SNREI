@@ -1,26 +1,16 @@
-from enum import Enum
+from json import load
 from pathlib import Path
 from typing import Optional
 
 from numpy import Inf, linspace, ndarray, sum
-from pydantic import BaseModel
 from scipy import interpolate
 
 from ..database import save_base_model
 from .description_layer import DescriptionLayer, Spline
+from .paths import ModelPart, models_path
 
 
-class ModelPart(Enum):
-    """
-    Available model parts.
-    """
-
-    elasticity = "elasticity"
-    long_term_anelasticity = "long_term_anelasticity"
-    short_term_anelasticity = "short_term_anelasticity"
-
-
-class Model(BaseModel):
+class Model:
     """
     Describes physical quantities by polynomials depending on the unitless radius.
     Can be used to encode all different parts of some rheology.
@@ -53,6 +43,28 @@ class Model(BaseModel):
     #       - asymptotic_mu_ratio: Defines mu(omega -> 0.0) / mu_0 (Unitless).
     #       - Q_mu: Quality factor (unitless).
     polynomials: dict[str, list[list[float | str]]]
+
+    def __init__(self, name: str, model_part: ModelPart):
+        """
+        Loads the model file while managing infinite values.
+        """
+        # Loads file.
+        filepath = models_path[model_part].joinpath(name + ("" if ".json" in name else ".json"))
+        while filepath.is_symlink():
+            filepath = filepath.resolve()
+        with open(filepath, "r") as file:
+            loaded_content = load(fp=file)
+        # Gets attributes.
+        self.layer_names = loaded_content["layer_names"]
+        self.r_limits = loaded_content["r_limits"]
+        self.variable_names = loaded_content["variable_names"]
+        self.crust_values = loaded_content["crust_values"]
+        self.polynomials = loaded_content["polynomials"]
+        # Manages infinite
+        for parameter, polynomials_per_layer in self.polynomials.items():
+            for i_layer, polynomial in enumerate(polynomials_per_layer):
+                if Inf in polynomial:
+                    self.polynomials[parameter][i_layer] = ["Inf"]
 
     def save(self, name: str, path: Path):
         """
@@ -129,7 +141,7 @@ class Model(BaseModel):
         Creates a polynomial spline structure to approximate a given physical quantity.
         Infinite values and modified crust values are handled.
         """
-        if Inf in polynomial:
+        if "Inf" in polynomial:
             return Inf, Inf, 0
         else:
             return interpolate.splrep(

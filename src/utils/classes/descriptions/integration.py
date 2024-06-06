@@ -1,6 +1,6 @@
 from typing import Any, Callable
 
-from numpy import Inf, array, errstate, ndarray, pi, shape, where, zeros
+from numpy import Inf, array, errstate, ndarray, pi, where
 from scipy import integrate, interpolate
 from scipy.integrate import OdeSolution
 
@@ -23,6 +23,7 @@ from ...y_system import (
     solid_system,
     solid_to_fluid,
 )
+from ..constants import INITIAL_Y_VECTOR
 from ..description_layer import DescriptionLayer
 from ..hyper_parameters import YSystemHyperParameters
 from .anelasticity_description import AnelasticityDescription
@@ -60,6 +61,7 @@ class Integration(Description):
         """
         Creates an Integration instance.
         """
+
         super().__init__(
             radius_unit=anelasticity_description.radius_unit,
             real_crust=anelasticity_description.real_crust,
@@ -108,6 +110,7 @@ class Integration(Description):
 
                 # Attenuation.
                 if use_short_term_anelasticity:
+
                     # Updates with attenuation functions f_r and f_i.
                     f = f_attenuation_computing(
                         omega_m_tab=variables["omega_m"],
@@ -124,6 +127,7 @@ class Integration(Description):
                             "f_i": interpolate.splrep(x=variables["x"], y=f.imag),
                         }
                     )
+
                     # Adds delta mu, computed using f_r and f_i.
                     delta_mu = delta_mu_computing(
                         mu_0=variables["mu_0"],
@@ -132,10 +136,12 @@ class Integration(Description):
                     )
                     variables["lambda"] = variables["lambda_0"] - 2.0 / 3.0 * delta_mu
                     variables["mu"] = variables["mu_0"] + delta_mu
+
                 else:
+
                     # No attenuation: mu = mu_0 and lambda = lambda_0.
-                    variables["lambda"] = array(variables["lambda_0"], dtype=complex)
-                    variables["mu"] = array(variables["mu_0"], dtype=complex)
+                    variables["lambda"] = array(object=variables["lambda_0"], dtype=complex)
+                    variables["mu"] = array(object=variables["mu_0"], dtype=complex)
 
                 # Complex cut frequency variables.
                 variables.update(build_cutting_omegas(variables=variables))
@@ -185,6 +191,7 @@ class Integration(Description):
         The 'system' input may corresponds to 'fluid_system' or 'solid_system'. It should always be a callable. Its first inputs
         are x and Y vector and its output is the dY/dx vector.
         """
+
         with errstate(divide="ignore", invalid="ignore"):
             solver: OdeSolution = integrate.solve_ivp(
                 fun=system,
@@ -216,11 +223,8 @@ class Integration(Description):
         if solver.success == True:
             return solver.y, solver.t  # x corresponds to last dimension.
         else:
-            print("")
             print(":: ERROR: method 'scipy.integrate.solve_ivp' failed.")
-            print("")
 
-    # TODO: Vectorize.
     def y_system_integration(self, n: int, hyper_parameters: YSystemHyperParameters) -> ndarray[complex]:
         """
         Integrates the unitless gravito-elastic system from the geocenter to the surface, at given n, omega and rheology.
@@ -228,8 +232,10 @@ class Integration(Description):
 
         # Integrate from geocenter to CMB.
         if n <= hyper_parameters.n_max_for_sub_CMB_integration:
+
             # Integrate from geocenter to CMB for low degrees.
             integration_start = hyper_parameters.minimal_radius / self.radius_unit
+
             if hyper_parameters.homogeneous_solution:
                 # Gets analytical homogeneous solution from r = 0 m to r = minimal_radius...
                 Y = solid_homogeneous_system(
@@ -238,70 +244,41 @@ class Integration(Description):
                     layer=self.description_layers[0],
                     piG=self.piG,
                 )
-                Y1i = Y[0, :].flatten()
-                Y2i = Y[1, :].flatten()
-                Y3i = Y[2, :].flatten()
+
             else:
                 # ... or starts to integrate from r = minimal_radius.
-                Y = array(
-                    [
-                        [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
-                        [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
-                        [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
-                    ],
-                    dtype=complex,
-                )
-                Y1i = Y[0, :].flatten()
-                Y2i = Y[1, :].flatten()
-                Y3i = Y[2, :].flatten()
+                Y = INITIAL_Y_VECTOR
 
             # Integrates in the Inner-Core.
-            Y1, Y2, Y3 = Y1i, Y2i, Y3i
             for n_layer in range(self.below_ICB_layers):
                 integration_stop = self.description_layers[n_layer].x_sup
-                Y1, _ = self.integration(
-                    Y_i=Y1,
-                    integration_start=integration_start,
-                    integration_stop=integration_stop,
-                    hyper_parameters=hyper_parameters,
-                    n=n,
-                    n_layer=n_layer,
-                    system=solid_system,
-                )
-                Y2, _ = self.integration(
-                    Y_i=Y2,
-                    integration_start=integration_start,
-                    integration_stop=integration_stop,
-                    hyper_parameters=hyper_parameters,
-                    n=n,
-                    n_layer=n_layer,
-                    system=solid_system,
-                )
-                Y3, _ = self.integration(
-                    Y_i=Y3,
-                    integration_start=integration_start,
-                    integration_stop=integration_stop,
-                    hyper_parameters=hyper_parameters,
-                    n=n,
-                    n_layer=n_layer,
-                    system=solid_system,
-                )
-                Y1, Y2, Y3 = Y1[:, -1], Y2[:, -1], Y3[:, -1]
+
+                # Loops on 3 independent solutions.
+                for i in range(3):
+                    Y[i, :] = self.integration(
+                        Y_i=Y[i, :],
+                        integration_start=integration_start,
+                        integration_stop=integration_stop,
+                        hyper_parameters=hyper_parameters,
+                        n=n,
+                        n_layer=n_layer,
+                        system=solid_system,
+                    )[0][:, -1]
                 integration_start = integration_stop
 
+            # Manage case below_CMB_layers > below_ICB_layers = 0 by defining Y at Geocenter for fluid Core.
+            if self.below_ICB_layers == 0:
+                Y = INITIAL_Y_VECTOR
+
             # ICB Boundary conditions.
-            if self.below_ICB_layers > 0:
-                Y = solid_to_fluid(
-                    Y1=Y1.real,
-                    Y2=Y2.real,
-                    Y3=Y3.real,
-                    x=integration_stop,
-                    first_fluid_layer=self.description_layers[self.below_ICB_layers],
-                    piG=self.piG,
-                )
-            else:
-                # TODO: manage case below_CMB_layers > below_ICB_layers = 0 by defining Y at Geocenter for fluid Core.
-                pass
+            Y = solid_to_fluid(
+                Y1=Y[0, :].real,
+                Y2=Y[1, :].real,
+                Y3=Y[2, :].real,
+                x=integration_stop,
+                first_fluid_layer=self.description_layers[self.below_ICB_layers],
+                piG=self.piG,
+            )
 
             # Integrates in the Outer-Core.
             for n_layer in range(self.below_ICB_layers, self.below_CMB_layers):
@@ -314,8 +291,7 @@ class Integration(Description):
                     n=n,
                     n_layer=n_layer,
                     system=fluid_system,
-                )
-                Y = Y[:, -1]
+                )[0][:, -1]
                 integration_start = integration_stop
 
             # CMB Boundary conditions.
@@ -326,13 +302,15 @@ class Integration(Description):
                     last_fluid_layer=self.description_layers[self.below_CMB_layers - 1],
                     piG=self.piG,
                 )
-                Y1, Y2, Y3 = Y1cmb, Y2cmb, Y3cmb
+                Y = array(object=[Y1cmb, Y2cmb, Y3cmb], dtype=complex)
+
             n_start_layer = self.below_CMB_layers
 
         else:
+
             # Integrate from geocenter to CMB with high degrees approximation.
             n_start_layer: int = (
-                where((array([layer.x_inf for layer in self.description_layers]) ** n) > (self.x_CMB**n))[0][0] + 1
+                where((array(object=[layer.x_inf for layer in self.description_layers]) ** n) > (self.x_CMB**n))[0][0] + 1
             )
             if hyper_parameters.homogeneous_solution:
                 Y = solid_homogeneous_system(
@@ -341,98 +319,58 @@ class Integration(Description):
                     layer=self.description_layers[n_start_layer],
                     piG=self.piG,
                 )
-                Y1cmb = Y[0, :].flatten()
-                Y2cmb = Y[1, :].flatten()
-                Y3cmb = Y[2, :].flatten()
-            else:
-                Y = array(
-                    [
-                        [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
-                        [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
-                        [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
-                    ],
-                    dtype=complex,
-                )
-                Y1cmb = Y[0, :].flatten()
-                Y2cmb = Y[1, :].flatten()
-                Y3cmb = Y[2, :].flatten()
 
-            Y1, Y2, Y3 = Y1cmb, Y2cmb, Y3cmb
+            else:
+                Y = INITIAL_Y_VECTOR
 
         # Integrates from the CMB to the surface.
         for n_layer in range(n_start_layer, len(self.description_layers)):
+
             integration_start = self.description_layers[n_layer].x_inf
             integration_stop = self.description_layers[n_layer].x_sup
-            Y1, _ = self.integration(
-                Y_i=Y1,
-                integration_start=integration_start,
-                integration_stop=integration_stop,
-                hyper_parameters=hyper_parameters,
-                n=n,
-                n_layer=n_layer,
-                system=solid_system,
-            )
-            Y2, _ = self.integration(
-                Y_i=Y2,
-                integration_start=integration_start,
-                integration_stop=integration_stop,
-                hyper_parameters=hyper_parameters,
-                n=n,
-                n_layer=n_layer,
-                system=solid_system,
-            )
-            Y3, _ = self.integration(
-                Y_i=Y3,
-                integration_start=integration_start,
-                integration_stop=integration_stop,
-                hyper_parameters=hyper_parameters,
-                n=n,
-                n_layer=n_layer,
-                system=solid_system,
-            )
-            Y1, Y2, Y3 = Y1[:, -1], Y2[:, -1], Y3[:, -1]
+            # Loops on 3 independent solutions.
+            for i in range(3):
+                Y[i, :] = self.integration(
+                    Y_i=Y[i, :],
+                    integration_start=integration_start,
+                    integration_stop=integration_stop,
+                    hyper_parameters=hyper_parameters,
+                    n=n,
+                    n_layer=n_layer,
+                    system=solid_system,
+                )[0][:, -1]
 
         # Surface Love numbers deriving.
         g_0_surface = self.description_layers[-1].evaluate(x=1.0, variable="g_0")
-        _, _, _, _, _, _, _, h_load, l_load, k_load = load_surface_solution(
+        h_load, l_load, k_load = load_surface_solution(
             n=n,
-            Y1s=Y1,
-            Y2s=Y2,
-            Y3s=Y3,
+            Y1s=Y[0, :],
+            Y2s=Y[1, :],
+            Y3s=Y[2, :],
             g_0_surface=g_0_surface,
             piG=self.piG,
         )
-        _, _, _, _, _, _, _, h_shr, l_shr, k_shr = shear_surface_solution(
+        h_shr, l_shr, k_shr = shear_surface_solution(
             n=n,
-            Y1s=Y1,
-            Y2s=Y2,
-            Y3s=Y3,
+            Y1s=Y[0, :],
+            Y2s=Y[1, :],
+            Y3s=Y[2, :],
             g_0_surface=g_0_surface,
             piG=self.piG,
         )
 
-        _, _, _, _, _, _, _, h_pot, l_pot, k_pot = potential_surface_solution(
+        h_pot, l_pot, k_pot = potential_surface_solution(
             n=n,
-            Y1s=Y1,
-            Y2s=Y2,
-            Y3s=Y3,
+            Y1s=Y[0, :],
+            Y2s=Y[1, :],
+            Y3s=Y[2, :],
             g_0_surface=g_0_surface,
         )
 
-        LOVE = zeros((9), dtype=complex)
-        LOVE[0] = h_load
-        LOVE[1] = l_load
-        LOVE[2] = k_load
-        LOVE[3] = h_shr
-        LOVE[4] = l_shr
-        LOVE[5] = k_shr
-        if shape(h_pot) == (1, 1):
-            LOVE[6] = h_pot[0, 0]
-            LOVE[7] = l_pot[0, 0]
-            LOVE[8] = k_pot[0, 0]
-        else:
-            LOVE[6] = h_pot
-            LOVE[7] = l_pot
-            LOVE[8] = k_pot
-
-        return LOVE
+        return array(
+            object=[
+                array(object=Love_number, dtype=complex).flatten()
+                for Love_number in [h_load, l_load, k_load, h_shr, l_shr, k_shr, h_pot, l_pot, k_pot]
+            ],
+            dtype=complex,
+        ).flatten()

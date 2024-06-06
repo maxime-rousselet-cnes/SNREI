@@ -13,16 +13,16 @@ from numpy import (
 )
 from scipy import integrate
 
-from .classes import SECONDS_PER_YEAR
+from .classes import ASYMPTOTIC_MU_RATIO_DECIMALS, SECONDS_PER_YEAR
 
 
 def frequencies_to_periods(
     frequencies: ndarray | list[float],
 ) -> ndarray:
     """
-    Converts tab from (Hz) to (y). Works also from (y) to (Hz).
+    Converts tab from (Hz) to (y). Also works from (y) to (Hz).
     """
-    return (1.0 / SECONDS_PER_YEAR) / array(frequencies)
+    return (1.0 / SECONDS_PER_YEAR) / array(object=frequencies)
 
 
 def mu_0_computing(rho_0: ndarray, Vs: ndarray) -> ndarray:
@@ -141,10 +141,10 @@ def f_attenuation_computing(
     use_bounded_attenuation_functions: bool,
 ) -> ndarray[complex]:
     """
-    computes the attenuation function f using parameters omega_m and alpha.
-    omega_m is a unitless frequency.
-    frequency is a unitless frequency.
-    omega is a unitless pulsation.
+    Computes the attenuation function f using parameters omega_m and alpha.
+    'omega_m' is a unitless frequency.
+    'frequency' is a unitless frequency.
+    'omega' is a unitless pulsation.
     """
     if use_bounded_attenuation_functions:
         tau = lambda tau_log: exp(tau_log)
@@ -153,7 +153,7 @@ def f_attenuation_computing(
         integrand = lambda tau_log, omega, alpha: Y(tau_log=tau_log, alpha=alpha) / denom(tau_log=tau_log, omega=omega)
         with errstate(invalid="ignore", divide="ignore"):
             return array(
-                [
+                object=[
                     (
                         0.0
                         if omega_m <= 0.0 or tau_M <= 0.0
@@ -202,6 +202,6 @@ def find_tau_M(omega_m: float, alpha: float, asymptotic_mu_ratio: float, Q_mu: f
     with errstate(invalid="ignore"):
         return (
             0.0
-            if round(number=asymptotic_mu_ratio, ndigits=5) == 1.0 or alpha == 0.0
+            if round(number=asymptotic_mu_ratio, ndigits=ASYMPTOTIC_MU_RATIO_DECIMALS) == 1.0 or alpha == 0.0
             else (alpha * (1.0 - asymptotic_mu_ratio) * Q_mu + omega_m ** (-alpha)) ** (1.0 / alpha)
         )

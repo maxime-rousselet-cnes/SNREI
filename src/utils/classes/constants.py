@@ -1,7 +1,9 @@
 from typing import Optional
 
+from numpy import array
+
 from .hyper_parameters import RunHyperParameters
-from .model import ModelPart
+from .paths import ModelPart
 
 # Universal Gravitationnal constant (m^3.kg^-1.s^-2).
 G = 6.67430e-11
@@ -11,6 +13,16 @@ EARTH_RADIUS = 6.371e6
 
 # s.y^-1
 SECONDS_PER_YEAR = 365.25 * 86400
+
+# For integration.
+INITIAL_Y_VECTOR = array(
+    object=[
+        [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+    ],
+    dtype=complex,
+)
 
 # List of all possible boolean triplets except (False, False, False).
 BOOLEANS = [True, False]
@@ -50,3 +62,9 @@ DEFAULT_MODELS: dict[Optional[ModelPart], Optional[str]] = {
     None: None,
 }
 DEFAULT_SPLINE_NUMBER = 10
+
+# Other low level parameters.
+ASYMPTOTIC_MU_RATIO_DECIMALS = 5
+
+# (cm/yr) -> (mm/yr).
+GRACE_DATA_UNIT_FACTOR = 10

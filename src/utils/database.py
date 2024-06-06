@@ -1,34 +1,9 @@
-from contextlib import suppress
 from json import JSONEncoder, dump, load
-from os import remove
-from os import symlink as base_symlink
 from pathlib import Path
 from typing import Any, Optional
 
 from numpy import arange, complex128, concatenate, fromfile, ndarray
 from pydantic import BaseModel
-
-
-def symlink(src: Path, dst: Path):
-    """
-    Creates a Symlink, eventually remove a previously existing one.
-    """
-    with suppress(FileNotFoundError):
-        remove(dst)
-    base_symlink(src=src, dst=dst)
-
-
-def symlinkfolder(src: Path, dst: Path) -> None:
-    """
-    Recursively creates symlinks from folder to folder.
-    """
-    dst.mkdir(parents=True, exist_ok=True)
-    for child in src.iterdir():
-        new_child = dst.joinpath(child.name)
-        if child.is_file():
-            symlink(src=child, dst=new_child)
-        else:
-            symlinkfolder(src=child, dst=new_child)
 
 
 class JSONSerialize(JSONEncoder):
@@ -49,10 +24,11 @@ def save_base_model(obj: Any, name: str, path: Path):
     """
     Saves a JSON serializable type.
     """
-    # May create the directory.
+    # Eventually considers subpath.
     while len(name.split("/")) > 1:
         path = path.joinpath(name.split("/")[0])
         name = "".join(name.split("/")[1:])
+    # May create the directory.
     path.mkdir(exist_ok=True, parents=True)
     # Saves the object.
     with open(path.joinpath(name + ".json"), "w") as file:
@@ -68,11 +44,9 @@ def load_base_model(
     Loads a JSON serializable type.
     """
     filepath = path.joinpath(name + ("" if ".json" in name else ".json"))
-    while filepath.is_symlink():
-        filepath = filepath.resolve()
     with open(filepath, "r") as file:
         loaded_content = load(fp=file)
-        return loaded_content if not base_model_type else base_model_type(**loaded_content)
+    return loaded_content if not base_model_type else base_model_type(**loaded_content)
 
 
 def save_complex_array_to_binary(array: ndarray, name: str, path: Path) -> None:

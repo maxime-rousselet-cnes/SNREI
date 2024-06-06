@@ -3,17 +3,16 @@ from itertools import product
 from typing import Any, Optional
 
 from .classes import (
-    BOOLEANS,
+    LAYERS_SEPARATOR,
+    VALUES_SEPARATOR,
     LoadSignalHyperParameters,
     Model,
     ModelPart,
     RunHyperParameters,
-    anelasticity_description_id_from_part_names,
     load_load_signal_hyper_parameters,
     models_path,
-    results_path,
 )
-from .database import load_base_model, save_base_model, symlink, symlinkfolder
+from .database import load_base_model
 
 
 def create_model_variation(
@@ -25,30 +24,34 @@ def create_model_variation(
 ) -> str:
     """
     Gets an initial model file and creates a new version of it by modifying the specified parameters with specified polynomials
-    per layer.
+    per layer. Only creates the file if needed. Returns the name.
     """
+
+    # Builds the new model's name.
+    name = LAYERS_SEPARATOR.join(
+        [
+            VALUES_SEPARATOR.join([parameter_name, layer_name] + [str(value) for value in polynomial])
+            for parameter_name, layer_name, polynomial in parameter_values
+        ]
+    )
+
+    # Eventually modifies its values and save it to a file.
     if create:
         for parameter_name, layer_name_part, polynomial in parameter_values:
             for layer_name in base_model.layer_names:
                 if layer_name_part in layer_name:
                     base_model.polynomials[parameter_name][base_model.layer_names.index(layer_name)] = polynomial
-    name = "___".join(
-        [
-            "__".join([parameter_name, layer_name] + [str(value) for value in polynomial])
-            for parameter_name, layer_name, polynomial in parameter_values
-        ]
-    )
-    if create:
         base_model.save(
             name=name,
             path=models_path[model_part].joinpath(base_model_name),
         )
+
     return name
 
 
 def sum_lists(lists: list[list]) -> list:
     """
-    Concatenates lists.
+    Concatenates lists. Needed to iterate on parameter variations.
     """
     concatenated_list = []
     for elt in lists:
@@ -88,7 +91,7 @@ def create_all_model_variations(
                                 parameter_values=sum_lists(lists=parameter_values),
                                 create=create,
                             )
-                            for parameter_values in product(
+                            for parameter_values in product(  # Iterates on all combinations possibilities.
                                 *(
                                     product(
                                         *(
@@ -134,7 +137,7 @@ def create_load_signal_hyper_parameter_variation(
 def create_all_load_signal_hyper_parameters_variations(
     base_load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
     load_signal_hyper_parameter_variations: dict[str, list] = {},
-) -> list[str]:
+) -> list[LoadSignalHyperParameters]:
     """
     Creates all possible variations of load signal hyper parameters.
     """
@@ -143,7 +146,7 @@ def create_all_load_signal_hyper_parameters_variations(
             base_load_signal_hyper_parameters=base_load_signal_hyper_parameters,
             parameter_values=parameter_values,
         )
-        for parameter_values in product(
+        for parameter_values in product(  # Iterates on all combinations possibilities.
             *(
                 product(
                     (parameter_name, parameter_value_possibility)
@@ -156,131 +159,49 @@ def create_all_load_signal_hyper_parameters_variations(
 
 
 def find_minimal_computing_options(
-    long_term_anelasticity_model_name: str, short_term_anelasticity_model_name: str, model_filenames: dict[ModelPart, list[str]]
-) -> tuple[bool, bool, bool]:
-    """
-    Tells whether it is necessary to compute elastic case, long_term_only case or short_term_only case or to create symlink to
-    equivalent model's results.
-    """
-    return (
-        (long_term_anelasticity_model_name == model_filenames[ModelPart.long_term_anelasticity][0])
-        and (short_term_anelasticity_model_name == model_filenames[ModelPart.short_term_anelasticity][0]),
-        short_term_anelasticity_model_name == model_filenames[ModelPart.short_term_anelasticity][0],
-        long_term_anelasticity_model_name == model_filenames[ModelPart.long_term_anelasticity][0],
-    )
-
-
-def minimal_computing_options(
-    options: list[RunHyperParameters], do_long_term_only_case: bool, do_short_term_only_case: bool
+    options: list[RunHyperParameters],
+    elasticity_model_name: str,
+    long_term_anelasticity_model_name: str,
+    short_term_anelasticity_model_name: str,
+    reference_model_filenames: dict[ModelPart, str],
 ) -> list[RunHyperParameters]:
     """
-    Returns the list of options that are needed for computation.
+    Tells whether it is necessary to compute elastic case, long_term_only case and short_term_only case or to point to
+    equivalent model's results.
     """
+
+    has_reference_elastic = elasticity_model_name == reference_model_filenames[ModelPart.elasticity]
+    has_reference_long_term_anelasticity = (
+        long_term_anelasticity_model_name == reference_model_filenames[ModelPart.long_term_anelasticity]
+    )
+    has_reference_short_term_anelasticity = (
+        short_term_anelasticity_model_name == reference_model_filenames[ModelPart.short_term_anelasticity]
+    )
+
+    # Needs to process for part_i variations if and only if part_j and part_k correspond to reference ones.
+    do_elastic = has_reference_long_term_anelasticity and has_reference_short_term_anelasticity
+    minimal_computing_options = RunHyperParameters(
+        use_long_term_anelasticity=has_reference_elastic and has_reference_short_term_anelasticity,
+        use_short_term_anelasticity=has_reference_elastic and has_reference_long_term_anelasticity,
+        use_bounded_attenuation_functions=True,  # Does not constrain bounded/unbounded attenuation functions.
+    )
+
+    # Returns the list of options that are needed for computation.
     return [
         run_hyper_parameters
         for run_hyper_parameters in options
-        if not (
-            not do_long_term_only_case
-            and (
-                run_hyper_parameters.use_long_term_anelasticity == True
-                and run_hyper_parameters.use_short_term_anelasticity == False
-            )
+        if (run_hyper_parameters.use_long_term_anelasticity <= minimal_computing_options.use_long_term_anelasticity)
+        and (run_hyper_parameters.use_short_term_anelasticity <= minimal_computing_options.use_short_term_anelasticity)
+        and (
+            run_hyper_parameters.use_bounded_attenuation_functions
+            <= minimal_computing_options.use_bounded_attenuation_functions
         )
-        and not (
-            not do_short_term_only_case
-            and (
-                run_hyper_parameters.use_long_term_anelasticity == False
-                and run_hyper_parameters.use_short_term_anelasticity == True
+    ] + (
+        [
+            RunHyperParameters(
+                use_long_term_anelasticity=False, use_short_term_anelasticity=False, use_bounded_attenuation_functions=False
             )
-        )
-    ]
-
-
-def create_symlinks_to_results(model_filenames: dict[ModelPart, list[str]], options: list[RunHyperParameters]) -> None:
-    """
-    Creates Symlinks for model's results to equivalent model's results. Considers the subfolders.
-    """
-    for elasticity_model_name, long_term_anelasticity_model_name, short_term_anelasticity_model_name in product(
-        model_filenames[ModelPart.elasticity],
-        model_filenames[ModelPart.long_term_anelasticity],
-        model_filenames[ModelPart.short_term_anelasticity],
-    ):
-        # Finds minimal conmputing options.
-        do_elastic_case, do_long_term_only_case, do_short_term_only_case = find_minimal_computing_options(
-            long_term_anelasticity_model_name=long_term_anelasticity_model_name,
-            short_term_anelasticity_model_name=short_term_anelasticity_model_name,
-            model_filenames=model_filenames,
-        )
-
-        # Eventually creates a symlink to equivalent model's result.
-        anelasticity_description_result_path = results_path.joinpath(
-            anelasticity_description_id_from_part_names(
-                elasticity_name=elasticity_model_name,
-                long_term_anelasticity_name=long_term_anelasticity_model_name,
-                short_term_anelasticity_name=short_term_anelasticity_model_name,
-            )
-        )
-
-        # Creates a symlink to equivalent elastic model's result.
-        if not do_elastic_case:
-            src_path = results_path.joinpath(
-                anelasticity_description_id_from_part_names(
-                    elasticity_name=elasticity_model_name,
-                    long_term_anelasticity_name=model_filenames[ModelPart.long_term_anelasticity][0],
-                    short_term_anelasticity_name=model_filenames[ModelPart.short_term_anelasticity][0],
-                )
-            )
-            for filename in ["degrees", "elastic_Love_numbers"]:
-                symlink(
-                    src=src_path.joinpath(filename + ".json").absolute(),
-                    dst=anelasticity_description_result_path.joinpath(filename + ".json"),
-                )
-
-        # Creates a symlink to equivalent long term anelasticity model's results for long term anelasticity only run.
-        if not do_long_term_only_case:
-            run_hyper_parameters = RunHyperParameters(
-                use_long_term_anelasticity=True, use_short_term_anelasticity=False, use_bounded_attenuation_functions=False
-            )
-            if run_hyper_parameters in options:
-                run_id = run_hyper_parameters.run_id()
-                src_path = (
-                    results_path.joinpath(
-                        anelasticity_description_id_from_part_names(
-                            elasticity_name=elasticity_model_name,
-                            long_term_anelasticity_name=long_term_anelasticity_model_name,
-                            short_term_anelasticity_name=model_filenames[ModelPart.short_term_anelasticity][0],
-                        )
-                    )
-                    .joinpath("runs")
-                    .joinpath(run_id)
-                )
-                symlinkfolder(
-                    src=src_path.absolute(),
-                    dst=anelasticity_description_result_path.joinpath("runs").joinpath(run_id),
-                )
-
-        # Creates a symlink to equivalent short term anelasticity model's results for short term anelasticity only run.
-        if not do_short_term_only_case:
-            for use_bounded_attenuation_functions in BOOLEANS:
-                run_hyper_parameters = RunHyperParameters(
-                    use_long_term_anelasticity=False,
-                    use_short_term_anelasticity=True,
-                    use_bounded_attenuation_functions=use_bounded_attenuation_functions,
-                )
-                if run_hyper_parameters in options:
-                    run_id = run_hyper_parameters.run_id()
-                    src_path = (
-                        results_path.joinpath(
-                            anelasticity_description_id_from_part_names(
-                                elasticity_name=elasticity_model_name,
-                                long_term_anelasticity_name=model_filenames[ModelPart.long_term_anelasticity][0],
-                                short_term_anelasticity_name=short_term_anelasticity_model_name,
-                            )
-                        )
-                        .joinpath("runs")
-                        .joinpath(run_id)
-                    )
-                    symlinkfolder(
-                        src=src_path.absolute(),
-                        dst=anelasticity_description_result_path.joinpath("runs").joinpath(run_id),
-                    )
+        ]
+        if do_elastic
+        else []
+    )

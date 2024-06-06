@@ -10,14 +10,10 @@ from numpy import (
     linspace,
     log2,
     ndarray,
-    newaxis,
-    ones,
     round,
-    vstack,
     where,
     zeros,
 )
-from numpy.linalg import pinv
 from scipy import interpolate
 from scipy.fft import fft, fftfreq
 
@@ -60,22 +56,6 @@ def get_trend_dates(
         * (shift_dates >= load_signal_hyper_parameters.first_year_for_trend)
     )[0]
     return trend_indices, shift_dates[trend_indices]
-
-
-def signal_trend(trend_dates: ndarray[float], signal: ndarray[float]) -> tuple[float, float]:
-    """
-    Returns signal's trend: mean slope and additive constant during last years (LSE).
-    """
-    # Assemble matrix A.
-    A = vstack(
-        [
-            trend_dates,
-            ones(len(trend_dates)),
-        ]
-    ).T
-    # Direct least square regression using pseudo-inverse.
-    result: ndarray = pinv(A).dot(signal[:, newaxis])
-    return result.flatten()  # Turn the signal into a column vector. (slope, additive_constant)
 
 
 def build_elastic_load_signal(

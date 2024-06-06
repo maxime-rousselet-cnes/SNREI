@@ -83,14 +83,14 @@ def get_colorbar_values(
     Generatesn array of colors for the map colorbar.
     """
     positive_range_colors = array(
-        [
+        object=[
             linspace(zero_code, positive_saturated_code, 256)
             for zero_code, positive_saturated_code in zip(zero_modified_color, positive_saturated_color)
         ]
     ).T
-    zero_modified_colors = array([list(zero_modified_color)])
+    zero_modified_colors = array(object=[list(zero_modified_color)])
     negative_range_colors = array(
-        [
+        object=[
             linspace(negative_saturated_code, zero_code, 255)
             for zero_code, negative_saturated_code in zip(zero_modified_color, negative_saturated_color)
         ]

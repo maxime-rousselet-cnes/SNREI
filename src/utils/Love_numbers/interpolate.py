@@ -4,8 +4,7 @@ from typing import Callable, Optional
 from numpy import array, concatenate, expand_dims, flip, ndarray
 from scipy import interpolate
 
-from ...functions import get_degrees_indices
-from ..abstract_computing import build_hermitian
+from ...functions import build_hermitian, get_degrees_indices
 from ..classes import (
     BoundaryCondition,
     Direction,

@@ -39,6 +39,7 @@ class ElasticityDescription(Description):
         below_CMB_layers: Optional[int] = None,
         spline_degree: Optional[int] = None,
     ) -> None:
+
         # Updates inherited fields.
         super().__init__(
             id=id,
@@ -48,6 +49,7 @@ class ElasticityDescription(Description):
             real_crust=real_crust,
             spline_number=spline_number,
         )
+
         # Updates proper fields.
         self.below_ICB_layers = below_ICB_layers
         self.below_CMB_layers = below_CMB_layers
@@ -58,7 +60,9 @@ class ElasticityDescription(Description):
         Counts the number of layers describing the Inner-Core and the Outer-Core.
         All Outer-Core layers should include "FLUID" in their name.
         """
+
         below_ICB_layers, below_CMB_layers = 0, 0
+
         # Iterates on layer names from Geocenter.
         for layer_name in [description_layer.name for description_layer in self.description_layers]:
             if "FLUID" in layer_name:
@@ -68,14 +72,16 @@ class ElasticityDescription(Description):
                 below_ICB_layers += 1
             else:
                 return below_ICB_layers, below_CMB_layers
+
         return below_ICB_layers, below_CMB_layers
 
     def build(self, overwrite_description: bool = True, save: bool = True):
         """
         Builds description layers from model file parameters and preprocesses elasticity variables.
         """
+
         # Initializes description layers from model.
-        super().build(save=False)
+        super().build(model_part=ModelPart.elasticity, save=False)
 
         # Updates basic fields.
         if self.below_ICB_layers is None or self.below_CMB_layers is None:
@@ -84,6 +90,7 @@ class ElasticityDescription(Description):
                 self.below_CMB_layers = below_CMB_layers
             if self.below_ICB_layers is None:
                 self.below_ICB_layers = below_ICB_layers
+
         self.x_CMB = self.description_layers[below_CMB_layers].x_inf
 
         # Defines units.
@@ -97,6 +104,7 @@ class ElasticityDescription(Description):
         # Preprocesses unitless variables, including g_0, mu_0 and lambda_0.
         g_0_inf = 0.0  # g_0 at the bottom of the layer (unitless).
         for i_layer, description_layer in enumerate(self.description_layers):
+
             # Gets unitless variables.
             for variable_name, variable_unit in [
                 ("Vs", self.speed_unit),
@@ -108,6 +116,7 @@ class ElasticityDescription(Description):
                     description_layer.splines[variable_name][1] / variable_unit,
                     description_layer.splines[variable_name][2],
                 )
+
             # Computes g_0, mu_0, lambda_0.
             x = description_layer.x_profile(spline_number=self.spline_number)
             rho_0 = description_layer.evaluate(x=x, variable="rho_0")
@@ -123,6 +132,7 @@ class ElasticityDescription(Description):
                 x_inf=description_layer.x_inf,
                 spline_number=self.spline_number,
             )
+
             # Updates unitless variables.
             g_0_inf = g_0[-1]
             self.description_layers[i_layer].splines["g_0"] = interpolate.splrep(x=x, y=g_0, k=self.spline_degree)

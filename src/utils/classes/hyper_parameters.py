@@ -61,18 +61,6 @@ class RunHyperParameters(HyperParameters):
     use_short_term_anelasticity: bool  # Whether to use short term anelasticity model or not.
     use_bounded_attenuation_functions: bool  # Whether to use the bounded version of attenuation functions or not.
 
-    def run_id(self):
-        """
-        Generates a run ID.
-        """
-        return "__".join(
-            (
-                "long_term_anelasticity" if self.use_long_term_anelasticity else "",
-                "short_term_anelasticity" if self.use_short_term_anelasticity else "",
-                "bounded_attenuation_functions" if self.use_bounded_attenuation_functions else "",
-            )
-        )
-
 
 class LoveNumbersHyperParameters(HyperParameters):
     """
@@ -80,8 +68,8 @@ class LoveNumbersHyperParameters(HyperParameters):
     """
 
     # Adaptive step (on frequency) algorithm parameters.
-    frequency_min: float  # log10(Low frequency limit (Hz)).
-    frequency_max: float  # log10(High frequency limit (Hz)).
+    period_min_year: float  # High frequency limit (y).
+    period_max_year: float  # Low frequency limit (y).
     n_frequency_0: int  # Minimal number of computed frequencies per degree.
     max_tol: float  # Maximal curvature criteria between orders 1 and 2.
     decimals: int  # Precision in log10(frequency / frequency_unit).
@@ -100,6 +88,7 @@ class LoveNumbersHyperParameters(HyperParameters):
         """
         Loads the lower level parameter fields from file names.
         """
+
         #  Parameters for the run.
         if not isinstance(self.run_hyper_parameters, RunHyperParameters):
             self.run_hyper_parameters = load_base_model(
@@ -107,6 +96,7 @@ class LoveNumbersHyperParameters(HyperParameters):
                 base_model_type=RunHyperParameters,
                 path=parameters_path,
             )
+
         #  Parameters for the Y_i system integration algorithm.
         if not isinstance(self.y_system_hyper_parameters, YSystemHyperParameters):
             self.y_system_hyper_parameters = load_base_model(
@@ -114,6 +104,7 @@ class LoveNumbersHyperParameters(HyperParameters):
                 base_model_type=YSystemHyperParameters,
                 path=parameters_path,
             )
+
         # Parameters to build an Earth Complete description.
         if not isinstance(self.anelasticity_description_parameters, AnelasticityDescriptionParameters):
             self.anelasticity_description_parameters = load_base_model(
@@ -125,6 +116,7 @@ class LoveNumbersHyperParameters(HyperParameters):
                 base_model_type=AnelasticityDescriptionParameters,
                 path=parameters_path,
             )
+
         # Parameters to build degrees list.
         if not isinstance(self.degree_steps, list):
             self.degree_steps = load_base_model(
@@ -157,32 +149,38 @@ class LoadSignalHyperParameters(HyperParameters):
     numbers.
     """
 
-    # Parameters describing the extended load signal.
-    spline_time: int
-    previous_zero_duration: int
-    mid_zero_duration: int
-    little_isostatic_adjustment_duration: int
-    little_isostatic_adjustment_effect: float
-    anti_Gibbs_effect_factor: int
-    load_signal: str
-    ocean_load: str
-    case: str
-    little_isostatic_adjustment: bool
-
-    # Parameters describing spacially-dependent load signal.
-    weights_map: str
-    opposite_load_on_continents: bool
-    n_max: int
-    GRACE: Optional[str]
-    ocean_mask: Optional[str]
-
-    # Trend parameters.
-    first_year_for_trend: int
-    last_year_for_trend: int
-    unit_factor: int
-
     # Run parameters.
     run_hyper_parameters: Optional[str] | RunHyperParameters
+
+    # Parameters describing the load signal.
+    load_signal: str  # For now: "load_history" is managed only.
+    # Load history parameters.
+    load_history: str  # (.csv) file path relative to data/GMSL_data.
+    case: str  # Whether "lower", "mean" or "upper".
+    spline_time_years: int  # Time for the anti-symmetrization spline process in years.
+    initial_plateau_time_years: int  # Time of the zero-value plateau before the signal history (y).
+    anti_Gibbs_effect_factor: int  # Integer, minimum equal to 1 (unitless).
+    # Little Isostatic Adjustment (LIA) parameters.
+    LIA: bool  # Whethter to take LIA into account or not.
+    LIA_end_date: int  # Usualy ~ 1400 (y).
+    LIA_time_years: int  # Usually ~ 100 (y).
+    LIA_amplitude_effect: float  # Usually ~ 0.25 (unitless).
+    # Parameters describing spacially-dependent load signal.
+    load_spatial_behaviour_data: str  # For now: "GRACE" is managed only.
+    opposite_load_on_continents: bool
+    n_max: int
+    load_spatial_behaviour_file: Optional[str]  # (.csv) file path relative to data.
+    ocean_mask: Optional[str]
+
+    # Trend computing parameters.
+    first_year_for_trend: int
+    last_year_for_trend: int
+
+    # Loop logistic parameters.
+    save_load: bool
+    remove_load: bool
+    do_elastic: bool
+    elastic_reference_id: Optional[str]
 
     def load(self) -> None:
         """

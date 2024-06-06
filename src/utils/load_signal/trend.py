@@ -17,7 +17,7 @@ from .harmonic import harmonic_name
 from .temporal import get_trend_dates, signal_trend
 
 
-def get_load_signal_harmonic_trends(
+def compute_load_signal_harmonic_trends(
     do_elastic: bool,
     load_signal_hyper_parameters: LoadSignalHyperParameters,
     anelasticity_description_id: str,

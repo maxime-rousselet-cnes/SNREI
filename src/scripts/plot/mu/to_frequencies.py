@@ -93,7 +93,7 @@ def plot_mu_profiles_for_options_to_periods(
                 * 1.0j
             ) / mu_0
             if period in periods_to_print:
-                print("----period (y):", period)
+                print("----period (yr):", period)
                 print("--------mu_0:", mu_0 * anelasticity_description.elasticity_unit)
                 print("--------mu/mu_0:", mu[i_f])
         # Plots mu_real and mu_imag.
@@ -110,7 +110,7 @@ def plot_mu_profiles_for_options_to_periods(
             plot.set_ylabel(part + " part")
             if grid:
                 plot.grid(True)
-        plot.set_xlabel("Period (y)")
+        plot.set_xlabel("Period (yr)")
     plot.set_xscale("log")
     plt.suptitle("$\mu_0 / \mu$")
     plt.savefig(figures_subpath.joinpath("mu_0_on_mu.png"))

@@ -17,7 +17,8 @@ def process_for_earthquakes(
     path: Path = GRACE_data_path,
     solution_name: str = "MSSA",
     save_path: Path = GRACE_trends_data_path,
-    result_name: str = "TREND_MSSA_PROCESSED_FOR_EARTHQUAKES",
+    result_filename: str = "TREND_MSSA_PROCESSED_FOR_EARTHQUAKES",
+    result_name: str = "EWH",
 ) -> None:
     """
     Removes Earthquakes effects from GRACE level-3 data. Saves the resulting trends.
@@ -27,7 +28,7 @@ def process_for_earthquakes(
     time_dependent_maps, lat, lon, times = extract_all_GRACE_data(path=path, solution_name=solution_name)
 
     # Gets all earthquakes parameters and remove their effects from level-3 data.
-    fitted_parameters_per_area, corrected_time_dependent_maps = remove_earthquakes(
+    _, corrected_time_dependent_maps = remove_earthquakes(
         time_dependent_maps=time_dependent_maps,
         times=times,
         lat=lat,
@@ -43,4 +44,4 @@ def process_for_earthquakes(
     )
 
     # Saves the trends.
-    save_map(map=processed_data, lat=lat, lon=lon, path=save_path, result_name=result_name)
+    save_map(map=processed_data, lat=lat, lon=lon, path=save_path, filename=result_filename, result_name=result_name)

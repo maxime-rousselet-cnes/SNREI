@@ -119,7 +119,7 @@ def plot_attenuation_functions(
                 label=("" if variable == "tau_M" else "$\\mu(\\omega=0)/\\mu_0=$" + str(round(a=variable_value, decimals=4)))
                 + "$\\tau _M=$"
                 + str(round(a=tau_M_years, decimals=4))
-                + " (y)",
+                + " (yr)",
                 linewidth=linewidth,
             )
             plots[0].scatter([tau_M_seconds] * 15, linspace(start=min(f_r), stop=max(f_r), num=15), s=5)

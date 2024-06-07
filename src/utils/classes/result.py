@@ -43,6 +43,7 @@ class Result:
 
     hyper_parameters: HyperParameters
     values: Values
+    axes: dict[str, ndarray[complex]]
 
     def __init__(
         self,
@@ -87,13 +88,21 @@ class Result:
                 "values": {
                     key.value: {
                         sub_key.value: (
-                            sub_values
+                            {"real": sub_values}
                             if not isinstance(sub_values.flatten()[0], complex)
                             else {"real": sub_values.real, "imag": sub_values.imag}
                         )
                         for sub_key, sub_values in values.items()
                     }
                     for key, values in self.values.items()
+                },
+                "axes": {
+                    axe_name: (
+                        {"real": axe_values}
+                        if not isinstance(axe_values.flatten()[0], complex)
+                        else {"real": axe_values.real, "imag": axe_values.imag}
+                    )
+                    for axe_name, axe_values in self.axes.items()
                 },
             },
             name=name,
@@ -108,8 +117,9 @@ class Result:
             name=name,
             path=path,
         )
-        result_values: dict[str, dict[str, dict[str, list[float]]]] = loaded_content["values"]
         self.hyper_parameters = HyperParameters(**loaded_content["hyper_parameters"])
+        result_values: dict[str, dict[str, dict[str, list[float]]]] = loaded_content["values"]
+        result_axes: dict[str, dict[str, list[float]]] = loaded_content["axes"]
         self.values = Values(
             {
                 Direction(int(direction)): {
@@ -120,3 +130,8 @@ class Result:
                 for direction, values in result_values.items()
             }
         )
+        self.axes = {
+            axe_name: array(object=axe_values["real"])
+            + (0.0 if not ("imag" in axe_values.keys()) else array(object=axe_values["imag"])) * 1.0j
+            for axe_name, axe_values in result_axes.items()
+        }

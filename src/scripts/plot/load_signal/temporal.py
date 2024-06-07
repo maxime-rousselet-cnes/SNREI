@@ -102,7 +102,7 @@ def plot_anelastic_induced_load_per_degree_per_description_per_options(
                     label="degree " + str(degree),
                 )
             plt.legend()
-            plt.xlabel("time (y)")
+            plt.xlabel("time (yr)")
             plt.grid()
             plt.title("anelastic induced load signal per degree")
             plt.legend()
@@ -127,7 +127,7 @@ def plot_anelastic_induced_load_per_degree_per_description_per_options(
                     + "(mm/y)",
                 )
             plt.legend()
-            plt.xlabel("time (y)")
+            plt.xlabel("time (yr)")
             plt.grid()
             plt.title(
                 "anelastic induced load signal per degree: trend since "

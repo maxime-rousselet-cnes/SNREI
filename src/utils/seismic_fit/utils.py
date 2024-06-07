@@ -3,7 +3,7 @@ from typing import Any, Callable
 
 from lmfit import Parameters, minimize
 from lmfit.minimizer import MinimizerResult
-from numpy import array, exp, ndarray, pi, sin, sum, where
+from numpy import array, errstate, exp, log, nan_to_num, ndarray, pi, sin, sum, where
 
 from .constants import (
     EARTHQUAKE_CORNERS,
@@ -29,19 +29,20 @@ def select_area(
     return time_dependent_maps[:, latitude_indices][:, :, longitude_indices], latitude_indices, longitude_indices
 
 
-def sigmoid(t: ndarray[float], tau: float) -> ndarray[float]:
+def get_parameter(parameters: Parameters, index: int, parameter_base_name: str) -> float:
     """
-    Defines a sigmoid of known slope.
+    Gets 'parameter_base_name' parameter for index-th function.
     """
-    return 1 / (1 + exp(-t / tau))
+    return parameters[parameter_base_name + "_" + str(index)]
 
 
 def co_seismic_signal(t: ndarray[float], parameters: Parameters, i_earthquake: int) -> ndarray[float]:
     """
     Describe a co-seismic signal on EWH time-serie.
     """
-    return parameters["co_seismic_amplitude_" + str(i_earthquake)] * sigmoid(
-        t=t - parameters["earthquake_t_0_" + str(i_earthquake)], tau=parameters["earthquake_tau_" + str(i_earthquake)]
+    return get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="co_seismic_amplitude") * array(
+        object=t >= get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="earthquake_t_0"),
+        dtype=float,
     )
 
 
@@ -49,22 +50,41 @@ def post_seismic_signal(t: ndarray[float], parameters: Parameters, i_earthquake:
     """
     Describe a post-seismic signal on EWH time-serie.
     """
-    return (
-        parameters["post_seismic_amplitude_" + str(i_earthquake)]
-        * array(object=t >= parameters["earthquake_t_0_" + str(i_earthquake)], dtype=float)
-        * exp(
-            -(t - parameters["earthquake_t_0_" + str(i_earthquake)])
-            / parameters["seismic_relaxation_time_" + str(i_earthquake)]
+    with errstate(invalid="ignore", divide="ignore"):
+        return array(
+            object=t >= get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="earthquake_t_0"),
+            dtype=float,
+        ) * nan_to_num(
+            x=(
+                get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="post_seismic_exp_amplitude")
+                * exp(
+                    -(t - get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="earthquake_t_0"))
+                    / get_parameter(
+                        parameters=parameters, index=i_earthquake, parameter_base_name="post_seismic_exp_relaxation_time"
+                    )
+                )
+                + get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="post_seismic_log_amplitude")
+                * log(
+                    1
+                    + (t - get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="earthquake_t_0"))
+                    / get_parameter(
+                        parameters=parameters, index=i_earthquake, parameter_base_name="post_seismic_log_relaxation_time"
+                    )
+                )
+            ),
+            nan=0.0,
         )
-    )
 
 
 def sinusoidal_signal(t: ndarray[float], parameters: Parameters, harmonic: int) -> ndarray[float]:
     """
     Describes a sinusoidal signal, such as the annual or semi-annual signal.
     """
-    return parameters["sinusoidal_amplitude_" + str(harmonic)] * sin(
-        2 * pi * harmonic * (t - t[0] - parameters["sinusoidal_delay_" + str(harmonic)])
+    return get_parameter(parameters=parameters, index=harmonic, parameter_base_name="sinusoidal_amplitude") * sin(
+        2
+        * pi
+        * harmonic
+        * (t - t[0] - get_parameter(parameters=parameters, index=harmonic, parameter_base_name="sinusoidal_delay"))
     )
 
 
@@ -108,20 +128,20 @@ def full_earthquake_signal(t: ndarray[float], parameters: Parameters) -> ndarray
     """
     return (
         secular_signal(t=t, parameters=parameters)
-        + multiple_earthquake_signal(t=t, parameters=parameters)
         + sinusoidal_signal(t=t, parameters=parameters, harmonic=1)
         + sinusoidal_signal(t=t, parameters=parameters, harmonic=2)
+        + multiple_earthquake_signal(t=t, parameters=parameters)
     )
 
 
 def fit_expression(
-    times: ndarray[float], time_serie: ndarray, expression: Callable[[float], Any], parameters: Parameters
+    times: ndarray[float], time_serie: ndarray, expression: Callable[[Any], Any], parameters: Parameters
 ) -> dict[str, float]:
     """
     Fits a function of time to data.
     """
     result: MinimizerResult = minimize(
-        fcn=lambda params, x, y: expression(x, params) - y,
+        fcn=lambda params, x, y: (expression(x, params) - y) ** 2,
         params=parameters,
         args=(times, time_serie),
         method="differential_evolution",
@@ -168,7 +188,7 @@ def fit_earthquakes(
                         max=PARAMETER_BOUNDS[parameter_name]["upper_bound"],
                     )
             elif ("earthquake" in parameter_name) or ("seismic" in parameter_name):
-                for i_earthquake in range(2 if area == "Sumatra" else 1):
+                for i_earthquake in range(4 if area == "Sumatra" else 1):
                     parameters.add(
                         name=parameter_name + "_" + str(i_earthquake),
                         min=PARAMETER_BOUNDS[parameter_name]["lower_bound"],
@@ -198,9 +218,6 @@ def fit_earthquakes(
         }
 
     return fitted_parameters_per_area
-
-
-from matplotlib.pyplot import figure, plot
 
 
 def remove_earthquakes(

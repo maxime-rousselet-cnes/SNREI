@@ -39,7 +39,7 @@ class Model:
     #   - for short term anelasticity part:
     #       - alpha: (Unitless).
     #       - omega_m: (Hz).
-    #       - tau_M: (y).
+    #       - tau_M: (yr).
     #       - asymptotic_mu_ratio: Defines mu(omega -> 0.0) / mu_0 (Unitless).
     #       - Q_mu: Quality factor (unitless).
     polynomials: dict[str, list[list[float | str]]]

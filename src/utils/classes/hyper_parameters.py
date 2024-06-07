@@ -28,8 +28,8 @@ class YSystemHyperParameters(HyperParameters):
 
     # Solver parameters.
     method: str  # Solver's numerical integration method.
-    atol: float  # The solver keeps the local error estimates less than atol + rtol * abs(y).
-    rtol: float  # The solver keeps the local error estimates less than atol + rtol * abs(y).
+    atol: float  # The solver keeps the local error estimates less than atol + rtol * abs(yr).
+    rtol: float  # The solver keeps the local error estimates less than atol + rtol * abs(yr).
     t_eval: Optional[Any]
 
 
@@ -68,8 +68,8 @@ class LoveNumbersHyperParameters(HyperParameters):
     """
 
     # Adaptive step (on frequency) algorithm parameters.
-    period_min_year: float  # High frequency limit (y).
-    period_max_year: float  # Low frequency limit (y).
+    period_min_year: float  # High frequency limit (yr).
+    period_max_year: float  # Low frequency limit (yr).
     n_frequency_0: int  # Minimal number of computed frequencies per degree.
     max_tol: float  # Maximal curvature criteria between orders 1 and 2.
     decimals: int  # Precision in log10(frequency / frequency_unit).
@@ -158,18 +158,19 @@ class LoadSignalHyperParameters(HyperParameters):
     load_history: str  # (.csv) file path relative to data/GMSL_data.
     case: str  # Whether "lower", "mean" or "upper".
     spline_time_years: int  # Time for the anti-symmetrization spline process in years.
-    initial_plateau_time_years: int  # Time of the zero-value plateau before the signal history (y).
+    initial_plateau_time_years: int  # Time of the zero-value plateau before the signal history (yr).
     anti_Gibbs_effect_factor: int  # Integer, minimum equal to 1 (unitless).
     # Little Isostatic Adjustment (LIA) parameters.
     LIA: bool  # Whethter to take LIA into account or not.
-    LIA_end_date: int  # Usualy ~ 1400 (y).
-    LIA_time_years: int  # Usually ~ 100 (y).
+    LIA_end_date: int  # Usualy ~ 1400 (yr).
+    LIA_time_years: int  # Usually ~ 100 (yr).
     LIA_amplitude_effect: float  # Usually ~ 0.25 (unitless).
     # Parameters describing spacially-dependent load signal.
     load_spatial_behaviour_data: str  # For now: "GRACE" is managed only.
     opposite_load_on_continents: bool
     n_max: int
     load_spatial_behaviour_file: Optional[str]  # (.csv) file path relative to data.
+    skiprows: int  # For spatial behaviour file loading.
     ocean_mask: Optional[str]
 
     # Trend computing parameters.

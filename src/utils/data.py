@@ -1,16 +1,185 @@
 from csv import DictWriter
+from functools import reduce
 from pathlib import Path
 
-from numpy import argsort, array, flip, ndarray, unique, zeros
+import netCDF4
+from cv2 import erode
+from numpy import argsort, array, expand_dims, flip, ndarray, ones, round, unique, zeros
 from pandas import read_csv
+from pyshtools.expand import MakeGridDH, SHExpandDH
 
 from .classes import (
     GRACE_DATA_UNIT_FACTOR,
+    GMSL_data_path,
     GRACE_data_path,
+    Love_numbers_path,
+    LoveNumbersHyperParameters,
+    Result,
     frequencies_path,
+    masks_data_path,
     tables_path,
 )
 from .database import save_base_model
+
+COLUMNS = ["lower", "mean", "upper"]
+
+
+def extract_temporal_load_signal(
+    name: str,
+    path: Path = GMSL_data_path,
+    filename: str = "Frederikse/global_basin_timeseries.csv",
+    zero_at_origin: bool = True,
+) -> tuple[ndarray[float], ndarray[float]]:
+    """
+    Opens Frederikse et al.'s file and formats its data. Mean load in equivalent water height with respect to time.
+    """
+
+    # Gets raw data.
+    df = read_csv(filepath_or_buffer=path.joinpath(filename), sep=",")
+    signal_dates = df["Unnamed: 0"].values
+
+    # Formats. Barystatic = Sum - Steric.
+    barystatic: dict[str, ndarray[float]] = {
+        column: array(
+            object=[
+                float(item.split(",")[0] + "." + item.split(",")[1])
+                for item in df["Sum of contributors [" + column + "]"].values
+            ],
+            dtype=float,
+        )
+        - array(
+            object=[float(item.split(",")[0] + "." + item.split(",")[1]) for item in df["Steric [" + column + "]"].values],
+            dtype=float,
+        )
+        for column in COLUMNS
+    }
+
+    # For worst/best case, build the maximum/minimum slope barystatic curb.
+    if name == "best" or name == "worst":
+        if name == "best":
+            start, end = "upper", "lower"
+        elif name == "worst":
+            start, end = "lower", "upper"
+        a = (barystatic[start][-1] - barystatic[end][0]) / (barystatic["mean"][-1] - barystatic["mean"][0])
+        b = barystatic[end][0] - a * barystatic["mean"][0]
+        barystatic[name] = a * barystatic["mean"] + b
+
+    return signal_dates, barystatic[name] - (barystatic[name][0] if zero_at_origin else 0)
+
+
+def erase_area(
+    map: ndarray[float],
+    lat: ndarray[float],
+    lon: ndarray[float],
+    min_latitude: float,
+    max_latitude: float,
+    min_longitude: float,
+    max_longitude: float,
+):
+    """
+    Erases a rectangle area on a (latitude, longitude) map: sets zero values.
+    Used to erase big lakes from sea/land masks.
+    """
+    return map * (
+        1
+        - expand_dims(a=flip(m=(lat > min_latitude) * (lat < max_latitude), axis=0), axis=1)
+        * expand_dims(a=(lon > (min_longitude % 360)) * (lon < (max_longitude % 360)), axis=0)
+    )
+
+
+def extract_mask_nc(path: Path = masks_data_path, name: str = "IMERG_land_sea_mask.nc", pixels_to_coast: int = 10) -> ndarray:
+    """
+    Opens NASA's nc file for land/sea mask and formats its data.
+    """
+
+    # Gets raw data.
+    ds = netCDF4.Dataset(path.joinpath(name))
+    map: ndarray[float] = flip(m=ds.variables["landseamask"], axis=0).data
+    lat = array(object=[latitude for latitude in ds.variables["lat"]])
+    lon = array(object=[longitude for longitude in ds.variables["lon"]])
+    map /= max(map.flatten())  # Normalizes (land = 0, ocean = 1).
+
+    # Rejects big lakes from ocean label.
+    # Lake Superior.
+    map = erase_area(
+        map=map,
+        lat=lat,
+        lon=lon,
+        min_latitude=41.375963,
+        max_latitude=50.582521,
+        min_longitude=-93.748270,
+        max_longitude=-75.225322,
+    )
+    # Lake Victoria.
+    map = erase_area(
+        map=map,
+        lat=lat,
+        lon=lon,
+        min_latitude=-2.809322,
+        max_latitude=0.836983,
+        min_longitude=31.207700,
+        max_longitude=34.530942,
+    )
+    # Caspian Sea.
+    map = erase_area(
+        map=map,
+        lat=lat,
+        lon=lon,
+        min_latitude=35.569650,
+        max_latitude=47.844035,
+        min_longitude=44.303403,
+        max_longitude=60.937192,
+    )
+
+    # Dilates continents (100km).
+    map = erode(map, ones(shape=(3, 3)), iterations=pixels_to_coast)
+
+    return map
+
+
+def extract_mask_csv(path: Path = masks_data_path, name: str = "ocean_mask_buffer_coast_300km_eq_removed_0_360.csv") -> ndarray:
+    """
+    Opens and formats ocean mask CSV datafile.
+    """
+    # Gets raw data.
+    df = read_csv(filepath_or_buffer=path.joinpath(name), sep=",")
+    return flip(m=[[value for value in df["mask"][df["lat"] == lat]] for lat in unique(ar=df["lat"])], axis=0)
+
+
+def map_sampling(map: ndarray[float], n_max: int, harmonic_domain: bool = False) -> tuple[ndarray[float], int]:
+    """
+    Redefined a (latitude, longitude) map definition. Eventually returns it in harmonic domain.
+    Returns maximal degree as second output.
+    """
+    n_max = min(n_max, (len(map) - 1) // 2)
+    harmonics = SHExpandDH(
+        map,
+        sampling=2,
+        lmax_calc=n_max,
+    )
+    return (
+        (harmonics if harmonic_domain else MakeGridDH(harmonics, sampling=2, lmax=n_max)),
+        n_max,
+    )
+
+
+def get_ocean_mask(name: str, n_max: int, pixels_to_coast: int = 0) -> ndarray[float] | float:
+    """
+    Gets the wanted ocean mask and adjusts it.
+    """
+    if name is None:
+        return 1.0
+    else:
+        if name.split(".")[-1] == "csv":
+            ocean_mask = extract_mask_csv(name=name)
+        else:
+            ocean_mask = extract_mask_nc(name=name, pixels_to_coast=pixels_to_coast)
+        return round(
+            a=map_sampling(
+                map=ocean_mask,
+                n_max=n_max,
+            )[0]
+        )
 
 
 def extract_GRACE_data(name: str, path: Path = GRACE_data_path, skiprows: int = 11) -> ndarray:
@@ -95,7 +264,7 @@ def save_frequencies(log_frequency_values: ndarray[float], frequency_unit: float
 
 
 def save_map(
-    map: ndarray[float], lat: ndarray[float], lon: ndarray[float], path: Path, filename: str, result_name: str
+    map: ndarray[float], lat: ndarray[float], lon: ndarray[float], path: Path, filename: str, result_name: str = "EWH"
 ) -> None:
     """
     Saves a static result map in (.CSV) file.
@@ -107,3 +276,40 @@ def save_map(
         for latitude, map_row in zip(lat, map):
             for longitude, value in zip(lon, map_row):
                 writer.writerow({"lat": latitude, "lon": longitude, result_name: value})
+
+
+def find_results(table_name: str, result_caracteristics: dict[str, str | bool | float]) -> list[str]:
+    """
+    Filters a result table by result identifier characteristics.
+    """
+    # Gets result informations.
+    df = read_csv(filepath_or_buffer=tables_path.joinpath(table_name + ".csv"), sep=",")
+    df[reduce(lambda a, b: a & b, [df[key] == value for key, value in result_caracteristics.items()])]["ID"]
+
+
+def load_Love_number_result(
+    Love_numbers_hyper_parameters: LoveNumbersHyperParameters, anelasticity_description_id: str
+) -> Result:
+    """
+    Loads Love number results given the parameters used to produce them.
+    First, it has a look on the Love number result sum up table, where the file ID can be found.
+    Then, it loads the result file as a 'Result' instance.
+    """
+
+    # Filters for parameters.
+    file_id: str = find_results(
+        table_name="Love_numbers",
+        result_caracteristics={
+            "anelasticity_description_id": anelasticity_description_id,
+            "max_tol": Love_numbers_hyper_parameters.max_tol,
+            "decimals": Love_numbers_hyper_parameters.decimals,
+        }
+        | Love_numbers_hyper_parameters.y_system_hyper_parameters.__dict__
+        | Love_numbers_hyper_parameters.run_hyper_parameters.__dict__,
+    )[0]
+
+    # Loads result.
+    Love_numbers = Result()
+    Love_numbers.load(name=file_id, path=Love_numbers_path)
+
+    return Love_numbers

@@ -4,11 +4,12 @@ PARAMETER_BOUNDS = {
     "additive_constant": {"lower_bound": -200.0, "upper_bound": 200.0},
     "sinusoidal_amplitude": {"lower_bound": 0.0, "upper_bound": 50.0},
     "sinusoidal_delay": {"lower_bound": 0.0, "upper_bound": 1.0},
-    "earthquake_t_0": {"lower_bound": 2002.0, "upper_bound": 2023.0},
-    "earthquake_tau": {"lower_bound": 0.05, "upper_bound": 3.0},
+    "earthquake_t_0": {"lower_bound": 2005.0, "upper_bound": 2015.0},
     "co_seismic_amplitude": {"lower_bound": -400.0, "upper_bound": 400.0},
-    "post_seismic_amplitude": {"lower_bound": -50.0, "upper_bound": 50.0},
-    "seismic_relaxation_time": {"lower_bound": 1.0, "upper_bound": 10.0},
+    "post_seismic_exp_amplitude": {"lower_bound": -100.0, "upper_bound": 100.0},
+    "post_seismic_exp_relaxation_time": {"lower_bound": 1.0, "upper_bound": 15.0},
+    "post_seismic_log_amplitude": {"lower_bound": -100.0, "upper_bound": 100.0},
+    "post_seismic_log_relaxation_time": {"lower_bound": 0.1, "upper_bound": 100.0},
 }
 
 # Defines areas where to remove earthquakes signals

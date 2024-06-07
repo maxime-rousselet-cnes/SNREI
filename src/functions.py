@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Optional
 
 from numpy import (
     abs,
@@ -6,6 +6,8 @@ from numpy import (
     array,
     concatenate,
     conjugate,
+    cos,
+    expand_dims,
     flip,
     linspace,
     log10,
@@ -13,6 +15,8 @@ from numpy import (
     ndarray,
     newaxis,
     ones,
+    pi,
+    prod,
     round,
     setdiff1d,
     unique,
@@ -20,6 +24,7 @@ from numpy import (
     zeros,
 )
 from numpy.linalg import pinv
+from pyshtools.expand import MakeGridDH
 from scipy import interpolate
 
 
@@ -146,3 +151,37 @@ def signal_trend(trend_dates: ndarray[float], signal: ndarray[float]) -> tuple[f
     # Direct least square regression using pseudo-inverse.
     result: ndarray = pinv(A).dot(signal[:, newaxis])
     return result.flatten()  # Turn the signal into a column vector. (slope, additive_constant)
+
+
+def map_normalizing(
+    map: ndarray,
+) -> ndarray:
+    """
+    Sets global mean as zero and max as one by homothety.
+    """
+    n_t = prod(map.shape)
+    sum_map = sum(map.flatten())
+    max_map = max(map.flatten())
+    return map / (max_map - sum_map / n_t) + sum_map / (sum_map - max_map * n_t)
+
+
+def surface_ponderation(
+    mask: ndarray[float],
+) -> ndarray[float]:
+    """
+    Gets the surface of a (latitude * longitude) array.
+    """
+    return mask * expand_dims(a=cos(linspace(start=-pi / 2, stop=pi / 2, num=len(mask))), axis=1)
+
+
+def mean_on_mask(
+    mask: ndarray[float], harmonics: Optional[ndarray[float]] = None, grid: Optional[ndarray[float]] = None
+) -> float:
+    """
+    Computes mean value over a given surface. Uses a given mask.
+    """
+    if grid is None:
+        grid: ndarray[float] = MakeGridDH(harmonics, sampling=2)
+    surface = surface_ponderation(mask=mask)
+    weighted_values = grid * surface
+    return round(a=sum(weighted_values.flatten()) / sum(surface.flatten()), decimals=5)

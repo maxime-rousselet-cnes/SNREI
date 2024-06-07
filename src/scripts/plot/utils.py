@@ -216,7 +216,7 @@ def plot_load_signal(
 
     plot.fill_between(dates, lower_barystatic, upper_barystatic)
     plot.plot(dates, mean_barystatic, linewidth=linewidth, color=(0, 0, 0))
-    plot.set_xlabel("date (y)")
+    plot.set_xlabel("date (yr)")
     plot.set_title("Barystatic  (mm)")
     plot.grid()
 

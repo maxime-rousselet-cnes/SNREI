@@ -112,7 +112,7 @@ def plot_mu_profiles_for_options_for_periods_to_depth(
             if grid:
                 plot.grid()
             # plot.set_xscale("log")
-            plot.set_title("$T=" + str(period) + "$ (y)")
+            plot.set_title("$T=" + str(period) + "$ (yr)")
         plt.suptitle(("Real" if part == "real" else "Imaginary") + " part")
         plot.set_ylabel("Depth (km)")
         plot.invert_yaxis()

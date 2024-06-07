@@ -53,6 +53,11 @@ OPTIONS: list[RunHyperParameters] = [
         use_bounded_attenuation_functions=False,
     ),
 ]
+ELASTIC_RUN_HYPER_PARAMETERS = RunHyperParameters(
+    use_long_term_anelasticity=False,
+    use_short_term_anelasticity=False,
+    use_bounded_attenuation_functions=False,
+)
 
 # Default hyper parameters.
 DEFAULT_MODELS: dict[Optional[ModelPart], Optional[str]] = {

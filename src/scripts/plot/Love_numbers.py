@@ -34,8 +34,8 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
     degrees_to_plot: list[int] = [2, 10],
     directions: list[Direction] = [Direction.radial, Direction.tangential, Direction.potential],
     boundary_conditions: list[BoundaryCondition] = [BoundaryCondition.load],
-    T_min_zoom_in: float = 1.0,  # (y)
-    T_max_zoom_in: float = 2.5e3,  # (y)
+    T_min_zoom_in: float = 1.0,  # (yr)
+    T_max_zoom_in: float = 2.5e3,  # (yr)
     # Should have as many elements as 'degrees_to_plot'.
     degrees_linestyles: list[str] = [":", "-"],
     figsize: tuple[int, int] = (10, 10),
@@ -151,7 +151,7 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
                         if anelasticity_description_id == anelasticity_description_ids[0]:
                             plot.set_ylabel(part + " part")
                         if part == "imaginary":
-                            plot.set_xlabel("T (y)")
+                            plot.set_xlabel("T (yr)")
                         if legend and part == "imaginary" and anelasticity_description_id == anelasticity_description_ids[0]:
                             plot.legend()
                 plt.suptitle("$" + symbol + "/" + symbol + "^E$", fontsize=title_fontsize)
@@ -167,8 +167,8 @@ def plot_Love_numbers_for_options_per_description_per_type(
     degrees_to_plot: list[int] = [2, 10],
     directions: list[Direction] = [Direction.radial, Direction.tangential, Direction.potential],
     boundary_conditions: list[BoundaryCondition] = [BoundaryCondition.load],
-    T_min_zoom_in: float = 1.0,  # (y)
-    T_max_zoom_in: float = 2.5e3,  # (y)
+    T_min_zoom_in: float = 1.0,  # (yr)
+    T_max_zoom_in: float = 2.5e3,  # (yr)
     degrees_colors: list[tuple[float, float, float]] = [(0.0, 0.0, 1.0), (1.0, 0.0, 0.0)],
     figsize: tuple[int, int] = (10, 10),
     linewidth: int = 2,

@@ -9,30 +9,36 @@ from src import (
 
 options = [
     RunHyperParameters(
-        use_long_term_anelasticity=True, use_short_term_anelasticity=True, use_bounded_attenuation_functions=True
+        use_long_term_anelasticity=True,
+        use_short_term_anelasticity=True,
+        use_bounded_attenuation_functions=True,
     ),
     RunHyperParameters(
-        use_long_term_anelasticity=False, use_short_term_anelasticity=True, use_bounded_attenuation_functions=True
+        use_long_term_anelasticity=False,
+        use_short_term_anelasticity=True,
+        use_bounded_attenuation_functions=True,
     ),
     RunHyperParameters(
-        use_long_term_anelasticity=True, use_short_term_anelasticity=False, use_bounded_attenuation_functions=False
+        use_long_term_anelasticity=True,
+        use_short_term_anelasticity=False,
+        use_bounded_attenuation_functions=False,
     ),
 ]
 
-anelasticity_description_ids, model_filenames = Love_numbers_for_options_for_models_for_parameters(
-    elasticity_model_names=["PREM"],
-    long_term_anelasticity_model_names=["Mao_Zhong"],
-    short_term_anelasticity_model_names=[
-        "Benjamin_Q_Resovsky",
-        "Benjamin_Q_PAR3P",
-        "Benjamin_Q_PREM",
-        "Benjamin_Q_QL6",
-        "Benjamin_Q_QM1",
-    ],
-    parameters={
-        ModelPart.long_term_anelasticity: {"eta_m": {"ASTHENOSPHERE": [[3e19]]}},
-        ModelPart.short_term_anelasticity: {"asymptotic_mu_ratio": {"MANTLE": [[0.1], [0.2]]}},
-    },
+anelasticity_description_ids, model_filenames = (
+    Love_numbers_for_options_for_models_for_parameters(
+        elasticity_model_names=["PREM"],
+        long_term_anelasticity_model_names=["Mao_Zhong"],
+        short_term_anelasticity_model_names=[
+            "Benjamin_Q_Resovsky",
+        ],
+        parameters={
+            ModelPart.long_term_anelasticity: {"eta_m": {"ASTHENOSPHERE": [[3e19]]}},
+            ModelPart.short_term_anelasticity: {
+                "asymptotic_mu_ratio": {"MANTLE": [[0.1], [0.2]]}
+            },
+        },
+    )
 )
 """
 load_result_folders: list[Path] = load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(

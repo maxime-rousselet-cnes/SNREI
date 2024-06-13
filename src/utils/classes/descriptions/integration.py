@@ -79,7 +79,10 @@ class Integration(Description):
 
         # Initializes the needed description layers.
         for i_layer, (variables, layer) in enumerate(
-            zip(anelasticity_description.variable_values_per_layer, anelasticity_description.description_layers)
+            zip(
+                anelasticity_description.variable_values_per_layer,
+                anelasticity_description.description_layers,
+            )
         ):
 
             # First gets the needed real variable splines.
@@ -89,7 +92,14 @@ class Integration(Description):
                 x_sup=layer.x_sup,
                 splines={
                     variable_name: layer.splines[variable_name]
-                    for variable_name in ["g_0", "rho_0", "mu_0", "lambda_0", "Vs", "Vp"]
+                    for variable_name in [
+                        "g_0",
+                        "rho_0",
+                        "mu_0",
+                        "lambda_0",
+                        "Vs",
+                        "Vp",
+                    ]
                 },
             )
 
@@ -142,7 +152,9 @@ class Integration(Description):
 
                 # Anelasticity.
                 if use_long_term_anelasticity:
-                    m_prime = m_prime_computing(omega_cut_m=variables["omega_cut_m"], omega_j=self.omega_j)
+                    m_prime = m_prime_computing(
+                        omega_cut_m=variables["omega_cut_m"], omega_j=self.omega_j
+                    )
                     b = b_computing(
                         omega_cut_m=variables["omega_cut_m"],
                         omega_cut_k=variables["omega_cut_k"],
@@ -155,15 +167,25 @@ class Integration(Description):
                         m_prime=m_prime,
                         b=b,
                     )
-                    variables["mu"] = mu_computing(mu_complex=variables["mu"], m_prime=m_prime, b=b)
+                    variables["mu"] = mu_computing(
+                        mu_complex=variables["mu"], m_prime=m_prime, b=b
+                    )
 
                 # Updates.
                 description_layer.splines.update(
                     {
-                        "lambda_real": interpolate.splrep(x=variables["x"], y=variables["lambda"].real),
-                        "lambda_imag": interpolate.splrep(x=variables["x"], y=variables["lambda"].imag),
-                        "mu_real": interpolate.splrep(x=variables["x"], y=variables["mu"].real),
-                        "mu_imag": interpolate.splrep(x=variables["x"], y=variables["mu"].imag),
+                        "lambda_real": interpolate.splrep(
+                            x=variables["x"], y=variables["lambda"].real
+                        ),
+                        "lambda_imag": interpolate.splrep(
+                            x=variables["x"], y=variables["lambda"].imag
+                        ),
+                        "mu_real": interpolate.splrep(
+                            x=variables["x"], y=variables["mu"].real
+                        ),
+                        "mu_imag": interpolate.splrep(
+                            x=variables["x"], y=variables["mu"].imag
+                        ),
                     },
                 )
 
@@ -214,6 +236,7 @@ class Integration(Description):
 
         # TODO: catch exception.
         if solver.success == True:
+            print(solver.y[:, -1])
             return solver.y, solver.t  # x corresponds to last dimension.
         else:
             print("")
@@ -221,7 +244,9 @@ class Integration(Description):
             print("")
 
     # TODO: Vectorize.
-    def y_system_integration(self, n: int, hyper_parameters: YSystemHyperParameters) -> ndarray[complex]:
+    def y_system_integration(
+        self, n: int, hyper_parameters: YSystemHyperParameters
+    ) -> ndarray[complex]:
         """
         Integrates the unitless gravito-elastic system from the geocenter to the surface, at given n, omega and rheology.
         """
@@ -332,7 +357,11 @@ class Integration(Description):
         else:
             # Integrate from geocenter to CMB with high degrees approximation.
             n_start_layer: int = (
-                where((array([layer.x_inf for layer in self.description_layers]) ** n) > (self.x_CMB**n))[0][0] + 1
+                where(
+                    (array([layer.x_inf for layer in self.description_layers]) ** n)
+                    > (self.x_CMB**n)
+                )[0][0]
+                + 1
             )
             if hyper_parameters.homogeneous_solution:
                 Y = solid_homogeneous_system(

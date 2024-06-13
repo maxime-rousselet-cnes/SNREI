@@ -42,26 +42,30 @@ def Love_numbers_computing(
     Returns log frequency array and Love numbers as an array.
     """
 
+    # Defines a function for parallel processing.
+    def parallel_processing(n: int) -> tuple[ndarray[float], ndarray[complex]]:
+        return Love_number_computing_subfunction(
+            n=n,
+            anelasticity_description=anelasticity_description,
+            y_system_hyper_parameters=y_system_hyper_parameters,
+            run_hyper_parameters=run_hyper_parameters,
+            log_frequency_initial_values=(
+                log_frequency_initial_values
+                if (
+                    run_hyper_parameters.use_long_term_anelasticity
+                    or run_hyper_parameters.use_short_term_anelasticity
+                )
+                else array([Inf])
+            ),
+            max_tol=max_tol,
+            decimals=decimals,
+        )
+
     with Pool() as p:  # Processes for degrees.
         frequency_and_Love_numbers_tuples: list[
             tuple[ndarray[float], ndarray[complex]]
         ] = p.map(
-            func=lambda n: Love_number_computing_subfunction(
-                n=n,
-                anelasticity_description=anelasticity_description,
-                y_system_hyper_parameters=y_system_hyper_parameters,
-                run_hyper_parameters=run_hyper_parameters,
-                log_frequency_initial_values=(
-                    log_frequency_initial_values
-                    if (
-                        run_hyper_parameters.use_long_term_anelasticity
-                        or run_hyper_parameters.use_short_term_anelasticity
-                    )
-                    else array([Inf])
-                ),
-                max_tol=max_tol,
-                decimals=decimals,
-            ),
+            func=parallel_processing,
             iterable=degrees,
         )
 

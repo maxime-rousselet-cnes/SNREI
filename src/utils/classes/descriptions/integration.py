@@ -236,7 +236,6 @@ class Integration(Description):
 
         # TODO: catch exception.
         if solver.success == True:
-            print(solver.y[:, -1])
             return solver.y, solver.t  # x corresponds to last dimension.
         else:
             print("")
@@ -392,6 +391,12 @@ class Integration(Description):
         for n_layer in range(n_start_layer, len(self.description_layers)):
             integration_start = self.description_layers[n_layer].x_inf
             integration_stop = self.description_layers[n_layer].x_sup
+
+            print(integration_start, integration_stop)
+            print(Y1)
+            print(Y2)
+            print(Y3)
+
             Y1, _ = self.integration(
                 Y_i=Y1,
                 integration_start=integration_start,

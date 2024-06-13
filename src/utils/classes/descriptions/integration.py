@@ -245,7 +245,8 @@ class Integration(Description):
 
         # TODO: catch exception.
         if solver.success == True:
-            return solver.y, solver.t  # x corresponds to last dimension.
+            print(solver.y[:, -1])
+            return solver.y, solver.t
 
     def y_system_integration(
         self, n: int, hyper_parameters: YSystemHyperParameters
@@ -307,7 +308,7 @@ class Integration(Description):
             # Integrates in the Outer-Core.
             for n_layer in range(self.below_ICB_layers, self.below_CMB_layers):
                 integration_stop = self.description_layers[n_layer].x_sup
-                Y, _ = self.integration(
+                Y = self.integration(
                     Y_i=Y,
                     integration_start=integration_start,
                     integration_stop=integration_stop,

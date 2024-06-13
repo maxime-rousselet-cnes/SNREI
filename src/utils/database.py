@@ -77,15 +77,10 @@ def generate_degrees_list(
     """
     return concatenate(
         [
-            arange(degree_thresholds[i], degree_thresholds[i + 1], degree_step, dtype=int)
+            arange(
+                degree_thresholds[i], degree_thresholds[i + 1], degree_step, dtype=int
+            )
             for i, degree_step in enumerate(degree_steps)
         ],
         dtype=int,
     ).tolist()
-
-
-def get_run_folder_name(anelasticity_description_id: str, run_id: str) -> str:
-    """
-    Builds a folder id with anelasticity description id and run id.
-    """
-    return "/".join((anelasticity_description_id, "runs", run_id))

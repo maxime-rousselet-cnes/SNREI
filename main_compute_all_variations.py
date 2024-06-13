@@ -1,49 +1,44 @@
-from pathlib import Path
-
 from src import (
-    Love_numbers_for_options_for_models_for_parameters,
     ModelPart,
     RunHyperParameters,
-    load_signal_for_options_for_models_for_parameters_for_elastic_load_signals,
+    clear_subs,
+    compute_load_signal_trends_for_anelastic_Earth_models,
 )
 
-options = [
-    RunHyperParameters(
-        use_long_term_anelasticity=True, use_short_term_anelasticity=True, use_bounded_attenuation_functions=True
-    ),
-    RunHyperParameters(
-        use_long_term_anelasticity=False, use_short_term_anelasticity=True, use_bounded_attenuation_functions=True
-    ),
-    RunHyperParameters(
-        use_long_term_anelasticity=True, use_short_term_anelasticity=False, use_bounded_attenuation_functions=False
-    ),
-]
+clear_subs()
 
-anelasticity_description_ids, model_filenames = Love_numbers_for_options_for_models_for_parameters(
+compute_load_signal_trends_for_anelastic_Earth_models(
     elasticity_model_names=["PREM"],
     long_term_anelasticity_model_names=["Mao_Zhong"],
     short_term_anelasticity_model_names=[
         "Benjamin_Q_Resovsky",
-        "Benjamin_Q_PAR3P",
-        "Benjamin_Q_PREM",
-        "Benjamin_Q_QL6",
-        "Benjamin_Q_QM1",
     ],
-    parameters={
+    rheological_parameters={
         ModelPart.long_term_anelasticity: {"eta_m": {"ASTHENOSPHERE": [[3e19]]}},
-        ModelPart.short_term_anelasticity: {"asymptotic_mu_ratio": {"MANTLE": [[0.1], [0.2]]}},
+        ModelPart.short_term_anelasticity: {
+            "asymptotic_mu_ratio": {"MANTLE": [[0.1], [0.2]]}
+        },
     },
-)
-"""
-load_result_folders: list[Path] = load_signal_for_options_for_models_for_parameters_for_elastic_load_signals(
-    anelasticity_description_ids=anelasticity_description_ids,
-    model_filenames=model_filenames,
-    load_signal_hyper_parameter_variations={
+    load_signal_parameters={
         "case": ["lower", "mean", "upper"],
-        "little_isostatic_adjustment": [False],
-        "opposite_load_on_continents": [True],
+        "LIA": [False, True],
+        "opposite_load_on_continents": [False, True],
     },
-    symlinks=True,
-    options=options,
+    options=[
+        RunHyperParameters(
+            use_long_term_anelasticity=True,
+            use_short_term_anelasticity=True,
+            use_bounded_attenuation_functions=True,
+        ),
+        RunHyperParameters(
+            use_long_term_anelasticity=False,
+            use_short_term_anelasticity=True,
+            use_bounded_attenuation_functions=True,
+        ),
+        RunHyperParameters(
+            use_long_term_anelasticity=True,
+            use_short_term_anelasticity=False,
+            use_bounded_attenuation_functions=False,
+        ),
+    ],
 )
-"""

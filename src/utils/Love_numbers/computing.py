@@ -1,6 +1,6 @@
 from multiprocessing import Pool
 
-from numpy import Inf, array, concatenate, ndarray, round, unique
+from numpy import Inf, array, concatenate, linspace, log10, ndarray, round, unique
 
 from ...functions import interpolate_all, precise_curvature
 from ..classes import (
@@ -9,6 +9,23 @@ from ..classes import (
     RunHyperParameters,
     YSystemHyperParameters,
 )
+from ..rheological_formulas import frequencies_to_periods
+
+
+def generate_log_frequency_initial_values(
+    period_min_year: float,
+    period_max_year: float,
+    n_frequency_0: int,
+    frequency_unit: float,
+) -> ndarray[float]:
+    """
+    Generates an array of log-spaced frequency values.
+    """
+    return linspace(
+        start=log10(frequencies_to_periods(period_max_year) / frequency_unit),
+        stop=log10(frequencies_to_periods(period_min_year) / frequency_unit),
+        num=n_frequency_0,
+    )
 
 
 def Love_numbers_computing(
@@ -26,7 +43,9 @@ def Love_numbers_computing(
     """
 
     with Pool() as p:  # Processes for degrees.
-        frequency_and_Love_numbers_tuples: list[tuple[ndarray[float], ndarray[complex]]] = p.map(
+        frequency_and_Love_numbers_tuples: list[
+            tuple[ndarray[float], ndarray[complex]]
+        ] = p.map(
             func=lambda n: Love_number_computing_subfunction(
                 n=n,
                 anelasticity_description=anelasticity_description,
@@ -34,7 +53,10 @@ def Love_numbers_computing(
                 run_hyper_parameters=run_hyper_parameters,
                 log_frequency_initial_values=(
                     log_frequency_initial_values
-                    if (run_hyper_parameters.use_long_term_anelasticity or run_hyper_parameters.use_short_term_anelasticity)
+                    if (
+                        run_hyper_parameters.use_long_term_anelasticity
+                        or run_hyper_parameters.use_short_term_anelasticity
+                    )
                     else array([Inf])
                 ),
                 max_tol=max_tol,
@@ -49,7 +71,8 @@ def Love_numbers_computing(
         for frequency_and_Love_numbers_tuple in frequency_and_Love_numbers_tuples
     ]
     Love_numbers_per_degree = [
-        frequency_and_Love_numbers_tuple[1] for frequency_and_Love_numbers_tuple in frequency_and_Love_numbers_tuples
+        frequency_and_Love_numbers_tuple[1]
+        for frequency_and_Love_numbers_tuple in frequency_and_Love_numbers_tuples
     ]
     log_frequency_all_values = unique(concatenate(log_frequency_values_per_degree))
     all_Love_numbers = interpolate_all(

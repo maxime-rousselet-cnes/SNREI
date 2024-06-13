@@ -49,7 +49,9 @@ class Model:
         Loads the model file while managing infinite values.
         """
         # Loads file.
-        filepath = models_path[model_part].joinpath(name + ("" if ".json" in name else ".json"))
+        filepath = models_path[model_part].joinpath(
+            name + ("" if ".json" in name else ".json")
+        )
         while filepath.is_symlink():
             filepath = filepath.resolve()
         with open(filepath, "r") as file:
@@ -70,9 +72,11 @@ class Model:
         """
         Method to save in (.JSON) file.
         """
-        save_base_model(obj=self, name=name, path=path)
+        save_base_model(obj=self.__dict__, name=name, path=path)
 
-    def build_description_layers_list(self, radius_unit: float, spline_number: int, real_crust: bool) -> list[DescriptionLayer]:
+    def build_description_layers_list(
+        self, radius_unit: float, spline_number: int, real_crust: bool
+    ) -> list[DescriptionLayer]:
         """
         Constructs the layers of an Earth description given model polynomials.
         """
@@ -82,7 +86,10 @@ class Model:
             self.r_limits[1:],
             self.layer_names,
             [
-                {variable_name: variable_polynomials[i] for variable_name, variable_polynomials in self.polynomials.items()}
+                {
+                    variable_name: variable_polynomials[i]
+                    for variable_name, variable_polynomials in self.polynomials.items()
+                }
                 for i in range(len(self.layer_names))
             ],
         ):
@@ -150,7 +157,10 @@ class Model:
                     [
                         (
                             crust_value
-                            if "CRUST_2" in layer_name and not real_crust and i == 0 and crust_value != "None"
+                            if "CRUST_2" in layer_name
+                            and not real_crust
+                            and i == 0
+                            and crust_value != "None"
                             else coefficient
                         )
                         * x**i

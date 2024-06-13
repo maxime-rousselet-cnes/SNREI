@@ -64,7 +64,9 @@ class ElasticityDescription(Description):
         below_ICB_layers, below_CMB_layers = 0, 0
 
         # Iterates on layer names from Geocenter.
-        for layer_name in [description_layer.name for description_layer in self.description_layers]:
+        for layer_name in [
+            description_layer.name for description_layer in self.description_layers
+        ]:
             if "FLUID" in layer_name:
                 below_CMB_layers += 1
             elif below_ICB_layers == below_CMB_layers:
@@ -75,7 +77,12 @@ class ElasticityDescription(Description):
 
         return below_ICB_layers, below_CMB_layers
 
-    def build(self, overwrite_description: bool = True, save: bool = True):
+    def build(
+        self,
+        model_part: ModelPart,
+        overwrite_description: bool = True,
+        save: bool = True,
+    ):
         """
         Builds description layers from model file parameters and preprocesses elasticity variables.
         """
@@ -135,9 +142,15 @@ class ElasticityDescription(Description):
 
             # Updates unitless variables.
             g_0_inf = g_0[-1]
-            self.description_layers[i_layer].splines["g_0"] = interpolate.splrep(x=x, y=g_0, k=self.spline_degree)
-            self.description_layers[i_layer].splines["mu_0"] = interpolate.splrep(x=x, y=mu_0, k=self.spline_degree)
-            self.description_layers[i_layer].splines["lambda_0"] = interpolate.splrep(x=x, y=lambda_0, k=self.spline_degree)
+            self.description_layers[i_layer].splines["g_0"] = interpolate.splrep(
+                x=x, y=g_0, k=self.spline_degree
+            )
+            self.description_layers[i_layer].splines["mu_0"] = interpolate.splrep(
+                x=x, y=mu_0, k=self.spline_degree
+            )
+            self.description_layers[i_layer].splines["lambda_0"] = interpolate.splrep(
+                x=x, y=lambda_0, k=self.spline_degree
+            )
 
         # Eventually saves in (.JSON) file.
         if save:

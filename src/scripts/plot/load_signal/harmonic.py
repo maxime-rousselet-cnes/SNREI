@@ -12,7 +12,7 @@ from ....utils import (
 from ..utils import plot_harmonics_on_natural_projection
 
 
-def plot_anelastic_induced_spatial_load_trend(
+def plot_anelastic_spatial_load_trend(
     anelasticity_description_id: str,
     options: RunHyperParameters,
     load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
@@ -66,7 +66,7 @@ def plot_anelastic_induced_spatial_load_trend(
                 harmonics=load_signal_harmonic_trends["anelastic"],
                 figure_subpath=figure_subpath,
                 name=load_signal_hyper_parameters.weights_map
-                + "_anelastic_induced_load_signal_trend_since_"
+                + "_anelastic_load_signal_trend_since_"
                 + str(load_signal_hyper_parameters.first_year_for_trend),
                 title=load_signal_hyper_parameters.weights_map
                 + " anelastic induced load signal trend since "
@@ -87,7 +87,7 @@ def plot_anelastic_induced_spatial_load_trend(
                 harmonics=load_signal_harmonic_trends["anelastic"] - load_signal_harmonic_trends["elastic"],
                 figure_subpath=figure_subpath,
                 name=load_signal_hyper_parameters.weights_map
-                + "_anelastic_induced_load_signal_trend_difference_with_elastic_since_"
+                + "_anelastic_load_signal_trend_difference_with_elastic_since_"
                 + str(load_signal_hyper_parameters.first_year_for_trend),
                 title=load_signal_hyper_parameters.weights_map
                 + " anelastic induced load signal trend difference with elastic since "
@@ -107,7 +107,7 @@ def plot_anelastic_induced_spatial_load_trend(
             # Load bar.
             print("----Run: " + run_id + ": Done.")
 
-def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
+def plot_anelastic_spatial_load_trend_per_description_per_options(
     anelasticity_description_ids: list[str],
     load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
     options: list[RunHyperParameters] = OPTIONS,
@@ -167,7 +167,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 harmonics=load_signal_harmonic_trends["anelastic"],
                 figure_subpath=figure_subpath,
                 name=load_signal_hyper_parameters.weights_map
-                + "_anelastic_induced_load_signal_trend_since_"
+                + "_anelastic_load_signal_trend_since_"
                 + str(load_signal_hyper_parameters.first_year_for_trend),
                 title=load_signal_hyper_parameters.weights_map
                 + " anelastic induced load signal trend since "
@@ -188,7 +188,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 harmonics=load_signal_harmonic_trends["anelastic"] - load_signal_harmonic_trends["elastic"],
                 figure_subpath=figure_subpath,
                 name=load_signal_hyper_parameters.weights_map
-                + "_anelastic_induced_load_signal_trend_difference_with_elastic_since_"
+                + "_anelastic_load_signal_trend_difference_with_elastic_since_"
                 + str(load_signal_hyper_parameters.first_year_for_trend),
                 title=load_signal_hyper_parameters.weights_map
                 + " anelastic induced load signal trend difference with elastic since "
@@ -208,7 +208,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
             # Load bar.
             print("----Run: " + run_id + ": Done.")
 
-def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
+def plot_anelastic_spatial_load_trend_per_description_per_options(
     anelasticity_description_ids: list[str],
     load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
     options: list[RunHyperParameters] = OPTIONS,
@@ -268,7 +268,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 harmonics=load_signal_harmonic_trends["anelastic"],
                 figure_subpath=figure_subpath,
                 name=load_signal_hyper_parameters.weights_map
-                + "_anelastic_induced_load_signal_trend_since_"
+                + "_anelastic_load_signal_trend_since_"
                 + str(load_signal_hyper_parameters.first_year_for_trend),
                 title=load_signal_hyper_parameters.weights_map
                 + " anelastic induced load signal trend since "
@@ -289,7 +289,7 @@ def plot_anelastic_induced_spatial_load_trend_per_description_per_options(
                 harmonics=load_signal_harmonic_trends["anelastic"] - load_signal_harmonic_trends["elastic"],
                 figure_subpath=figure_subpath,
                 name=load_signal_hyper_parameters.weights_map
-                + "_anelastic_induced_load_signal_trend_difference_with_elastic_since_"
+                + "_anelastic_load_signal_trend_difference_with_elastic_since_"
                 + str(load_signal_hyper_parameters.first_year_for_trend),
                 title=load_signal_hyper_parameters.weights_map
                 + " anelastic induced load signal trend difference with elastic since "

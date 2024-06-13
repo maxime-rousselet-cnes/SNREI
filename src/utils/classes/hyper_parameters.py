@@ -20,10 +20,14 @@ class YSystemHyperParameters(HyperParameters):
     """
 
     # Physical parameters.
-    n_max_for_sub_CMB_integration: int  # Maximal degree for integration under the Core-Mantle Boundary.
+    n_max_for_sub_CMB_integration: (
+        int  # Maximal degree for integration under the Core-Mantle Boundary.
+    )
     homogeneous_solution: bool  # Whether to use analytical solution for homogeneous sphere at r ~= 0 km or not.
     dynamic_term: bool  # Whether to use omega^2 terms or not.
-    inhomogeneity_gradients: bool  # Wheter to use lambda_prime an mu_prime terms or not.
+    inhomogeneity_gradients: (
+        bool  # Wheter to use lambda_prime an mu_prime terms or not.
+    )
     minimal_radius: float  # (m).
 
     # Solver parameters.
@@ -57,9 +61,15 @@ class RunHyperParameters(HyperParameters):
     Describes a run's options.
     """
 
-    use_long_term_anelasticity: bool  # Whether to use long term anelasticity model or not.
-    use_short_term_anelasticity: bool  # Whether to use short term anelasticity model or not.
-    use_bounded_attenuation_functions: bool  # Whether to use the bounded version of attenuation functions or not.
+    use_long_term_anelasticity: (
+        bool  # Whether to use long term anelasticity model or not.
+    )
+    use_short_term_anelasticity: (
+        bool  # Whether to use short term anelasticity model or not.
+    )
+    use_bounded_attenuation_functions: (
+        bool  # Whether to use the bounded version of attenuation functions or not.
+    )
 
 
 class LoveNumbersHyperParameters(HyperParameters):
@@ -78,9 +88,15 @@ class LoveNumbersHyperParameters(HyperParameters):
     anelasticity_description_parameters: (
         Optional[str] | AnelasticityDescriptionParameters
     )  # To build an Earth Complete description.
-    y_system_hyper_parameters: Optional[str] | YSystemHyperParameters  # For the Y_i system integration algorithm.
-    degree_steps: Optional[str] | list[int]  # Love numbers are computed every degree_steps[i] between...
-    degree_thresholds: Optional[str] | list[int]  # ... degree_thresholds[i] and degree_thresholds[i + 1].
+    y_system_hyper_parameters: (
+        Optional[str] | YSystemHyperParameters
+    )  # For the Y_i system integration algorithm.
+    degree_steps: (
+        Optional[str] | list[int]
+    )  # Love numbers are computed every degree_steps[i] between...
+    degree_thresholds: (
+        Optional[str] | list[int]
+    )  # ... degree_thresholds[i] and degree_thresholds[i + 1].
     run_hyper_parameters: Optional[str] | RunHyperParameters  # Run parameters.
     save_result_per_degree: bool  # Whether to save a result per degree or not.
 
@@ -92,7 +108,11 @@ class LoveNumbersHyperParameters(HyperParameters):
         #  Parameters for the run.
         if not isinstance(self.run_hyper_parameters, RunHyperParameters):
             self.run_hyper_parameters = load_base_model(
-                name=self.run_hyper_parameters if self.run_hyper_parameters else "run_hyper_parameters",
+                name=(
+                    self.run_hyper_parameters
+                    if self.run_hyper_parameters
+                    else "run_hyper_parameters"
+                ),
                 base_model_type=RunHyperParameters,
                 path=parameters_path,
             )
@@ -100,13 +120,19 @@ class LoveNumbersHyperParameters(HyperParameters):
         #  Parameters for the Y_i system integration algorithm.
         if not isinstance(self.y_system_hyper_parameters, YSystemHyperParameters):
             self.y_system_hyper_parameters = load_base_model(
-                name=self.y_system_hyper_parameters if self.y_system_hyper_parameters else "Y_system_hyper_parameters",
+                name=(
+                    self.y_system_hyper_parameters
+                    if self.y_system_hyper_parameters
+                    else "Y_system_hyper_parameters"
+                ),
                 base_model_type=YSystemHyperParameters,
                 path=parameters_path,
             )
 
         # Parameters to build an Earth Complete description.
-        if not isinstance(self.anelasticity_description_parameters, AnelasticityDescriptionParameters):
+        if not isinstance(
+            self.anelasticity_description_parameters, AnelasticityDescriptionParameters
+        ):
             self.anelasticity_description_parameters = load_base_model(
                 name=(
                     self.anelasticity_description_parameters
@@ -125,17 +151,23 @@ class LoveNumbersHyperParameters(HyperParameters):
             )
         if not isinstance(self.degree_thresholds, list):
             self.degree_thresholds = load_base_model(
-                name=self.degree_thresholds if self.degree_thresholds else "degree_thresholds",
+                name=(
+                    self.degree_thresholds
+                    if self.degree_thresholds
+                    else "degree_thresholds"
+                ),
                 path=parameters_path,
             )
 
 
-def load_Love_numbers_hyper_parameters(name: Optional[str] = None) -> LoveNumbersHyperParameters:
+def load_Love_numbers_hyper_parameters(
+    name: str = "Love_numbers_hyper_parameters",
+) -> LoveNumbersHyperParameters:
     """
     Routine that gets Love numbers hyper parameters from (.JSON) file.
     """
     Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_base_model(
-        name=name if not name is None else "Love_numbers_hyper_parameters",
+        name=name,
         path=parameters_path,
         base_model_type=LoveNumbersHyperParameters,
     )
@@ -149,16 +181,15 @@ class LoadSignalHyperParameters(HyperParameters):
     numbers.
     """
 
-    # Run parameters.
-    run_hyper_parameters: Optional[str] | RunHyperParameters
-
     # Parameters describing the load signal.
     load_signal: str  # For now: "load_history" is managed only.
     # Load history parameters.
     load_history: str  # (.csv) file path relative to data/GMSL_data.
     case: str  # Whether "lower", "mean" or "upper".
     spline_time_years: int  # Time for the anti-symmetrization spline process in years.
-    initial_plateau_time_years: int  # Time of the zero-value plateau before the signal history (yr).
+    initial_plateau_time_years: (
+        int  # Time of the zero-value plateau before the signal history (yr).
+    )
     anti_Gibbs_effect_factor: int  # Integer, minimum equal to 1 (unitless).
     # Little Isostatic Adjustment (LIA) parameters.
     LIA: bool  # Whethter to take LIA into account or not.
@@ -183,20 +214,10 @@ class LoadSignalHyperParameters(HyperParameters):
     do_elastic: bool
     elastic_reference_id: Optional[str]
 
-    def load(self) -> None:
-        """
-        Loads the lower level parameter fields from file names.
-        """
-        #  Parameters for the run.
-        if not isinstance(self.run_hyper_parameters, RunHyperParameters):
-            self.run_hyper_parameters = load_base_model(
-                name=self.run_hyper_parameters if self.run_hyper_parameters else "run_hyper_parameters",
-                base_model_type=RunHyperParameters,
-                path=parameters_path,
-            )
 
-
-def load_load_signal_hyper_parameters(name: Optional[str] = None) -> LoadSignalHyperParameters:
+def load_load_signal_hyper_parameters(
+    name: Optional[str] = None,
+) -> LoadSignalHyperParameters:
     """
     Routine that gets Love numbers hyper parameters from (.JSON) file.
     """
@@ -205,5 +226,4 @@ def load_load_signal_hyper_parameters(name: Optional[str] = None) -> LoadSignalH
         path=parameters_path,
         base_model_type=LoadSignalHyperParameters,
     )
-    load_signal_hyper_parameters.load()
     return load_signal_hyper_parameters

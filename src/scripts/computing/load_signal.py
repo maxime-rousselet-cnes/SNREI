@@ -2,14 +2,14 @@ from ...utils import (
     OPTIONS,
     LoadSignalHyperParameters,
     RunHyperParameters,
-    anelastic_induced_load_signal_per_degree,
+    anelastic_load_signal_per_degree,
     build_elastic_load_signal,
-    compute_anelastic_induced_harmonic_load_per_description_per_options,
+    compute_anelastic_harmonic_load_per_description_per_options,
     load_load_signal_hyper_parameters,
 )
 
 
-def compute_anelastic_induced_load_per_degree_per_description_per_options(
+def compute_anelastic_load_per_degree_per_description_per_options(
     anelasticity_description_ids: list[str],
     load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
     options: list[RunHyperParameters] = OPTIONS,
@@ -20,8 +20,12 @@ def compute_anelastic_induced_load_per_degree_per_description_per_options(
         - Computes and saves anelastic induced load signal per degree.
     """
     # Builds load signal.
-    signal_dates, frequencies, (frequencial_elastic_normalized_load_signal, elastic_load_signal_trend, _) = (
-        build_elastic_load_signal(signal_hyper_parameters=load_signal_hyper_parameters, get_harmonic_weights=False)
+    (
+        signal_dates,
+        frequencies,
+        (frequencial_elastic_normalized_load_signal, elastic_load_signal_trend, _),
+    ) = build_elastic_load_signal(
+        signal_hyper_parameters=load_signal_hyper_parameters, get_harmonic_weights=False
     )
 
     # Loops on descriptions.
@@ -30,7 +34,7 @@ def compute_anelastic_induced_load_per_degree_per_description_per_options(
         for run_hyper_parameters in options:
             load_signal_hyper_parameters.run_hyper_parameters = run_hyper_parameters
             # Computes anelastic induced load signal per degree.
-            anelastic_induced_load_signal_per_degree(
+            anelastic_load_signal_per_degree(
                 anelasticity_description_id=anelasticity_description_id,
                 load_signal_hyper_parameters=load_signal_hyper_parameters,
                 signal_dates=signal_dates,
@@ -40,14 +44,14 @@ def compute_anelastic_induced_load_per_degree_per_description_per_options(
             )
 
 
-def compute_anelastic_induced_harmonic_load_per_description(
+def compute_anelastic_harmonic_load_per_description(
     anelasticity_description_ids: list[str],
     load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
 ) -> None:
     """
     Computes anelastic induced harmonic load signal for given descriptions.
     """
-    compute_anelastic_induced_harmonic_load_per_description_per_options(
+    compute_anelastic_harmonic_load_per_description_per_options(
         anelasticity_description_ids=anelasticity_description_ids,
         load_signal_hyper_parameters=load_signal_hyper_parameters,
         options=[load_signal_hyper_parameters.run_hyper_parameters],

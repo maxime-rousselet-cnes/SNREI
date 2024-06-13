@@ -1,0 +1,3 @@
+from .main_computing_loop import compute_load_signal_trends_for_anelastic_Earth_models
+
+[compute_load_signal_trends_for_anelastic_Earth_models]

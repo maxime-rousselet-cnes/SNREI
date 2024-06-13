@@ -49,22 +49,29 @@ class Result:
         self,
         values: Optional[Values] = None,
         hyper_parameters: Optional[HyperParameters] = None,
+        axes: Optional[dict[str, ndarray[complex]]] = None,
     ) -> None:
         self.hyper_parameters = hyper_parameters
         self.values = values
+        self.axes = axes
 
     def update_values_from_array(
         self,
         result_array: ndarray,
-        degrees: list[int] | ndarray,
     ) -> None:
         """
         Converts p-dimmensionnal array to 'values' field, p >=3.
         The axis in position -1 should count 9 components corresponding to every combination of Direction and BoundaryCondition.
         """
+
         result_shape = result_array.shape[:-1]
-        non_radial_factor = array(object=degrees, dtype=int) if len(result_shape) == 1 else expand_dims(a=degrees, axis=1)
+        non_radial_factor = (
+            array(object=self.axes["degrees"], dtype=int)
+            if len(result_shape) == 1
+            else expand_dims(a=self.axes["degrees"], axis=1)
+        )
         radial_factor = ones(shape=result_shape)
+
         self.values = {
             direction: {
                 boundary_condition: (
@@ -72,8 +79,14 @@ class Result:
                     if len(result_shape) == 1
                     else result_array[:, :, i_direction + 3 * i_boundary_condition]
                 )
-                * (radial_factor if direction == Direction.radial else non_radial_factor)
-                for i_boundary_condition, boundary_condition in enumerate(BoundaryCondition)
+                * (
+                    radial_factor
+                    if direction == Direction.radial
+                    else non_radial_factor
+                )
+                for i_boundary_condition, boundary_condition in enumerate(
+                    BoundaryCondition
+                )
             }
             for i_direction, direction in enumerate(Direction)
         }
@@ -82,6 +95,7 @@ class Result:
         """
         Saves the results in a (.JSON) file. Handles Enum classes. Converts complex values arrays to
         """
+
         save_base_model(
             obj={
                 "hyper_parameters": self.hyper_parameters,
@@ -113,25 +127,42 @@ class Result:
         """
         Loads a Result structure from (.JSON) file.
         """
+
         loaded_content = load_base_model(
             name=name,
             path=path,
         )
+
         self.hyper_parameters = HyperParameters(**loaded_content["hyper_parameters"])
-        result_values: dict[str, dict[str, dict[str, list[float]]]] = loaded_content["values"]
+        result_values: dict[str, dict[str, dict[str, list[float]]]] = loaded_content[
+            "values"
+        ]
         result_axes: dict[str, dict[str, list[float]]] = loaded_content["axes"]
         self.values = Values(
             {
                 Direction(int(direction)): {
-                    (BoundaryCondition(int(boundary_condition))): array(object=sub_values["real"])
-                    + (0.0 if not ("imag" in sub_values.keys()) else array(object=sub_values["imag"])) * 1.0j
+                    (BoundaryCondition(int(boundary_condition))): array(
+                        object=sub_values["real"]
+                    )
+                    + (
+                        0.0
+                        if not ("imag" in sub_values.keys())
+                        else array(object=sub_values["imag"])
+                    )
+                    * 1.0j
                     for boundary_condition, sub_values in values.items()
                 }
                 for direction, values in result_values.items()
             }
         )
+
         self.axes = {
             axe_name: array(object=axe_values["real"])
-            + (0.0 if not ("imag" in axe_values.keys()) else array(object=axe_values["imag"])) * 1.0j
+            + (
+                0.0
+                if not ("imag" in axe_values.keys())
+                else array(object=axe_values["imag"])
+            )
+            * 1.0j
             for axe_name, axe_values in result_axes.items()
         }

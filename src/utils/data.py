@@ -1,6 +1,7 @@
 from csv import DictWriter
 from functools import reduce
 from pathlib import Path
+from typing import Optional
 
 import netCDF4
 from cv2 import erode
@@ -48,7 +49,10 @@ def extract_temporal_load_signal(
             dtype=float,
         )
         - array(
-            object=[float(item.split(",")[0] + "." + item.split(",")[1]) for item in df["Steric [" + column + "]"].values],
+            object=[
+                float(item.split(",")[0] + "." + item.split(",")[1])
+                for item in df["Steric [" + column + "]"].values
+            ],
             dtype=float,
         )
         for column in COLUMNS
@@ -60,11 +64,15 @@ def extract_temporal_load_signal(
             start, end = "upper", "lower"
         elif name == "worst":
             start, end = "lower", "upper"
-        a = (barystatic[start][-1] - barystatic[end][0]) / (barystatic["mean"][-1] - barystatic["mean"][0])
+        a = (barystatic[start][-1] - barystatic[end][0]) / (
+            barystatic["mean"][-1] - barystatic["mean"][0]
+        )
         b = barystatic[end][0] - a * barystatic["mean"][0]
         barystatic[name] = a * barystatic["mean"] + b
 
-    return signal_dates, barystatic[name] - (barystatic[name][0] if zero_at_origin else 0)
+    return signal_dates, barystatic[name] - (
+        barystatic[name][0] if zero_at_origin else 0
+    )
 
 
 def erase_area(
@@ -82,12 +90,20 @@ def erase_area(
     """
     return map * (
         1
-        - expand_dims(a=flip(m=(lat > min_latitude) * (lat < max_latitude), axis=0), axis=1)
-        * expand_dims(a=(lon > (min_longitude % 360)) * (lon < (max_longitude % 360)), axis=0)
+        - expand_dims(
+            a=flip(m=(lat > min_latitude) * (lat < max_latitude), axis=0), axis=1
+        )
+        * expand_dims(
+            a=(lon > (min_longitude % 360)) * (lon < (max_longitude % 360)), axis=0
+        )
     )
 
 
-def extract_mask_nc(path: Path = masks_data_path, name: str = "IMERG_land_sea_mask.nc", pixels_to_coast: int = 10) -> ndarray:
+def extract_mask_nc(
+    path: Path = masks_data_path,
+    name: str = "IMERG_land_sea_mask.nc",
+    pixels_to_coast: int = 10,
+) -> ndarray:
     """
     Opens NASA's nc file for land/sea mask and formats its data.
     """
@@ -137,33 +153,62 @@ def extract_mask_nc(path: Path = masks_data_path, name: str = "IMERG_land_sea_ma
     return map
 
 
-def extract_mask_csv(path: Path = masks_data_path, name: str = "ocean_mask_buffer_coast_300km_eq_removed_0_360.csv") -> ndarray:
+def extract_mask_csv(
+    path: Path = masks_data_path,
+    name: str = "ocean_mask_buffer_coast_300km_eq_removed_0_360.csv",
+) -> ndarray:
     """
     Opens and formats ocean mask CSV datafile.
     """
     # Gets raw data.
     df = read_csv(filepath_or_buffer=path.joinpath(name), sep=",")
-    return flip(m=[[value for value in df["mask"][df["lat"] == lat]] for lat in unique(ar=df["lat"])], axis=0)
+    return flip(
+        m=[
+            [value for value in df["mask"][df["lat"] == lat]]
+            for lat in unique(ar=df["lat"])
+        ],
+        axis=0,
+    )
 
 
-def map_sampling(map: ndarray[float], n_max: int, harmonic_domain: bool = False) -> tuple[ndarray[float], int]:
+def redefine_n_max(
+    n_max: int, map: Optional[ndarray] = None, harmonics: Optional[ndarray] = None
+) -> int:
+    """
+    Gets maximal number of degees, limited by map length.
+    """
+    if map is None:
+        return min(n_max, len(harmonics[0, :, 0]) - 1)
+    else:
+        return min(n_max, (len(map) - 1) // 2)
+
+
+def map_sampling(
+    map: ndarray[float], n_max: int, harmonic_domain: bool = False
+) -> tuple[ndarray[float], int]:
     """
     Redefined a (latitude, longitude) map definition. Eventually returns it in harmonic domain.
     Returns maximal degree as second output.
     """
-    n_max = min(n_max, (len(map) - 1) // 2)
+    n_max = redefine_n_max(n_max=n_max, map=map)
     harmonics = SHExpandDH(
         map,
         sampling=2,
         lmax_calc=n_max,
     )
     return (
-        (harmonics if harmonic_domain else MakeGridDH(harmonics, sampling=2, lmax=n_max)),
+        (
+            harmonics
+            if harmonic_domain
+            else MakeGridDH(harmonics, sampling=2, lmax=n_max)
+        ),
         n_max,
     )
 
 
-def get_ocean_mask(name: str, n_max: int, pixels_to_coast: int = 0) -> ndarray[float] | float:
+def get_ocean_mask(
+    name: str, n_max: int, pixels_to_coast: int = 0
+) -> ndarray[float] | float:
     """
     Gets the wanted ocean mask and adjusts it.
     """
@@ -182,7 +227,9 @@ def get_ocean_mask(name: str, n_max: int, pixels_to_coast: int = 0) -> ndarray[f
         )
 
 
-def extract_GRACE_data(name: str, path: Path = GRACE_data_path, skiprows: int = 11) -> ndarray:
+def extract_GRACE_data(
+    name: str, path: Path = GRACE_data_path, skiprows: int = 11
+) -> ndarray:
     """
     Opens and formats GRACE (.xyz) datafile.
     """
@@ -191,9 +238,15 @@ def extract_GRACE_data(name: str, path: Path = GRACE_data_path, skiprows: int = 
     # Converts to array.
     return (
         GRACE_DATA_UNIT_FACTOR
-        * flip(m=[[value for value in df["EWH"][df["lat"] == lat]] for lat in unique(ar=df["lat"])], axis=0),
-        flip(m=unique(df["lat"]), axis=0),
-        unique(df["lon"]),
+        * flip(
+            m=[
+                [value for value in df["EWH"][df["lat"] == lat]]
+                for lat in unique(ar=df["lat"])
+            ],
+            axis=0,
+        )[:-1, :-1],
+        flip(m=unique(df["lat"]), axis=0)[:-1],
+        unique(df["lon"])[:-1],
     )
 
 
@@ -218,7 +271,9 @@ def extract_all_GRACE_data(
     filepaths = list(path.joinpath(solution_name).glob("*xyz"))
 
     # Gets dimensions with first file.
-    map, lat, lon = extract_GRACE_data(name=filepaths[0].name, path=path.joinpath(solution_name), skiprows=11)
+    map, lat, lon = extract_GRACE_data(
+        name=filepaths[0].name, path=path.joinpath(solution_name), skiprows=11
+    )
     all_GRACE_data = zeros(shape=(len(filepaths), len(lat), len(lon)))
     all_GRACE_data[0] = map
     times = len(filepaths) * [format_GRACE_name_to_date(filepaths[0].name)]
@@ -241,30 +296,45 @@ def extract_all_GRACE_data(
     )
 
 
-def add_result_to_table(table_name: str, result_caracteristics: dict[str, str | bool | float]) -> None:
+def add_result_to_table(
+    table_name: str, result_caracteristics: dict[str, str | bool | float]
+) -> None:
     """
     Adds a line to the wanted result table with a result informations and filename.
     """
 
     table_filepath = tables_path.joinpath(table_name + ".csv")
+    tables_path.mkdir(exist_ok=True, parents=True)
+    write = not table_filepath.exists()
 
     # Adds a line to the table (whether it exists or not)..
     with open(table_filepath, "a+", newline="") as file:
         writer = DictWriter(file, result_caracteristics.keys())
-        if not table_filepath.exists():
+        if write:
             writer.writeheader()
         writer.writerow(result_caracteristics)
 
 
-def save_frequencies(log_frequency_values: ndarray[float], frequency_unit: float) -> None:
+def save_frequencies(
+    log_frequency_values: ndarray[float], frequency_unit: float
+) -> None:
     """
     Maps back log unitless frequencies to (Hz) and save to (.JSON) file.
     """
-    save_base_model(obj=10.0**log_frequency_values * frequency_unit, name="frequencies", path=frequencies_path)
+    save_base_model(
+        obj=10.0**log_frequency_values * frequency_unit,
+        name="frequencies",
+        path=frequencies_path,
+    )
 
 
 def save_map(
-    map: ndarray[float], lat: ndarray[float], lon: ndarray[float], path: Path, filename: str, result_name: str = "EWH"
+    map: ndarray[float],
+    lat: ndarray[float],
+    lon: ndarray[float],
+    path: Path,
+    filename: str,
+    result_name: str = "EWH",
 ) -> None:
     """
     Saves a static result map in (.CSV) file.
@@ -278,17 +348,32 @@ def save_map(
                 writer.writerow({"lat": latitude, "lon": longitude, result_name: value})
 
 
-def find_results(table_name: str, result_caracteristics: dict[str, str | bool | float]) -> list[str]:
+def find_results(
+    table_name: str, result_caracteristics: dict[str, str | bool | float]
+) -> list[str]:
     """
     Filters a result table by result identifier characteristics.
     """
     # Gets result informations.
     df = read_csv(filepath_or_buffer=tables_path.joinpath(table_name + ".csv"), sep=",")
-    df[reduce(lambda a, b: a & b, [df[key] == value for key, value in result_caracteristics.items()])]["ID"]
+    return df[
+        reduce(
+            lambda a, b: a & b,
+            [df[key] == value for key, value in result_caracteristics.items()],
+        )
+    ]["ID"]
+
+
+def generate_new_id(path: Path) -> str:
+    """
+    Accumulates the number of already existing result files.
+    """
+    return str(len(list(path.glob("*"))))
 
 
 def load_Love_number_result(
-    Love_numbers_hyper_parameters: LoveNumbersHyperParameters, anelasticity_description_id: str
+    Love_numbers_hyper_parameters: LoveNumbersHyperParameters,
+    anelasticity_description_id: str,
 ) -> Result:
     """
     Loads Love number results given the parameters used to produce them.

@@ -21,7 +21,7 @@ from ...functions import (
     signal_trend,
     surface_ponderation,
 )
-from ..classes import LoadSignalHyperParameters
+from ..classes import GRACE_trends_data_path, LoadSignalHyperParameters
 from ..data import (
     extract_GRACE_data,
     extract_mask_csv,
@@ -63,13 +63,21 @@ def build_elastic_load_signal_history(
     """
 
     # Linearly extends the signal for last years.
-    trend_indices = initial_signal_dates >= load_signal_hyper_parameters.first_year_for_trend
+    trend_indices = (
+        initial_signal_dates >= load_signal_hyper_parameters.first_year_for_trend
+    )
     elastic_load_signal_trend, elastic_load_signal_additive_constant = signal_trend(
         trend_dates=initial_signal_dates[trend_indices],
         signal=load_signal[trend_indices],
     )
-    extend_part_dates = arange(initial_signal_dates[-1] + 1, load_signal_hyper_parameters.last_year_for_trend + 1)
-    extend_part_load_signal = elastic_load_signal_trend * extend_part_dates + elastic_load_signal_additive_constant
+    extend_part_dates = arange(
+        initial_signal_dates[-1] + 1,
+        load_signal_hyper_parameters.last_year_for_trend + 1,
+    )
+    extend_part_load_signal = (
+        elastic_load_signal_trend * extend_part_dates
+        + elastic_load_signal_additive_constant
+    )
 
     # Eventually includes a LIA effect.
     if load_signal_hyper_parameters.LIA:
@@ -83,7 +91,12 @@ def build_elastic_load_signal_history(
                         stop=0.0,
                         num=load_signal_hyper_parameters.LIA_time_years,
                     ),
-                    zeros(shape=(initial_signal_dates[0] - load_signal_hyper_parameters.LIA_end_date)),
+                    zeros(
+                        shape=(
+                            initial_signal_dates[0]
+                            - load_signal_hyper_parameters.LIA_end_date
+                        )
+                    ),
                     load_signal,
                 )
             )
@@ -92,9 +105,14 @@ def build_elastic_load_signal_history(
         extend_part_load_signal -= LIA_value
 
     # Creates cubic spline for antisymetry.
-    mean_slope = extend_part_load_signal[-1] / load_signal_hyper_parameters.spline_time_years
+    mean_slope = (
+        extend_part_load_signal[-1] / load_signal_hyper_parameters.spline_time_years
+    )
     spline = (
-        lambda T: mean_slope / (2.0 * load_signal_hyper_parameters.spline_time_years**2.0) * T**3.0 - 3.0 * mean_slope / 2 * T
+        lambda T: mean_slope
+        / (2.0 * load_signal_hyper_parameters.spline_time_years**2.0)
+        * T**3.0
+        - 3.0 * mean_slope / 2 * T
     )
 
     # Builds signal history / Creates an initial plateau at zero value.
@@ -103,12 +121,16 @@ def build_elastic_load_signal_history(
             zeros(shape=(load_signal_hyper_parameters.initial_plateau_time_years)),
             load_signal,
             extend_part_load_signal,
-            spline(T=arange(start=-load_signal_hyper_parameters.spline_time_years, stop=0)),
+            spline(
+                T=arange(start=-load_signal_hyper_parameters.spline_time_years, stop=0)
+            ),
         )
     )
 
     # Applies antisymetry.
-    extended_time_serie = concatenate((extended_time_serie_past, [0], -flip(m=extended_time_serie_past)))
+    extended_time_serie = concatenate(
+        (extended_time_serie_past, [0], -flip(m=extended_time_serie_past))
+    )
 
     # Deduces dates axis.
     n_extended_signal = len(extended_time_serie)
@@ -117,12 +139,18 @@ def build_elastic_load_signal_history(
     # Interpolates at sufficient sampling for no Gibbs effect.
     n_log_min_no_Gibbs = round(ceil(log2(n_extended_signal)))
     half_signal_period = max(extended_dates)
-    n_signal = int(2 ** (n_log_min_no_Gibbs + load_signal_hyper_parameters.anti_Gibbs_effect_factor))
+    n_signal = int(
+        2
+        ** (n_log_min_no_Gibbs + load_signal_hyper_parameters.anti_Gibbs_effect_factor)
+    )
     signal_dates = linspace(-half_signal_period, stop=half_signal_period, num=n_signal)
 
     return (
         signal_dates,
-        interpolate.splev(x=signal_dates, tck=interpolate.splrep(x=extended_dates, y=extended_time_serie, k=3)),  # Signal.
+        interpolate.splev(
+            x=signal_dates,
+            tck=interpolate.splrep(x=extended_dates, y=extended_time_serie, k=3),
+        ),  # Signal.
         2.0 * half_signal_period / n_signal,  # Time step.
         elastic_load_signal_trend,  # Trend.
     )
@@ -141,12 +169,15 @@ def build_frequencial_elastic_load_signal(
     """
     # Builds the signal's frequencial component.
     dates, load_signal = extract_temporal_load_signal(
-        name=load_signal_hyper_parameters.case, filename=load_signal_hyper_parameters.load_history
+        name=load_signal_hyper_parameters.case,
+        filename=load_signal_hyper_parameters.load_history,
     )
-    signal_dates, temporal_elastic_load_signal, time_step, elastic_load_signal_trend = build_elastic_load_signal_history(
-        signal_dates=dates,
-        load_signal=load_signal,
-        load_signal_hyper_parameters=load_signal_hyper_parameters,
+    signal_dates, temporal_elastic_load_signal, time_step, elastic_load_signal_trend = (
+        build_elastic_load_signal_history(
+            initial_signal_dates=dates,
+            load_signal=load_signal,
+            load_signal_hyper_parameters=load_signal_hyper_parameters,
+        )
     )  # (yr).
     elastic_load_signal_frequencial_component = fft(x=temporal_elastic_load_signal)
     frequencies = fftfreq(n=len(elastic_load_signal_frequencial_component), d=time_step)
@@ -180,37 +211,55 @@ def build_frequencial_harmonic_elastic_load_signal(
             frequencies,
             elastic_load_signal_frequencial_component,
             elastic_load_signal_trend,
-        ) = build_frequencial_elastic_load_signal(load_signal_hyper_parameters=load_signal_hyper_parameters)
+        ) = build_frequencial_elastic_load_signal(
+            load_signal_hyper_parameters=load_signal_hyper_parameters
+        )
 
         # Gets harmonic component.
         if load_signal_hyper_parameters.load_spatial_behaviour_data == "GRACE":
             map = extract_GRACE_data(
-                name=load_signal_hyper_parameters.load_spatial_behaviour_file, skiprows=load_signal_hyper_parameters.skiprows
-            )
+                name=load_signal_hyper_parameters.load_spatial_behaviour_file,
+                path=GRACE_trends_data_path,
+                skiprows=load_signal_hyper_parameters.skiprows,
+            )[0]
         else:  # Considered as ocean/land repartition only.
             map = map_normalizing(
                 map=(
-                    extract_mask_csv(name=load_signal_hyper_parameters.load_spatial_behaviour_file)
-                    if load_signal_hyper_parameters.load_spatial_behaviour_file.split(".")[-1] == "csv"
-                    else extract_mask_nc(name=load_signal_hyper_parameters.load_spatial_behaviour_file)
+                    extract_mask_csv(
+                        name=load_signal_hyper_parameters.load_spatial_behaviour_file
+                    )
+                    if load_signal_hyper_parameters.load_spatial_behaviour_file.split(
+                        "."
+                    )[-1]
+                    == "csv"
+                    else extract_mask_nc(
+                        name=load_signal_hyper_parameters.load_spatial_behaviour_file
+                    )
                 )
             )
         # Loads the continents with opposite value, such that global mean is null.
         if load_signal_hyper_parameters.opposite_load_on_continents:
-            ocean_mask = get_ocean_mask(name=load_signal_hyper_parameters.ocean_mask, n_max=(len(map) - 1) // 2)
+            ocean_mask = get_ocean_mask(
+                name=load_signal_hyper_parameters.ocean_mask, n_max=(len(map) - 1) // 2
+            )
             map = map * ocean_mask - (1.0 - ocean_mask) * (
                 mean_on_mask(grid=map, mask=ocean_mask)
                 * sum(surface_ponderation(mask=ocean_mask).flatten())
                 / sum(surface_ponderation(mask=(1.0 - ocean_mask)).flatten())
             )
 
-        spatial_component = map_sampling(map=map, n_max=load_signal_hyper_parameters.n_max, harmonic_domain=True)[0]
+        spatial_component = map_sampling(
+            map=map, n_max=load_signal_hyper_parameters.n_max, harmonic_domain=True
+        )[0]
 
         # Projects.
         return (
             signal_dates,
             frequencies,
-            tensordot(a=spatial_component, b=elastic_load_signal_frequencial_component, axes=0) / elastic_load_signal_trend,
+            tensordot(
+                a=spatial_component, b=elastic_load_signal_frequencial_component, axes=0
+            )
+            / elastic_load_signal_trend,
             spatial_component,
         )
 

@@ -1,5 +1,88 @@
-from .classes import GRACE_data_path, GRACE_trends_data_path
-from .data import extract_all_GRACE_data, save_map
+from .classes import (
+    AnelasticityDescription,
+    GRACE_data_path,
+    GRACE_trends_data_path,
+    LoadSignalHyperParameters,
+    Love_numbers_path,
+    LoveNumbersHyperParameters,
+    ModelPart,
+    Result,
+    RunHyperParameters,
+    anelastic_load_signal_trends_path,
+    dates_path,
+    elastic_load_signal_trends_path,
+    elastic_load_signals_path,
+    frequencies_path,
+    load_Love_numbers_hyper_parameters,
+    parameters_path,
+    results_path,
+)
+from .data import (
+    add_result_to_table,
+    extract_all_GRACE_data,
+    generate_new_id,
+    get_ocean_mask,
+    redefine_n_max,
+    save_map,
+)
+from .database import (
+    generate_degrees_list,
+    load_base_model,
+    load_complex_array_from_binary,
+    save_base_model,
+    save_complex_array_to_binary,
+)
+from .geocenter import geocenter_inversion
+from .load_signal import (
+    anelastic_frequencial_harmonic_load_signal_computing,
+    build_frequencial_harmonic_elastic_load_signal,
+    compute_signal_trends,
+)
+from .Love_numbers import Love_numbers_computing, generate_log_frequency_initial_values
 from .seismic_fit import remove_earthquakes
+from .variations import (
+    create_all_load_signal_hyper_parameters_variations,
+    create_all_model_variations,
+    find_minimal_computing_options,
+)
 
-[GRACE_data_path, GRACE_trends_data_path, extract_all_GRACE_data, save_map, remove_earthquakes]
+[
+    AnelasticityDescription,
+    GRACE_data_path,
+    GRACE_trends_data_path,
+    LoadSignalHyperParameters,
+    Love_numbers_path,
+    LoveNumbersHyperParameters,
+    ModelPart,
+    Result,
+    RunHyperParameters,
+    anelastic_load_signal_trends_path,
+    dates_path,
+    elastic_load_signal_trends_path,
+    elastic_load_signals_path,
+    frequencies_path,
+    load_Love_numbers_hyper_parameters,
+    parameters_path,
+    results_path,
+    add_result_to_table,
+    extract_all_GRACE_data,
+    generate_new_id,
+    get_ocean_mask,
+    redefine_n_max,
+    save_map,
+    generate_degrees_list,
+    load_base_model,
+    load_complex_array_from_binary,
+    save_base_model,
+    save_complex_array_to_binary,
+    geocenter_inversion,
+    anelastic_frequencial_harmonic_load_signal_computing,
+    build_frequencial_harmonic_elastic_load_signal,
+    compute_signal_trends,
+    Love_numbers_computing,
+    generate_log_frequency_initial_values,
+    remove_earthquakes,
+    create_all_load_signal_hyper_parameters_variations,
+    create_all_model_variations,
+    find_minimal_computing_options,
+]

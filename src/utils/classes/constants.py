@@ -24,7 +24,7 @@ INITIAL_Y_VECTOR = array(
     dtype=complex,
 )
 
-# List of all possible boolean triplets except (False, False, False).
+# List of all possible boolean triplets.
 BOOLEANS = [True, False]
 OPTIONS: list[RunHyperParameters] = [
     RunHyperParameters(
@@ -52,7 +52,14 @@ OPTIONS: list[RunHyperParameters] = [
         use_short_term_anelasticity=True,
         use_bounded_attenuation_functions=False,
     ),
+    RunHyperParameters(
+        use_long_term_anelasticity=False,
+        use_short_term_anelasticity=False,
+        use_bounded_attenuation_functions=False,
+    ),
 ]
+
+# Elastic.
 ELASTIC_RUN_HYPER_PARAMETERS = RunHyperParameters(
     use_long_term_anelasticity=False,
     use_short_term_anelasticity=False,

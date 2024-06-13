@@ -10,7 +10,6 @@ from numpy import (
     expand_dims,
     flip,
     linspace,
-    log10,
     max,
     ndarray,
     newaxis,
@@ -29,7 +28,10 @@ from scipy import interpolate
 
 
 def precise_curvature(
-    x_initial_values: ndarray, f: Callable[[float], ndarray[complex]], max_tol: float, decimals: int
+    x_initial_values: ndarray,
+    f: Callable[[float], ndarray[complex]],
+    max_tol: float,
+    decimals: int,
 ) -> tuple[ndarray, ndarray]:
     """
     Finds a sufficiently precise sampling of x axis for f function representation. The criteria takes curvature into account is
@@ -48,7 +50,11 @@ def precise_curvature(
 
         # Updates.
         x_values = concatenate((x_values, x_new_values))
-        f_values = f_new_values if len(f_values) == 0 else concatenate((f_values, f_new_values))
+        f_values = (
+            f_new_values
+            if len(f_values) == 0
+            else concatenate((f_values, f_new_values))
+        )
         order = argsort(x_values)
         x_values = x_values[order]
         f_values = f_values[order]
@@ -56,23 +62,34 @@ def precise_curvature(
 
         # Iterates on new sampling.
         for f_left, f_x, f_right, x_left, x, x_right in zip(
-            f_values[:-2], f_values[1:-1], f_values[2:], x_values[:-2], x_values[1:-1], x_values[2:]
+            f_values[:-2],
+            f_values[1:-1],
+            f_values[2:],
+            x_values[:-2],
+            x_values[1:-1],
+            x_values[2:],
         ):
             # For maximal curvature: finds where the error is above maximum threshold parameter and adds median values.
-            condition: ndarray = abs((f_right - f_left) / (x_right - x_left) * (x - x_left) + f_left - f_x) > max_tol * max(
-                a=abs([f_left, f_x, f_right]), axis=0
-            )
+            condition: ndarray = abs(
+                (f_right - f_left) / (x_right - x_left) * (x - x_left) + f_left - f_x
+            ) > max_tol * max(a=abs([f_left, f_x, f_right]), axis=0)
             if condition.any():
                 # Updates sampling.
-                x_new_values = concatenate((x_new_values, [(x + x_left) / 2.0, (x + x_right) / 2.0]))
+                x_new_values = concatenate(
+                    (x_new_values, [(x + x_left) / 2.0, (x + x_right) / 2.0])
+                )
 
         # Keeps only values that are not already taken into account.
-        x_new_values = setdiff1d(ar1=unique(round(a=x_new_values, decimals=decimals)), ar2=x_values)
+        x_new_values = setdiff1d(
+            ar1=unique(round(a=x_new_values, decimals=decimals)), ar2=x_values
+        )
 
     return x_values, f_values
 
 
-def interpolate_array(x_values: ndarray, y_values: ndarray, new_x_values: ndarray) -> ndarray:
+def interpolate_array(
+    x_values: ndarray, y_values: ndarray, new_x_values: ndarray
+) -> ndarray:
     """
     1D-Interpolates the given data on its first axis, whatever its shape is.
     """
@@ -98,14 +115,24 @@ def interpolate_array(x_values: ndarray, y_values: ndarray, new_x_values: ndarra
     return function_values
 
 
-def interpolate_all(x_values_per_component: list[ndarray], function_values: list[ndarray], x_shared_values: ndarray) -> ndarray:
+def interpolate_all(
+    x_values_per_component: list[ndarray],
+    function_values: list[ndarray],
+    x_shared_values: ndarray,
+) -> ndarray:
     """
     Interpolate several function values on shared abscissas.
     """
     return array(
         object=[
-            interpolate_array(x_values=x_tab, y_values=function_values_tab, new_x_values=x_shared_values)
-            for x_tab, function_values_tab in zip(x_values_per_component, function_values)
+            interpolate_array(
+                x_values=x_tab,
+                y_values=function_values_tab,
+                new_x_values=x_shared_values,
+            )
+            for x_tab, function_values_tab in zip(
+                x_values_per_component, function_values
+            )
         ]
     )
 
@@ -124,20 +151,9 @@ def get_degrees_indices(degrees: list[int], degrees_to_plot: list[int]) -> list[
     return [list(degrees).index(degree) for degree in degrees_to_plot]
 
 
-def generate_log_frequency_initial_values(
-    frequency_min: float, frequency_max: float, n_frequency_0: int, frequency_unit: float
-) -> ndarray[float]:
-    """
-    Generates an array of log-spaced frequency values.
-    """
-    return linspace(
-        start=log10(frequency_min / frequency_unit),
-        stop=log10(frequency_max / frequency_unit),
-        num=n_frequency_0,
-    )
-
-
-def signal_trend(trend_dates: ndarray[float], signal: ndarray[float]) -> tuple[float, float]:
+def signal_trend(
+    trend_dates: ndarray[float], signal: ndarray[float]
+) -> tuple[float, float]:
     """
     Returns signal's trend: mean slope and additive constant during last years (LSE).
     """
@@ -150,7 +166,9 @@ def signal_trend(trend_dates: ndarray[float], signal: ndarray[float]) -> tuple[f
     ).T
     # Direct least square regression using pseudo-inverse.
     result: ndarray = pinv(A).dot(signal[:, newaxis])
-    return result.flatten()  # Turn the signal into a column vector. (slope, additive_constant)
+    return (
+        result.flatten()
+    )  # Turn the signal into a column vector. (slope, additive_constant)
 
 
 def map_normalizing(
@@ -171,11 +189,15 @@ def surface_ponderation(
     """
     Gets the surface of a (latitude * longitude) array.
     """
-    return mask * expand_dims(a=cos(linspace(start=-pi / 2, stop=pi / 2, num=len(mask))), axis=1)
+    return mask * expand_dims(
+        a=cos(linspace(start=-pi / 2, stop=pi / 2, num=len(mask))), axis=1
+    )
 
 
 def mean_on_mask(
-    mask: ndarray[float], harmonics: Optional[ndarray[float]] = None, grid: Optional[ndarray[float]] = None
+    mask: ndarray[float],
+    harmonics: Optional[ndarray[float]] = None,
+    grid: Optional[ndarray[float]] = None,
 ) -> float:
     """
     Computes mean value over a given surface. Uses a given mask.

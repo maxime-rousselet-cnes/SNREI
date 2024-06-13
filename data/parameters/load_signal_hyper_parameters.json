@@ -1,5 +1,4 @@
 {
-    "run_hyper_parameters": "run_hyper_parameters",
     "load_signal": "load_history",
     "load_history": "Frederikse/global_basin_timeseries.csv",
     "case": "mean",
@@ -13,8 +12,8 @@
     "load_spatial_behaviour_data": "GRACE",
     "opposite_load_on_continents": false,
     "n_max": 100,
-    "load_spatial_behaviour_file": "trends_GRACE/GRACE(-FO)_MSSA_2003_2022.csv",
-    "skiprows": 0,
+    "load_spatial_behaviour_file": "GRACE(-FO)_MSSA_2003_2022.xyz",
+    "skiprows": 3,
     "ocean_mask": "IMERG_land_sea_mask.nc",
     "first_year_for_trend": 2003,
     "last_year_for_trend": 2024,

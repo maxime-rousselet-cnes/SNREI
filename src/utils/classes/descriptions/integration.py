@@ -245,7 +245,6 @@ class Integration(Description):
 
         # TODO: catch exception.
         if solver.success == True:
-            print(solver.y[:, -1])
             return solver.y, solver.t
 
     def y_system_integration(
@@ -360,6 +359,10 @@ class Integration(Description):
 
             integration_start = self.description_layers[n_layer].x_inf
             integration_stop = self.description_layers[n_layer].x_sup
+
+            print(integration_start, integration_stop)
+            print(Y)
+
             # Loops on 3 independent solutions.
             for i in range(3):
                 Y[i, :] = self.integration(

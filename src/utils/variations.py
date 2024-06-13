@@ -222,7 +222,7 @@ def find_minimal_computing_options(
     )
 
     # Returns the list of options that are needed for computation.
-    return ([ELASTIC_RUN_HYPER_PARAMETERS] if do_elastic else []) + [
+    return [
         run_hyper_parameters
         for run_hyper_parameters in options
         if (
@@ -237,4 +237,4 @@ def find_minimal_computing_options(
             run_hyper_parameters.use_bounded_attenuation_functions
             <= maximal_computing_options.use_bounded_attenuation_functions
         )
-    ]
+    ] + ([ELASTIC_RUN_HYPER_PARAMETERS] if do_elastic else [])

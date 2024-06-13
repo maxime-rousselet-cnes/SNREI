@@ -64,7 +64,7 @@ def Love_numbers_computing(
             decimals=decimals,
         )
 
-    with Pool() as p:  # Processes for degrees.
+    with Pool(1) as p:  # Processes for degrees.
         frequency_and_Love_numbers_tuples: list[
             tuple[ndarray[float], ndarray[complex]]
         ] = p.map(

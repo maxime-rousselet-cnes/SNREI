@@ -243,16 +243,10 @@ class Integration(Description):
                 atol=hyper_parameters.atol,
             )
 
+        print(n_layer, n, self.frequency, solver.success)
         # TODO: catch exception.
         if solver.success == True:
             return solver.y, solver.t  # x corresponds to last dimension.
-        else:
-            print(
-                ":: ERROR: method 'scipy.integrate.solve_ivp' failed:",
-                self.frequency,
-                n,
-                n_layer,
-            )
 
     def y_system_integration(
         self, n: int, hyper_parameters: YSystemHyperParameters

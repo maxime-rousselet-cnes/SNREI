@@ -81,7 +81,10 @@ class Integration(Description):
 
         # Initializes the needed description layers.
         for i_layer, (variables, layer) in enumerate(
-            zip(anelasticity_description.variable_values_per_layer, anelasticity_description.description_layers)
+            zip(
+                anelasticity_description.variable_values_per_layer,
+                anelasticity_description.description_layers,
+            )
         ):
 
             # First gets the needed real variable splines.
@@ -91,7 +94,14 @@ class Integration(Description):
                 x_sup=layer.x_sup,
                 splines={
                     variable_name: layer.splines[variable_name]
-                    for variable_name in ["g_0", "rho_0", "mu_0", "lambda_0", "Vs", "Vp"]
+                    for variable_name in [
+                        "g_0",
+                        "rho_0",
+                        "mu_0",
+                        "lambda_0",
+                        "Vs",
+                        "Vp",
+                    ]
                 },
             )
 
@@ -140,7 +150,9 @@ class Integration(Description):
                 else:
 
                     # No attenuation: mu = mu_0 and lambda = lambda_0.
-                    variables["lambda"] = array(object=variables["lambda_0"], dtype=complex)
+                    variables["lambda"] = array(
+                        object=variables["lambda_0"], dtype=complex
+                    )
                     variables["mu"] = array(object=variables["mu_0"], dtype=complex)
 
                 # Complex cut frequency variables.
@@ -148,7 +160,9 @@ class Integration(Description):
 
                 # Anelasticity.
                 if use_long_term_anelasticity:
-                    m_prime = m_prime_computing(omega_cut_m=variables["omega_cut_m"], omega_j=self.omega_j)
+                    m_prime = m_prime_computing(
+                        omega_cut_m=variables["omega_cut_m"], omega_j=self.omega_j
+                    )
                     b = b_computing(
                         omega_cut_m=variables["omega_cut_m"],
                         omega_cut_k=variables["omega_cut_k"],
@@ -161,15 +175,25 @@ class Integration(Description):
                         m_prime=m_prime,
                         b=b,
                     )
-                    variables["mu"] = mu_computing(mu_complex=variables["mu"], m_prime=m_prime, b=b)
+                    variables["mu"] = mu_computing(
+                        mu_complex=variables["mu"], m_prime=m_prime, b=b
+                    )
 
                 # Updates.
                 description_layer.splines.update(
                     {
-                        "lambda_real": interpolate.splrep(x=variables["x"], y=variables["lambda"].real),
-                        "lambda_imag": interpolate.splrep(x=variables["x"], y=variables["lambda"].imag),
-                        "mu_real": interpolate.splrep(x=variables["x"], y=variables["mu"].real),
-                        "mu_imag": interpolate.splrep(x=variables["x"], y=variables["mu"].imag),
+                        "lambda_real": interpolate.splrep(
+                            x=variables["x"], y=variables["lambda"].real
+                        ),
+                        "lambda_imag": interpolate.splrep(
+                            x=variables["x"], y=variables["lambda"].imag
+                        ),
+                        "mu_real": interpolate.splrep(
+                            x=variables["x"], y=variables["mu"].real
+                        ),
+                        "mu_imag": interpolate.splrep(
+                            x=variables["x"], y=variables["mu"].imag
+                        ),
                     },
                 )
 
@@ -223,9 +247,16 @@ class Integration(Description):
         if solver.success == True:
             return solver.y, solver.t  # x corresponds to last dimension.
         else:
-            print(":: ERROR: method 'scipy.integrate.solve_ivp' failed.")
+            print(
+                ":: ERROR: method 'scipy.integrate.solve_ivp' failed:",
+                self.frequency,
+                n,
+                n_layer,
+            )
 
-    def y_system_integration(self, n: int, hyper_parameters: YSystemHyperParameters) -> ndarray[complex]:
+    def y_system_integration(
+        self, n: int, hyper_parameters: YSystemHyperParameters
+    ) -> ndarray[complex]:
         """
         Integrates the unitless gravito-elastic system from the geocenter to the surface, at given n, omega and rheology.
         """
@@ -310,7 +341,14 @@ class Integration(Description):
 
             # Integrate from geocenter to CMB with high degrees approximation.
             n_start_layer: int = (
-                where((array(object=[layer.x_inf for layer in self.description_layers]) ** n) > (self.x_CMB**n))[0][0] + 1
+                where(
+                    (
+                        array(object=[layer.x_inf for layer in self.description_layers])
+                        ** n
+                    )
+                    > (self.x_CMB**n)
+                )[0][0]
+                + 1
             )
             if hyper_parameters.homogeneous_solution:
                 Y = solid_homogeneous_system(
@@ -370,7 +408,17 @@ class Integration(Description):
         return array(
             object=[
                 array(object=Love_number, dtype=complex).flatten()
-                for Love_number in [h_load, l_load, k_load, h_shr, l_shr, k_shr, h_pot, l_pot, k_pot]
+                for Love_number in [
+                    h_load,
+                    l_load,
+                    k_load,
+                    h_shr,
+                    l_shr,
+                    k_shr,
+                    h_pot,
+                    l_pot,
+                    k_pot,
+                ]
             ],
             dtype=complex,
         ).flatten()

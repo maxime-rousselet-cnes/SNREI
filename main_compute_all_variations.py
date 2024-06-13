@@ -20,9 +20,9 @@ compute_load_signal_trends_for_anelastic_Earth_models(
         },
     },
     load_signal_parameters={
-        "case": ["lower", "mean", "upper"],
-        "LIA": [False, True],
-        "opposite_load_on_continents": [False, True],
+        "case": ["lower"],
+        "LIA": [False],
+        "opposite_load_on_continents": [False],
     },
     options=[
         RunHyperParameters(

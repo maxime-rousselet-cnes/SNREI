@@ -96,6 +96,8 @@ def solid_system(
     A[5, 4] = n1 / (x**2)
     A[5, 5] = -2.0 / x
 
+    print(A)
+    0 == 0[1]
     return dot(A, Y)
 
 

@@ -243,7 +243,6 @@ class Integration(Description):
                 atol=hyper_parameters.atol,
             )
 
-        print(n_layer, n, self.frequency, solver.success, Y_i)
         # TODO: catch exception.
         if solver.success == True:
             return solver.y, solver.t  # x corresponds to last dimension.

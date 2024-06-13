@@ -76,7 +76,7 @@ DEFAULT_MODELS: dict[Optional[ModelPart], Optional[str]] = {
 DEFAULT_SPLINE_NUMBER = 10
 
 # Other low level parameters.
-ASYMPTOTIC_MU_RATIO_DECIMALS = 5
+ASYMPTOTIC_MU_RATIO_DECIMALS = 8
 
 # (cm/yr) -> (mm/yr).
 GRACE_DATA_UNIT_FACTOR = 10

@@ -42,6 +42,9 @@ def Love_numbers_computing(
     Returns log frequency array and Love numbers as an array.
     """
 
+    # Initializes a Callable as a global variable to parallelize.
+    global parallel_processing
+
     # Defines a function for parallel processing.
     def parallel_processing(n: int) -> tuple[ndarray[float], ndarray[complex]]:
         return Love_number_computing_subfunction(

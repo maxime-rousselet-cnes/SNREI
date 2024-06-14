@@ -15,9 +15,7 @@ compute_load_signal_trends_for_anelastic_Earth_models(
     ],
     rheological_parameters={
         ModelPart.long_term_anelasticity: {"eta_m": {"ASTHENOSPHERE": [[3e19]]}},
-        ModelPart.short_term_anelasticity: {
-            "asymptotic_mu_ratio": {"MANTLE": [[0.1], [0.2]]}
-        },
+        ModelPart.short_term_anelasticity: {"asymptotic_mu_ratio": {"MANTLE": [[0.1]]}},
     },
     load_signal_parameters={
         "case": ["lower"],

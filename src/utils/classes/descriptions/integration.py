@@ -238,9 +238,7 @@ class Integration(Description):
         if solver.success == True:
             return solver.y, solver.t  # x corresponds to last dimension.
         else:
-            print("")
-            print(":: ERROR: method 'scipy.integrate.solve_ivp' failed.")
-            print("")
+            print(":: RUNTINE ERROR ::", n, n_layer, self.omega)
 
     # TODO: Vectorize.
     def y_system_integration(
@@ -391,11 +389,6 @@ class Integration(Description):
         for n_layer in range(n_start_layer, len(self.description_layers)):
             integration_start = self.description_layers[n_layer].x_inf
             integration_stop = self.description_layers[n_layer].x_sup
-
-            print(integration_start, integration_stop)
-            print(Y1)
-            print(Y2)
-            print(Y3)
 
             Y1, _ = self.integration(
                 Y_i=Y1,

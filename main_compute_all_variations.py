@@ -35,7 +35,7 @@ anelasticity_description_ids, model_filenames = (
         parameters={
             ModelPart.long_term_anelasticity: {"eta_m": {"ASTHENOSPHERE": [[3e19]]}},
             ModelPart.short_term_anelasticity: {
-                "asymptotic_mu_ratio": {"MANTLE": [[0.1], [0.2]]}
+                "asymptotic_mu_ratio": {"MANTLE": [[0.1]]}
             },
         },
     )

@@ -246,6 +246,8 @@ class Integration(Description):
         # TODO: catch exception.
         if solver.success == True:
             return solver.y, solver.t
+        else:
+            print(":: RUNTINE ERROR ::", n, n_layer, self.omega)
 
     def y_system_integration(
         self, n: int, hyper_parameters: YSystemHyperParameters
@@ -359,9 +361,6 @@ class Integration(Description):
 
             integration_start = self.description_layers[n_layer].x_inf
             integration_stop = self.description_layers[n_layer].x_sup
-
-            print(integration_start, integration_stop)
-            print(Y)
 
             # Loops on 3 independent solutions.
             for i in range(3):

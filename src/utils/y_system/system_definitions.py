@@ -57,42 +57,31 @@ def solid_system(
     A[0, 0] = -2.0 * lndi * bndi / x
     A[0, 1] = bndi
     A[0, 2] = n1 * lndi * bndi / x
-    A[0, 3] = 0.0
-    A[0, 4] = 0.0
-    A[0, 5] = 0.0
 
     A[1, 0] = (-4.0 * gndi * rndi / x) + (2.0 * dndi / (x**2)) + dyn_term
     A[1, 1] = -4.0 * mndi * bndi / x
     A[1, 2] = n1 * (rndi * gndi / x - dndi / (x**2))
     A[1, 3] = n1 / x
-    A[1, 4] = 0.0
+
     A[1, 5] = -rndi
 
     A[2, 0] = -1.0 / x
-    A[2, 1] = 0.0
+
     A[2, 2] = 1.0 / x
     A[2, 3] = 1.0 / mndi
-    A[2, 4] = 0.0
-    A[2, 5] = 0.0
 
     A[3, 0] = rndi * gndi / x - dndi / (x**2)
     A[3, 1] = -lndi * bndi / x
     A[3, 2] = endi / (x**2) + dyn_term
     A[3, 3] = -3.0 / x
     A[3, 4] = -rndi / x
-    A[3, 5] = 0.0
 
     A[4, 0] = 4.0 * piG * rndi
-    A[4, 1] = 0.0
-    A[4, 2] = 0.0
-    A[4, 3] = 0.0
-    A[4, 4] = 0.0
+
     A[4, 5] = 1.0
 
-    A[5, 0] = 0.0
-    A[5, 1] = 0.0
     A[5, 2] = -4.0 * piG * rndi * n1 / x
-    A[5, 3] = 0.0
+
     A[5, 4] = n1 / (x**2)
     A[5, 5] = -2.0 / x
 

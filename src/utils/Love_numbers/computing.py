@@ -47,7 +47,7 @@ def Love_numbers_computing(
 
     # Defines a function for parallel processing.
     def parallel_processing(n: int) -> tuple[ndarray[float], ndarray[complex]]:
-        return Love_number_computing_subfunction(
+        return Love_numbers_computing_subfunction(
             n=n,
             anelasticity_description=anelasticity_description,
             y_system_hyper_parameters=y_system_hyper_parameters,
@@ -94,7 +94,7 @@ def Love_numbers_computing(
     )
 
 
-def Love_number_computing_subfunction(
+def Love_numbers_computing_subfunction(
     n: int,
     anelasticity_description: AnelasticityDescription,
     y_system_hyper_parameters: YSystemHyperParameters,
@@ -108,7 +108,7 @@ def Love_number_computing_subfunction(
     """
 
     # Defines a callable that computes Love numbers for an array of log10(frequency/ unit_frequency) values.
-    Love_number_computing_loop_on_frequencies = lambda log_frequency_values: array(
+    Love_numbers_computing_loop_on_frequencies = lambda log_frequency_values: array(
         object=[
             Integration(
                 anelasticity_description=anelasticity_description,
@@ -127,7 +127,7 @@ def Love_number_computing_subfunction(
     # Processes for frequencies. Adaptive step for precise curvature.
     log_frequency_values, Love_numbers = precise_curvature(
         x_initial_values=log_frequency_initial_values,
-        f=Love_number_computing_loop_on_frequencies,
+        f=Love_numbers_computing_loop_on_frequencies,
         max_tol=max_tol,
         decimals=decimals,
     )

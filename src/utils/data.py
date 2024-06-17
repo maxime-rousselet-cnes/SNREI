@@ -354,7 +354,7 @@ def find_results(
     """
     Filters a result table by result identifier characteristics.
     """
-    print(result_caracteristics)  # TODO.
+
     # Gets result informations.
     df = read_csv(filepath_or_buffer=tables_path.joinpath(table_name + ".csv"), sep=",")
     return df[
@@ -372,8 +372,8 @@ def generate_new_id(path: Path) -> str:
     return str(len(list(path.glob("*"))))
 
 
-def load_Love_number_result(
-    Love_number_hyper_parameters: LoveNumbersHyperParameters,
+def load_Love_numbers_result(
+    Love_numbers_hyper_parameters: LoveNumbersHyperParameters,
     anelasticity_description_id: str,
 ) -> Result:
     """
@@ -387,16 +387,19 @@ def load_Love_number_result(
         table_name="Love_numbers",
         result_caracteristics={
             "anelasticity_description_id": anelasticity_description_id,
-            "max_tol": Love_number_hyper_parameters.max_tol,
-            "decimals": Love_number_hyper_parameters.decimals,
+            "max_tol": Love_numbers_hyper_parameters.max_tol,
+            "decimals": Love_numbers_hyper_parameters.decimals,
         }
-        | Love_number_hyper_parameters.y_system_hyper_parameters.__dict__
-        | Love_number_hyper_parameters.run_hyper_parameters.__dict__,
+        | Love_numbers_hyper_parameters.run_hyper_parameters.__dict__
+        | {
+            key: value
+            for key, value in Love_numbers_hyper_parameters.y_system_hyper_parameters.__dict__.items()
+            if type(value) is bool
+        },
     )
-    print(file_ids)
 
     # Loads result.
     Love_numbers = Result()
-    Love_numbers.load(name=file_ids[0], path=Love_numbers_path)
+    Love_numbers.load(name=str(file_ids[0]), path=Love_numbers_path)
 
     return Love_numbers

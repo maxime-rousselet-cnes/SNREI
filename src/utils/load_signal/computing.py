@@ -18,7 +18,7 @@ from .utils import get_trend_dates
 def anelastic_frequencial_harmonic_load_signal_computing(
     anelasticity_description_id: str,
     n_max: int,
-    Love_number_hyper_parameters: LoveNumbersHyperParameters,
+    Love_numbers_hyper_parameters: LoveNumbersHyperParameters,
     signal_frequencies: ndarray[float],  # (yr^-1).
     frequencial_elastic_normalized_load_signal: ndarray[complex],
 ) -> tuple[ndarray[complex], Result]:
@@ -31,7 +31,7 @@ def anelastic_frequencial_harmonic_load_signal_computing(
         anelasticity_description_id=anelasticity_description_id,
         target_frequencies=signal_frequencies / SECONDS_PER_YEAR,  # (yr^-1) -> (Hz).
         target_degrees=arange(n_max) + 1,
-        Love_number_hyper_parameters=Love_number_hyper_parameters,
+        Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
         directions=[Direction.radial, Direction.potential],
         boundary_conditions=[BoundaryCondition.load],
     )
@@ -41,7 +41,7 @@ def anelastic_frequencial_harmonic_load_signal_computing(
         anelasticity_description_id=anelasticity_description_id,
         target_frequencies=array(object=[Inf]),  # Infinite frequency for elastic case.
         target_degrees=arange(n_max) + 1,
-        Love_number_hyper_parameters=Love_number_hyper_parameters
+        Love_numbers_hyper_parameters=Love_numbers_hyper_parameters
         | {"run_hyper_parameters": ELASTIC_RUN_HYPER_PARAMETERS},
         directions=[Direction.radial, Direction.potential],
         boundary_conditions=[BoundaryCondition.load],

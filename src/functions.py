@@ -1,6 +1,7 @@
 from typing import Callable, Optional
 
 from numpy import (
+    Inf,
     abs,
     argsort,
     array,
@@ -124,16 +125,21 @@ def interpolate_all(
     Interpolate several function values on shared abscissas.
     """
     return array(
-        object=[
-            interpolate_array(
-                x_values=x_tab,
-                y_values=function_values_tab,
-                new_x_values=x_shared_values,
-            )
-            for x_tab, function_values_tab in zip(
-                x_values_per_component, function_values
-            )
-        ]
+        object=(
+            function_values
+            if len(x_shared_values) == 1
+            and x_shared_values[0] == Inf  # Manages elastic case.
+            else [
+                interpolate_array(
+                    x_values=x_tab,
+                    y_values=function_values_tab,
+                    new_x_values=x_shared_values,
+                )
+                for x_tab, function_values_tab in zip(
+                    x_values_per_component, function_values
+                )
+            ]
+        )
     )
 
 

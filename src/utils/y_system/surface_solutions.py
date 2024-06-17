@@ -1,13 +1,15 @@
-from numpy import array, asarray, dot, linalg, ndarray
+from numpy import array, dot, linalg, ndarray
 
 
-def load_surface_solution(n: int, Y1s: ndarray, Y2s: ndarray, Y3s: ndarray, g_0_surface: float, piG: float):
+def load_surface_solution(
+    n: int, Y1s: ndarray, Y2s: ndarray, Y3s: ndarray, g_0_surface: float, piG: float
+) -> tuple[float, float, float]:
     """
-    Defines Surface load Love numbers using the 3 independent integrated solutions.
+    Returns load Love numbers from the Y_i system solution at Earth surface.
     """
-    # Forms the Outer Surface Vector Describing Load.
+    # Forms the outer surface vector describing load.
     dmat = array(
-        object=[
+        [
             [
                 -((2.0 * n + 1.0) * (g_0_surface**2) / (4.0 * piG)),
                 0.0,
@@ -16,69 +18,79 @@ def load_surface_solution(n: int, Y1s: ndarray, Y2s: ndarray, Y3s: ndarray, g_0_
         ]
     )
 
-    # Form G Matrix From Integrated Solutions
+    # Forms the G matrix from integrated solutions.
     Gmat = array(
-        object=[
+        [
             [Y1s[1], Y2s[1], Y3s[1]],
             [Y1s[3], Y2s[3], Y3s[3]],
-            [(Y1s[5] + (n + 1.0) * Y1s[4]), (Y2s[5] + (n + 1.0) * Y2s[4]), (Y3s[5] + (n + 1.0) * Y3s[4])],
+            [
+                (Y1s[5] + (n + 1.0) * Y1s[4]),
+                (Y2s[5] + (n + 1.0) * Y2s[4]),
+                (Y3s[5] + (n + 1.0) * Y3s[4]),
+            ],
         ]
     )
 
-    # Solve the System of Equations (NO Matrix Inversion, for Stability)
+    # Solve the system.
     mvec = linalg.solve(Gmat, dmat.T).flatten()
 
-    # Compute Solutions
-    Y1sol = dot(array(object=[Y1s[0], Y2s[0], Y3s[0]]), mvec)
-    Y3sol = dot(array(object=[Y1s[2], Y2s[2], Y3s[2]]), mvec)
-    Y5sol = dot(array(object=[Y1s[4], Y2s[4], Y3s[4]]), mvec)
+    # Computes solutions.
+    Y1sol = dot(array([Y1s[0], Y2s[0], Y3s[0]]), mvec).flatten()[0]
+    Y3sol = dot(array([Y1s[2], Y2s[2], Y3s[2]]), mvec).flatten()[0]
+    Y5sol = dot(array([Y1s[4], Y2s[4], Y3s[4]]), mvec).flatten()[0]
 
-    # Compute Load Love Numbers
+    # Computes load Love numbers.
     h_load = Y1sol
     l_load = Y3sol
     k_load = Y5sol / g_0_surface - 1.0
 
-    # Adjusts degree-one Love numbers to ensure that the potential field
-    # outside the Earth vanishes in the CM frame (e.g. Merriam 1985).
+    # Adjust degree 1 to ensure that the potential field outside the Earth vanishes (e.g. Merriam 1985).
     if n == 1:
         h_load = h_load - k_load
         l_load = l_load - k_load
-        k_load = 0.0
-    # Returns Solutions.
+        k_load = k_load - k_load
+
     return h_load, l_load, k_load
 
 
-def shear_surface_solution(n: int, Y1s: ndarray, Y2s: ndarray, Y3s: ndarray, g_0_surface: float, piG: float):
+def shear_surface_solution(
+    n: int, Y1s: ndarray, Y2s: ndarray, Y3s: ndarray, g_0_surface: float, piG: float
+) -> tuple[float, float, float]:
     """
-    Defines Surface shear Love numbers using the 3 independent integrated solutions.
+    Returns shear Love numbers from the Y_i system solution at Earth surface.
     """
 
     # Degree 1 is not well defined.
     if n == 1:
         return 0.0, 0.0, 0.0
 
-    # Forms the Outer Surface Vector Describing Shear.
-    # See Okubo & Saito (1983), Saito (1978).
-    dmat = array(object=[[0.0, ((2.0 * n + 1.0) * (g_0_surface**2)) / ((4.0 * piG * n) * (n + 1)), 0.0]])
+    # Forms the outer surface vector describing shear. See Okubo & Saito (1983), Saito (1978).
+    dmat = array(
+        [[0.0, ((2.0 * n + 1.0) * (g_0_surface**2)) / ((4.0 * piG * n) * (n + 1)), 0.0]]
+    )
 
-    # Form G Matrix From Integrated Solutions
+    # Forms the G matrix from integrated solutions.
     Gmat = array(
-        object=[
+        [
             [Y1s[1], Y2s[1], Y3s[1]],
             [Y1s[3], Y2s[3], Y3s[3]],
-            [(Y1s[5] + (n + 1.0) * Y1s[4]), (Y2s[5] + (n + 1.0) * Y2s[4]), (Y3s[5] + (n + 1.0) * Y3s[4])],
+            [
+                (Y1s[5] + (n + 1.0) * Y1s[4]),
+                (Y2s[5] + (n + 1.0) * Y2s[4]),
+                (Y3s[5] + (n + 1.0) * Y3s[4]),
+            ],
         ]
     )
 
-    # Solve the System of Equations (NO Matrix Inversion, for Stability)
+    # Solves the system.
     mvec = linalg.solve(Gmat, dmat.T)
 
-    # Compute Solutions
-    Y1sol = dot(array(object=[[Y1s[0], Y2s[0], Y3s[0]]]), mvec)
-    Y3sol = dot(array(object=[[Y1s[2], Y2s[2], Y3s[2]]]), mvec)
-    Y5sol = dot(array(object=[[Y1s[4], Y2s[4], Y3s[4]]]), mvec)
+    # Computes solutions.
+    Y1sol = dot(array([[Y1s[0], Y2s[0], Y3s[0]]]), mvec).flatten()[0]
+    Y3sol = dot(array([[Y1s[2], Y2s[2], Y3s[2]]]), mvec).flatten()[0]
+    Y5sol = dot(array([[Y1s[4], Y2s[4], Y3s[4]]]), mvec).flatten()[0]
 
-    # Compute Shear Love Numbers
+    # Computes shear Love numbers.
     h_shr = Y1sol
     l_shr = Y3sol
     k_shr = Y5sol / g_0_surface
@@ -86,36 +98,42 @@ def shear_surface_solution(n: int, Y1s: ndarray, Y2s: ndarray, Y3s: ndarray, g_0
     return h_shr, l_shr, k_shr
 
 
-def potential_surface_solution(n: int, Y1s: ndarray, Y2s: ndarray, Y3s: ndarray, g_0_surface: float):
+def potential_surface_solution(
+    n: int, Y1s: ndarray, Y2s: ndarray, Y3s: ndarray, g_0_surface: float
+) -> tuple[float, float, float]:
     """
-    Defines Surface shear Love numbers using the 3 independent integrated solutions.
+    Returns potential Love numbers from the Y_i system solution at Earth surface.
     """
 
     # Degree 1 is not well defined.
     if n == 1:
         return 0.0, 0.0, 0.0
 
-    # Forms the Outer Surface Vector Describing External Potential.
-    dmat = array(object=[[0.0, 0.0, (2.0 * n + 1) * g_0_surface]])
+    # Forms the outer surface vector describing external potential.
+    dmat = array([[0.0, 0.0, (2.0 * n + 1) * g_0_surface]])
 
-    # Form G Matrix From Integrated Solutions
+    # Forms the G matrix from integrated solutions.
     Gmat = array(
-        object=[
+        [
             [Y1s[1], Y2s[1], Y3s[1]],
             [Y1s[3], Y2s[3], Y3s[3]],
-            [(Y1s[5] + (n + 1.0) * Y1s[4]), (Y2s[5] + (n + 1.0) * Y2s[4]), (Y3s[5] + (n + 1.0) * Y3s[4])],
+            [
+                (Y1s[5] + (n + 1.0) * Y1s[4]),
+                (Y2s[5] + (n + 1.0) * Y2s[4]),
+                (Y3s[5] + (n + 1.0) * Y3s[4]),
+            ],
         ]
     )
 
-    # Solve the System of Equations (NO Matrix Inversion, for Stability)
+    # Solves the system.
     mvec = linalg.solve(Gmat, dmat.T)
 
-    # Compute Solutions
-    Y1sol = dot(array(object=[[Y1s[0], Y2s[0], Y3s[0]]]), mvec)
-    Y3sol = dot(array(object=[[Y1s[2], Y2s[2], Y3s[2]]]), mvec)
-    Y5sol = dot(array(object=[[Y1s[4], Y2s[4], Y3s[4]]]), mvec)
+    # Computes solutions.
+    Y1sol = dot(array([[Y1s[0], Y2s[0], Y3s[0]]]), mvec).flatten()[0]
+    Y3sol = dot(array([[Y1s[2], Y2s[2], Y3s[2]]]), mvec).flatten()[0]
+    Y5sol = dot(array([[Y1s[4], Y2s[4], Y3s[4]]]), mvec).flatten()[0]
 
-    # Compute Potential Love Numbers
+    # Computes potential Love Numbers.
     h_pot = Y1sol
     l_pot = Y3sol
     k_pot = Y5sol / g_0_surface - 1.0

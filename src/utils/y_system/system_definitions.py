@@ -1,8 +1,10 @@
 from math import factorial
 
-from numpy import Inf, array, dot, lib, ndarray, sqrt, zeros
+from numpy import Inf, array, dot, lib, ndarray, sqrt
 
 from ..classes import DescriptionLayer
+
+# TODO: Vectorize and implement minimal computing policy.
 
 
 def solid_system(
@@ -16,10 +18,10 @@ def solid_system(
     inhomogeneity_gradients: bool,
 ) -> ndarray:
     """
-    Performs a single iteration of the gravito-anelastic solid differential system dY/dr = A Y.
+    Computes dY/dx from Y using the gravito-elastic Y_i system in solid layers of the Earth.
     """
 
-    # Interpolate Parameters at Current Radius
+    # Interpolate parameters at current radius.
     lndi = (
         layer.evaluate(x=x, variable="lambda_real")
         + layer.evaluate(x=x, variable="lambda_imag") * 1.0j
@@ -31,8 +33,6 @@ def solid_system(
     rndi = layer.evaluate(x=x, variable="rho_0")
     gndi = layer.evaluate(x=x, variable="g_0")
 
-    # add dynamics terms (in w square)
-    # change the high frequencies behavior of LN
     dyn_term = -rndi * omega**2.0 if dynamic_term and omega != Inf else 0.0
     if inhomogeneity_gradients:
         lndi_prime = (
@@ -50,40 +50,60 @@ def solid_system(
     dndi = 2.0 * mndi * (3.0 * lndi + 2.0 * mndi) * bndi
     endi = 4.0 * n1 * mndi * (lndi + mndi) * bndi - 2.0 * mndi
 
-    # Builds A Matrix (where dY/dr = A Y).
-    # See Smylie (2013).
-    A = zeros(shape=(6, 6), dtype=complex)
+    # Build A Matrix (where dY/dr = A Y). See Smylie (2013).
+    c11 = -2.0 * lndi * bndi / x
+    c12 = bndi
+    c13 = n1 * lndi * bndi / x
+    c14 = 0.0
+    c15 = 0.0
+    c16 = 0.0
 
-    A[0, 0] = -2.0 * lndi * bndi / x
-    A[0, 1] = bndi
-    A[0, 2] = n1 * lndi * bndi / x
+    c21 = (-4.0 * gndi * rndi / x) + (2.0 * dndi / (x**2)) + dyn_term
+    c22 = -4.0 * mndi * bndi / x
+    c23 = n1 * (rndi * gndi / x - dndi / (x**2))
+    c24 = n1 / x
+    c25 = 0.0
+    c26 = -rndi
 
-    A[1, 0] = (-4.0 * gndi * rndi / x) + (2.0 * dndi / (x**2)) + dyn_term
-    A[1, 1] = -4.0 * mndi * bndi / x
-    A[1, 2] = n1 * (rndi * gndi / x - dndi / (x**2))
-    A[1, 3] = n1 / x
+    c31 = -1.0 / x
+    c32 = 0.0
+    c33 = 1.0 / x
+    c34 = 1.0 / mndi
+    c35 = 0.0
+    c36 = 0.0
 
-    A[1, 5] = -rndi
+    c41 = rndi * gndi / x - dndi / (x**2)
+    c42 = -lndi * bndi / x
+    c43 = endi / (x**2) + dyn_term
+    c44 = -3.0 / x
+    c45 = -rndi / x
+    c46 = 0.0
 
-    A[2, 0] = -1.0 / x
+    c51 = 4.0 * piG * rndi
+    c52 = 0.0
+    c53 = 0.0
+    c54 = 0.0
+    c55 = 0.0
+    c56 = 1.0
 
-    A[2, 2] = 1.0 / x
-    A[2, 3] = 1.0 / mndi
+    c61 = 0.0
+    c62 = 0.0
+    c63 = -4.0 * piG * rndi * n1 / x
+    c64 = 0.0
+    c65 = n1 / (x**2)
+    c66 = -2.0 / x
 
-    A[3, 0] = rndi * gndi / x - dndi / (x**2)
-    A[3, 1] = -lndi * bndi / x
-    A[3, 2] = endi / (x**2) + dyn_term
-    A[3, 3] = -3.0 / x
-    A[3, 4] = -rndi / x
-
-    A[4, 0] = 4.0 * piG * rndi
-
-    A[4, 5] = 1.0
-
-    A[5, 2] = -4.0 * piG * rndi * n1 / x
-
-    A[5, 4] = n1 / (x**2)
-    A[5, 5] = -2.0 / x
+    A = array(
+        [
+            [c11, c12, c13, c14, c15, c16],
+            [c21, c22, c23, c24, c25, c26],
+            [c31, c32, c33, c34, c35, c36],
+            [c41, c42, c43, c44, c45, c46],
+            [c51, c52, c53, c54, c55, c56],
+            [c61, c62, c63, c64, c65, c66],
+        ],
+        dtype=complex,
+    )
 
     return dot(A, Y)
 
@@ -96,25 +116,25 @@ def fluid_system(
     piG: float,
 ) -> ndarray:
     """
-    Performs a single iteration of the gravito-anelastic fluid differential system dY/dr = B Y.
+    Computes dY/dx from Y using the gravito-elastic Y_i system in fluid layers of the Earth.
     """
 
-    # Interpolate Parameters at Current Radius
+    # Interpolate parameters at current radius.
     rndi = fluid_layer.evaluate(x=x, variable="rho_0")
     gndi = fluid_layer.evaluate(x=x, variable="g_0")
 
     n1 = n * (n + 1.0)
 
     # Smylie (2013) Eq.9.42 & 9.43.
-    B = zeros(shape=(2, 2), dtype=complex)
+    c11 = 4.0 * piG * rndi / gndi
+    c12 = 1.0
 
-    B[0, 0] = 4.0 * piG * rndi / gndi
-    B[0, 1] = 1.0
+    c21 = (n1 / x**2) - 16.0 * piG * rndi / (gndi * x)
+    c22 = (-2.0 / x) - (4.0 * piG * rndi / gndi)
 
-    B[1, 0] = (n1 / x**2) - 16.0 * piG * rndi / (gndi * x)
-    B[1, 1] = (-2.0 / x) - (4.0 * piG * rndi / gndi)
+    A = array([[c11, c12], [c21, c22]], dtype=complex)
 
-    return dot(B, Y)
+    return dot(A, Y)
 
 
 def solid_to_fluid(
@@ -126,9 +146,10 @@ def solid_to_fluid(
     piG: float,
 ) -> ndarray:
     """
-    Transforms the solid system of equation into the fluid system of equation at an interface.
+    Converts the Y system solution at a fluid/solid interface.
     """
-    # Interpolate Parameters at Current Radius
+
+    # Interpolate parameters at current radius.
     rndi = first_fluid_layer.evaluate(x=x, variable="rho_0")
     gndi = first_fluid_layer.evaluate(x=x, variable="g_0")
 
@@ -150,32 +171,35 @@ def solid_to_fluid(
     sol5 = Y1[4] + kk * Y2[4] + (k_13 + kk * k_23) * Y3[4]
     sol6 = Y1[5] + kk * Y2[5] + (k_13 + kk * k_23) * Y3[5]
 
-    Yf1 = array(object=[sol5, sol6 + (4.0 * piG / gndi) * sol2], dtype=complex)
+    Yf1 = array([sol5, sol6 + (4.0 * piG / gndi) * sol2], dtype=complex)
     return Yf1
 
 
 def fluid_to_solid(
     Yf1: ndarray, x: float, last_fluid_layer: DescriptionLayer, piG: float
 ) -> tuple[ndarray, ndarray, ndarray]:
-    # Interpolate Parameters at Current Radius
+    """
+    Converts the Y system solution at a fluid/solid interface.
+    """
+
+    # Interpolate parameters at current radius.
     rndi = last_fluid_layer.evaluate(x=x, variable="rho_0")
     gndi = last_fluid_layer.evaluate(x=x, variable="g_0")
 
-    Y1 = array(
-        object=[1.0, gndi * rndi, 0.0, 0.0, 0.0, -4.0 * piG * rndi], dtype=complex
-    )
+    Y1 = array([1.0, gndi * rndi, 0.0, 0.0, 0.0, -4.0 * piG * rndi], dtype=complex)
 
-    Y2 = array(object=[0.0, 0.0, 1.0, 0.0, 0.0, 0.0], dtype=complex)
+    Y2 = array([0.0, 0.0, 1.0, 0.0, 0.0, 0.0], dtype=complex)
 
-    Y3 = array(object=[Yf1[0] / gndi, 0.0, 0.0, 0.0, Yf1[0], Yf1[1]], dtype=complex)
+    Y3 = array([Yf1[0] / gndi, 0.0, 0.0, 0.0, Yf1[0], Yf1[1]], dtype=complex)
     return Y1, Y2, Y3
 
 
+# TODO: verify/redo analytic developments.
 def solid_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: float):
     """
     Computes analytical solution to homogeneous sphere system of radius x, with n_layer-th layer elastic rheology.
     """
-    # Interpolates Parameters at Current Radius.
+    # Interpolate Parameters at Current Radius
     lndi = (
         layer.evaluate(x=x, variable="lambda_real")
         + layer.evaluate(x=x, variable="lambda_imag") * 1.0j
@@ -190,11 +214,10 @@ def solid_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: flo
 
     wnd = 0.0
 
-    # Computes Additional Non-Dimensional Parameters.
+    # Compute Additional Non-Dimensional Parameters
     n1 = n * (n + 1.0)
     gamma = 4.0 * piG * rndi / 3.0
-
-    # k May be Imaginary.
+    # k May be Imaginary
     ksq1 = 0.5 * (
         (((wnd**2) + 4.0 * gamma) / (vpndi**2))
         + ((wnd**2) / (vsndi**2))
@@ -211,7 +234,7 @@ def solid_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: flo
             + (4.0 * n1 * (gamma**2) / ((vsndi**2) * (vpndi**2)))
         )
     )
-    # From Takeuchi & Saito (1972), Eq. 99: Factored for Numerical Stability.
+    # From Takeuchi & Saito (1972), Eq. 99: Factored for Numerical Stability
     f1 = (
         (1.0 / gamma)
         * (vsndi * lib.scimath.sqrt(ksq1) + wnd)
@@ -222,24 +245,22 @@ def solid_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: flo
         * (vsndi * lib.scimath.sqrt(ksq2) + wnd)
         * (vsndi * lib.scimath.sqrt(ksq2) - wnd)
     )
-
-    # Imaginary Part is Effectively Zero -- Gets Rid of It.
+    # Imaginary Part is Effectively Zero -- Get Rid of It
     f1 = f1.real
     f2 = f2.real
     h1 = f1 - (n + 1.0)
     h2 = f2 - (n + 1.0)
-
-    # x May be Imaginary -- Only Even Powers will be Used Later.
+    # x May be Imaginary -- Only Even Powers will be Used Later
     x1 = lib.scimath.sqrt(ksq1) * x
     x2 = lib.scimath.sqrt(ksq2) * x
 
-    # Computes the squares.
+    # Compute the Squares
     x1sqr = x1 * x1
     x1sqr = x1sqr.real
     x2sqr = x2 * x2
     x2sqr = x2sqr.real
 
-    # Computes the Bessel functions using expansion formulas (Takeuchi & Saito 1972, Eq. 102).
+    # Compute the Bessel functions using expansion formulas (Takeuchi & Saito 1972, Eq. 102)
     phi1_n = (
         1.0
         - x1sqr / (2.0 * (2.0 * n + 3.0))
@@ -527,11 +548,14 @@ def solid_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: flo
     Y62 = Y62 - ((n + 1.0) / x) * Y52
     Y63 = Y63 - ((n + 1.0) / x) * Y53
 
-    # Return Y-Variable Starting Solutions
-    return array(
-        object=[
+    # Form Starting Solution Array
+    Y = array(
+        [
             [Y11, Y21, Y31, Y41, Y51, Y61],
             [Y12, Y22, Y32, Y42, Y52, Y62],
             [Y13, Y23, Y33, Y43, Y53, Y63],
         ]
     )
+
+    # Return Y-Variable Starting Solutions
+    return Y

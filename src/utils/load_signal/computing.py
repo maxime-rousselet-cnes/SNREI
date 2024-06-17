@@ -101,7 +101,8 @@ def compute_signal_trends(
                 frequencial_harmonic_load_signal_per_order
             ):
                 signal_trends[i_sign, i_degree, i_order] = signal_trend(
-                    trend_dates=trend_dates, signal=ifft(frequencial_signal)
+                    trend_dates=trend_dates,
+                    signal=ifft(frequencial_signal)[trend_indices],
                 )
 
     return signal_trends

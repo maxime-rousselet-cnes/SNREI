@@ -1,9 +1,10 @@
 from itertools import product
 
-from numpy import ndarray
+from numpy import array, ndarray
 
 from ...functions import mean_on_mask
 from ...utils import (
+    ELASTIC_RUN_HYPER_PARAMETERS,
     AnelasticityDescription,
     LoadSignalHyperParameters,
     Love_numbers_computing,
@@ -194,7 +195,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
 
             # Saves.
             axes = {
-                "degrees": degrees,
+                "degrees": array(object=degrees),
                 "frequencies": anelasticity_description.frequency_unit
                 * 10.0**log_frequencies,
             }
@@ -206,20 +207,34 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             )
             Love_numbers_id = generate_new_id(path=Love_numbers_path)
             Love_numbers_result.save(name=Love_numbers_id, path=Love_numbers_path)
-            add_result_to_table(
-                table_name="Love_numbers",
-                result_caracteristics={
+            result_caracteristics = (
+                {
                     "ID": Love_numbers_id,
                     "elasticity_model": elasticity_model_name,
                     "long_term_anelasticity_model": long_term_anelasticity_model_name,
-                    "short_te__drm_anelasticity_model": short_term_anelasticity_model_name,
+                    "short_term_anelasticity_model": short_term_anelasticity_model_name,
                     "anelasticity_description_id": anelasticity_description.id,
                     "max_tol": Love_numbers_hyper_parameters.max_tol,
                     "decimals": Love_numbers_hyper_parameters.decimals,
                 }
                 | Love_numbers_hyper_parameters.y_system_hyper_parameters.__dict__
-                | run_hyper_parameters.__dict__,
+                | run_hyper_parameters.__dict__
             )
+            print(result_caracteristics)
+            add_result_to_table(
+                table_name="Love_numbers", result_caracteristics=result_caracteristics
+            )
+
+            # Eventually indicates equalvalent model's elastic results path.
+            if ELASTIC_RUN_HYPER_PARAMETERS in options_to_compute:
+                elastic_equivalent_ID = Love_numbers_id
+            else:
+                add_result_to_table(
+                    table_name="Love_numbers",
+                    result_caracteristics=result_caracteristics
+                    | ELASTIC_RUN_HYPER_PARAMETERS.__dict__
+                    | {"ID": elastic_equivalent_ID},
+                )
 
             # III - Loops on elastic load signals to compute anelastic load signals.
             for elastic_load_signal_id, (
@@ -233,9 +248,13 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         name=elastic_load_signal_id, path=elastic_load_signals_path
                     )
                 )
-                dates = load_base_model(name=elastic_load_signal_id, path=dates_path)
-                frequencies = load_base_model(
-                    name=elastic_load_signal_id, path=frequencies_path
+                dates = array(
+                    object=load_base_model(name=elastic_load_signal_id, path=dates_path)
+                )
+                frequencies = array(
+                    object=load_base_model(
+                        name=elastic_load_signal_id, path=frequencies_path
+                    )
                 )
 
                 # Computes anelastic load signal.

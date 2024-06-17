@@ -203,6 +203,7 @@ class LoadSignalHyperParameters(HyperParameters):
     load_spatial_behaviour_file: Optional[str]  # (.csv) file path relative to data.
     skiprows: int  # For spatial behaviour file loading.
     ocean_mask: Optional[str]
+    pixels_to_coast: int  # Erosion distance for mask.
 
     # Trend computing parameters.
     first_year_for_trend: int

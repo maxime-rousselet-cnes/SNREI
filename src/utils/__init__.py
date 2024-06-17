@@ -1,4 +1,5 @@
 from .classes import (
+    ELASTIC_RUN_HYPER_PARAMETERS,
     AnelasticityDescription,
     GRACE_data_path,
     GRACE_trends_data_path,
@@ -48,6 +49,7 @@ from .variations import (
 )
 
 [
+    ELASTIC_RUN_HYPER_PARAMETERS,
     AnelasticityDescription,
     GRACE_data_path,
     GRACE_trends_data_path,

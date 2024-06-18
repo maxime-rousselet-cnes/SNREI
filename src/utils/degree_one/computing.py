@@ -17,8 +17,9 @@ def degree_one_inversion(
     """
 
     # Initializes.
+    n_frequencies = anelastic_frequencial_harmonic_load_signal.shape[-1]
     degree_one = zeros(
-        shape=(2, 2, anelastic_frequencial_harmonic_load_signal.shape[-1]),
+        shape=(2, 2, n_frequencies),
         dtype=complex,
     )
     ocean_mask_indices = ocean_mask.flatten().astype(dtype=bool)
@@ -90,7 +91,11 @@ def degree_one_inversion(
         harmonic_right_hand_side,
     ) in enumerate(
         zip(
-            degree_one_Love_numbers,
+            (
+                degree_one_Love_numbers
+                if len(anelastic_hermitian_Love_numbers.axes["frequencies"]) != 1
+                else [degree_one_Love_numbers] * n_frequencies
+            ),  # Handles elastic case.
             right_hand_side_terms.transpose((3, 0, 1, 2)),
         )
     ):

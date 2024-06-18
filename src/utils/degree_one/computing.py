@@ -18,7 +18,7 @@ def degree_one_inversion(
 
     # Initializes.
     degree_one = zeros(
-        shape=[2, 1] + anelastic_frequencial_harmonic_load_signal.shape[2:]
+        shape=[2, 1] + list(anelastic_frequencial_harmonic_load_signal.shape[2:])
     )
     ocean_mask_indices = ocean_mask.flatten().astype(dtype=bool)
 

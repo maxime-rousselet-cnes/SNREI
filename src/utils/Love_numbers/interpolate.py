@@ -56,7 +56,8 @@ def interpolate_Love_numbers(
                     for boundary_condition in boundary_conditions
                 }
                 for direction in directions
-            }
+            },
+            axes={"degrees": target_degrees, "frequencies": source_frequencies},
         )
     else:
         hermitian_Love_numbers: dict[Direction, dict[BoundaryCondition, ndarray]] = {
@@ -98,5 +99,6 @@ def interpolate_Love_numbers(
                     for boundary_condition in boundary_conditions
                 }
                 for direction in directions
-            }
+            },
+            axes={"degrees": target_degrees, "frequencies": target_frequencies},
         )

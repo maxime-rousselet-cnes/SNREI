@@ -10,6 +10,7 @@ from ..classes import (
     LoadSignalHyperParameters,
     LoveNumbersHyperParameters,
     Result,
+    RunHyperParameters,
 )
 from ..Love_numbers import interpolate_Love_numbers
 from .utils import get_trend_dates
@@ -19,6 +20,7 @@ def anelastic_frequencial_harmonic_load_signal_computing(
     anelasticity_description_id: str,
     n_max: int,
     Love_numbers_hyper_parameters: LoveNumbersHyperParameters,
+    run_hyper_parameters: RunHyperParameters,
     signal_frequencies: ndarray[float],  # (yr^-1).
     frequencial_elastic_normalized_load_signal: ndarray[complex],
 ) -> tuple[ndarray[complex], Result]:
@@ -26,7 +28,8 @@ def anelastic_frequencial_harmonic_load_signal_computing(
     Gets already computed Love numbers and computes anelastic induced frequential-harmonic load signal.
     """
 
-    if len(frequencial_elastic_normalized_load_signal.shape) != 1:
+    if run_hyper_parameters != ELASTIC_RUN_HYPER_PARAMETERS:
+        Love_numbers_hyper_parameters.run_hyper_parameters = run_hyper_parameters
         # Interpolates anelastic Love numbers on signal degrees and frequencies as hermitian signal.
         anelastic_hermitian_Love_numbers: Result = interpolate_Love_numbers(
             anelasticity_description_id=anelasticity_description_id,
@@ -49,8 +52,10 @@ def anelastic_frequencial_harmonic_load_signal_computing(
         boundary_conditions=[BoundaryCondition.load],
     )
 
-    if len(frequencial_elastic_normalized_load_signal.shape) == 1:
+    print(run_hyper_parameters)
+    if run_hyper_parameters == ELASTIC_RUN_HYPER_PARAMETERS:
         # Elastic induced signal in harmonic domain.
+        print("test")
         return (
             frequencial_elastic_normalized_load_signal,
             elastic_hermitian_Love_numbers,

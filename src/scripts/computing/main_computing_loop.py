@@ -259,6 +259,10 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     )
                 )
 
+                print(anelasticity_description.id)
+                print(run_hyper_parameters)
+                print(elastic_load_signal_id)
+                print()
                 # Computes anelastic load signal.
                 (
                     anelastic_frequencial_harmonic_load_signal,
@@ -267,6 +271,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     anelasticity_description_id=anelasticity_description.id,
                     n_max=load_signal_hyper_parameters.n_max,
                     Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+                    run_hyper_parameters=run_hyper_parameters,
                     signal_frequencies=frequencies,
                     frequencial_elastic_normalized_load_signal=elastic_frequencial_harmonic_load_signal,
                 )

@@ -187,7 +187,6 @@ def create_all_load_signal_hyper_parameters_variations(
 
 def find_minimal_computing_options(
     options: list[RunHyperParameters],
-    elasticity_model_name: str,
     long_term_anelasticity_model_name: str,
     short_term_anelasticity_model_name: str,
     reference_model_filenames: dict[ModelPart, str],
@@ -197,9 +196,6 @@ def find_minimal_computing_options(
     equivalent model's results.
     """
 
-    has_reference_elastic = (
-        elasticity_model_name == reference_model_filenames[ModelPart.elasticity]
-    )
     has_reference_long_term_anelasticity = (
         long_term_anelasticity_model_name
         == reference_model_filenames[ModelPart.long_term_anelasticity]
@@ -209,32 +205,26 @@ def find_minimal_computing_options(
         == reference_model_filenames[ModelPart.short_term_anelasticity]
     )
 
-    # Needs to process for part_i variations if and only if part_j and part_k correspond to reference ones.
-    do_elastic = (
-        has_reference_long_term_anelasticity and has_reference_short_term_anelasticity
-    )
-    maximal_computing_options = RunHyperParameters(
-        use_long_term_anelasticity=has_reference_elastic
-        and has_reference_short_term_anelasticity,
-        use_short_term_anelasticity=has_reference_elastic
-        and has_reference_long_term_anelasticity,
-        use_bounded_attenuation_functions=True,  # Does not constrain bounded/unbounded attenuation functions.
-    )
-
     # Returns the list of options that are needed for computation.
-    return ([ELASTIC_RUN_HYPER_PARAMETERS] if do_elastic else []) + [
+    return [
         run_hyper_parameters
-        for run_hyper_parameters in options
+        for run_hyper_parameters in options + [ELASTIC_RUN_HYPER_PARAMETERS]
         if (
-            run_hyper_parameters.use_long_term_anelasticity
-            <= maximal_computing_options.use_long_term_anelasticity
-        )
-        and (
-            run_hyper_parameters.use_short_term_anelasticity
-            <= maximal_computing_options.use_short_term_anelasticity
-        )
-        and (
-            run_hyper_parameters.use_bounded_attenuation_functions
-            <= maximal_computing_options.use_bounded_attenuation_functions
+            (
+                has_reference_long_term_anelasticity
+                and has_reference_short_term_anelasticity
+            )
+            or (
+                run_hyper_parameters.use_short_term_anelasticity
+                and has_reference_long_term_anelasticity
+            )
+            or (
+                run_hyper_parameters.use_long_term_anelasticity
+                and has_reference_short_term_anelasticity
+            )
+            or (
+                run_hyper_parameters.use_long_term_anelasticity
+                and run_hyper_parameters.use_short_term_anelasticity
+            )
         )
     ]

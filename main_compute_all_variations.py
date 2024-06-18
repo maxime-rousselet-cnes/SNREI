@@ -27,6 +27,16 @@ compute_load_signal_trends_for_anelastic_Earth_models(
             use_long_term_anelasticity=True,
             use_short_term_anelasticity=True,
             use_bounded_attenuation_functions=True,
-        )
+        ),
+        RunHyperParameters(
+            use_long_term_anelasticity=True,
+            use_short_term_anelasticity=False,
+            use_bounded_attenuation_functions=False,
+        ),
+        RunHyperParameters(
+            use_long_term_anelasticity=False,
+            use_short_term_anelasticity=True,
+            use_bounded_attenuation_functions=True,
+        ),
     ],
 )

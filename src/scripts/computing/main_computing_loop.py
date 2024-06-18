@@ -122,12 +122,12 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             obj=frequencies, name=elastic_load_signal_id, path=frequencies_path
         )
         save_complex_array_to_binary(
-            array=frequencial_harmonic_elastic_load_signal,
+            input_array=frequencial_harmonic_elastic_load_signal,
             name=elastic_load_signal_id,
             path=elastic_load_signals_path,
         )
         save_complex_array_to_binary(
-            array=harmonic_elastic_load_signal_trends,
+            input_array=harmonic_elastic_load_signal_trends,
             name=elastic_load_signal_id,
             path=elastic_load_signal_trends_path,
         )
@@ -160,21 +160,20 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
 
         options_to_compute = find_minimal_computing_options(
             options=options,
-            elasticity_model_name=elasticity_model_name,
             long_term_anelasticity_model_name=long_term_anelasticity_model_name,
             short_term_anelasticity_model_name=short_term_anelasticity_model_name,
             reference_model_filenames=reference_model_filenames,
         )
 
+        # Creates the rheological description instance.
+        anelasticity_description = AnelasticityDescription(
+            elasticity_name=elasticity_model_name,
+            long_term_anelasticity_name=long_term_anelasticity_model_name,
+            short_term_anelasticity_name=short_term_anelasticity_model_name,
+        )
+
         # If the option needs to be computed for this rheological description.
         for run_hyper_parameters in options_to_compute:
-
-            # Creates the rheological description instance.
-            anelasticity_description = AnelasticityDescription(
-                elasticity_name=elasticity_model_name,
-                long_term_anelasticity_name=long_term_anelasticity_model_name,
-                short_term_anelasticity_name=short_term_anelasticity_model_name,
-            )
 
             # Computes Love numbers.
             Love_numbers_hyper_parameters.run_hyper_parameters = run_hyper_parameters
@@ -306,10 +305,10 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                                 harmonics=anelastic_harmonic_load_signal_trends,
                             ),
                         }
-                        | load_signal_hyper_parameters,
+                        | load_signal_hyper_parameters.__dict__,
                     )
                     save_complex_array_to_binary(
-                        array=anelastic_harmonic_load_signal_trends,
+                        input_array=anelastic_harmonic_load_signal_trends,
                         name=anelastic_load_signal_id,
                         path=anelastic_load_signal_trends_path,
                     )

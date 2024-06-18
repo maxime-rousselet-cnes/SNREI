@@ -400,6 +400,6 @@ def load_Love_numbers_result(
 
     # Loads result.
     Love_numbers = Result()
-    Love_numbers.load(name=str(file_ids[0]), path=Love_numbers_path)
+    Love_numbers.load(name=str(list(file_ids)[0]), path=Love_numbers_path)
 
     return Love_numbers

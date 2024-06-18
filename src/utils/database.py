@@ -2,7 +2,7 @@ from json import JSONEncoder, dump, load
 from pathlib import Path
 from typing import Any, Optional
 
-from numpy import arange, complex128, concatenate, fromfile, ndarray
+from numpy import arange, array, complex128, concatenate, fromfile, ndarray
 from pydantic import BaseModel
 
 
@@ -49,23 +49,30 @@ def load_base_model(
     return loaded_content if not base_model_type else base_model_type(**loaded_content)
 
 
-def save_complex_array_to_binary(array: ndarray, name: str, path: Path) -> None:
+def save_complex_array_to_binary(input_array: ndarray, name: str, path: Path) -> None:
     """
     Saves a complex NumPy array to a binary file.
     """
     path.mkdir(parents=True, exist_ok=True)
     filename = path.joinpath(name)
     with open(filename, "wb") as f:
-        array.tofile(f)
+        input_array.tofile(f)
+    shape_filename = path.joinpath(name + "_shape")
+    with open(shape_filename, "wb") as f:
+        array(object=input_array.shape).tofile(f)
 
 
 def load_complex_array_from_binary(name: str, path: Path) -> ndarray[complex128]:
     """
     Loads a complex NumPy array from a binary file.
     """
+
     # Load the array from binary file
     filename = path.joinpath(name)
-    return fromfile(filename, dtype=complex128)
+    shape_filename = path.joinpath(name + "_shape")
+    return fromfile(filename, dtype=complex128).reshape(
+        fromfile(shape_filename, dtype=int)
+    )
 
 
 def generate_degrees_list(

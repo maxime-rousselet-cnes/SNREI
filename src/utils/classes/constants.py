@@ -11,6 +11,8 @@ G = 6.67430e-11
 # Earth mean radius (m).
 EARTH_RADIUS = 6.371e6
 
+# Ratio betwenn surface water density and mean Earth density.
+DENSITY_RATIO = 997.0 / 5513.0
 # s.y^-1
 SECONDS_PER_YEAR = 365.25 * 86400
 

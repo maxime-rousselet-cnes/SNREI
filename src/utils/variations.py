@@ -208,7 +208,7 @@ def find_minimal_computing_options(
     # Returns the list of options that are needed for computation.
     return [
         run_hyper_parameters
-        for run_hyper_parameters in options + [ELASTIC_RUN_HYPER_PARAMETERS]
+        for run_hyper_parameters in [ELASTIC_RUN_HYPER_PARAMETERS] + options
         if (
             (
                 has_reference_long_term_anelasticity

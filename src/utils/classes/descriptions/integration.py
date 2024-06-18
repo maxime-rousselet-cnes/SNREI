@@ -252,12 +252,12 @@ class Integration(Description):
         self, n: int, hyper_parameters: YSystemHyperParameters
     ) -> ndarray[complex]:
         """
-        Integrates the unitless gravito-elastic system from the geocenter to the surface, at given n, omega and rheology.
+        Integrates the unitless gravito-elastic system from the Geocenter to the surface, at given n, omega and rheology.
         """
 
-        # I - Integrate from geocenter to CMB.
+        # I - Integrate from Geocenter to CMB.
         if n <= hyper_parameters.n_max_for_sub_CMB_integration:
-            # Integrate from geocenter to CMB for low degrees.
+            # Integrate from Geocenter to CMB for low degrees.
             integration_start = hyper_parameters.minimal_radius / self.radius_unit
 
             Y = (
@@ -342,7 +342,7 @@ class Integration(Description):
             n_start_layer = self.below_CMB_layers
 
         else:
-            # Integrate from geocenter to CMB with high degrees approximation.
+            # Integrate from Geocenter to CMB with high degrees approximation.
             n_start_layer: int = (
                 where(
                     (array([layer.x_inf for layer in self.description_layers]) ** n)

@@ -1,3 +1,3 @@
-from .computing import geocenter_inversion
+from .computing import degree_one_inversion
 
-[geocenter_inversion]
+[degree_one_inversion]

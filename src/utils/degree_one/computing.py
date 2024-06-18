@@ -5,14 +5,14 @@ from scipy.linalg import solve
 from ..classes import DENSITY_RATIO, BoundaryCondition, Direction, Result
 
 
-def geocenter_inversion(
+def degree_one_inversion(
     anelastic_frequencial_harmonic_load_signal: ndarray[complex],
     anelastic_hermitian_Love_numbers: Result,
     ocean_mask: ndarray[float],
 ) -> ndarray[complex]:
     """
     Re-estimates degree 1 coefficients by inversion.
-    Returns geocenter coefficients as frequencial signals.
+    Returns degree_one coefficients as frequencial signals.
     Input is 4-D array: C/S, n, m, frequency (mm).
     """
 

@@ -21,6 +21,7 @@ from ...utils import (
     create_all_load_signal_hyper_parameters_variations,
     create_all_model_variations,
     dates_path,
+    degree_one_inversion,
     elastic_load_signal_trends_path,
     elastic_load_signals_path,
     find_minimal_computing_options,
@@ -28,7 +29,6 @@ from ...utils import (
     generate_degrees_list,
     generate_log_frequency_initial_values,
     generate_new_id,
-    geocenter_inversion,
     get_ocean_mask,
     load_base_model,
     load_complex_array_from_binary,
@@ -274,9 +274,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         frequencial_elastic_normalized_load_signal=elastic_frequencial_harmonic_load_signal,
                     )
 
-                    # Derives Geocenter motion correction.
+                    # Derives degree one correction.
                     anelastic_frequencial_harmonic_load_signal[:, 1, :, :] = (
-                        geocenter_inversion(
+                        degree_one_inversion(
                             anelastic_frequencial_harmonic_load_signal=anelastic_frequencial_harmonic_load_signal,
                             anelastic_hermitian_Love_numbers=anelastic_hermitian_Love_numbers,
                             ocean_mask=ocean_mask,

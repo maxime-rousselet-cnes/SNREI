@@ -18,7 +18,8 @@ def degree_one_inversion(
 
     # Initializes.
     degree_one = zeros(
-        shape=[2, 1] + list(anelastic_frequencial_harmonic_load_signal.shape[2:])
+        shape=(2, 2, anelastic_frequencial_harmonic_load_signal.shape[-1]),
+        dtype=complex,
     )
     ocean_mask_indices = ocean_mask.flatten().astype(dtype=bool)
 
@@ -108,10 +109,10 @@ def degree_one_inversion(
 
         # Inversion.
         solution_vector, _, _, _ = lstsq(a=left_hand_side, b=right_hand_side)
-        degree_one[:, :, :2, frequencial_index] = array(
+        degree_one[:, :2, frequencial_index] = array(
             object=[
-                [[solution_vector[0], solution_vector[1]]],
-                [[0.0, solution_vector[2]]],
+                [solution_vector[0], solution_vector[1]],
+                [0.0, solution_vector[2]],
             ]
         )
 

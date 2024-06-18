@@ -26,15 +26,17 @@ def anelastic_frequencial_harmonic_load_signal_computing(
     Gets already computed Love numbers and computes anelastic induced frequential-harmonic load signal.
     """
 
-    # Interpolates anelastic Love numbers on signal degrees and frequencies as hermitian signal.
-    anelastic_hermitian_Love_numbers: Result = interpolate_Love_numbers(
-        anelasticity_description_id=anelasticity_description_id,
-        target_frequencies=signal_frequencies / SECONDS_PER_YEAR,  # (yr^-1) -> (Hz).
-        target_degrees=arange(n_max) + 1,
-        Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
-        directions=[Direction.radial, Direction.potential],
-        boundary_conditions=[BoundaryCondition.load],
-    )
+    if len(frequencial_elastic_normalized_load_signal.shape) != 1:
+        # Interpolates anelastic Love numbers on signal degrees and frequencies as hermitian signal.
+        anelastic_hermitian_Love_numbers: Result = interpolate_Love_numbers(
+            anelasticity_description_id=anelasticity_description_id,
+            target_frequencies=signal_frequencies
+            / SECONDS_PER_YEAR,  # (yr^-1) -> (Hz).
+            target_degrees=arange(n_max) + 1,
+            Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+            directions=[Direction.radial, Direction.potential],
+            boundary_conditions=[BoundaryCondition.load],
+        )
 
     Love_numbers_hyper_parameters.run_hyper_parameters = ELASTIC_RUN_HYPER_PARAMETERS
     # Interpolates elastic Love numbers on signal degrees.
@@ -48,16 +50,12 @@ def anelastic_frequencial_harmonic_load_signal_computing(
     )
 
     if len(frequencial_elastic_normalized_load_signal.shape) == 1:
-        # Computes anelastic induced signal in harmonic domain.
-        return multiply(
-            elastic_hermitian_Love_numbers.values[Direction.potential][
-                BoundaryCondition.load
-            ]
-            / anelastic_hermitian_Love_numbers.values[Direction.potential][
-                BoundaryCondition.load
-            ],
+        # Elastic induced signal in harmonic domain.
+        return (
             frequencial_elastic_normalized_load_signal,
+            elastic_hermitian_Love_numbers,
         )
+
     else:
         # Computes anelastic induced signal in frequencial-harmonic domain.
         return (  # (1 + k_el) / (1 + k_anel) * {C, S }.

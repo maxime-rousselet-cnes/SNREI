@@ -228,7 +228,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             )
 
             # Eventually indicates equalvalent model's elastic results path.
-            if ELASTIC_RUN_HYPER_PARAMETERS in options_to_compute:
+            if run_hyper_parameters == ELASTIC_RUN_HYPER_PARAMETERS:
                 elastic_equivalent_ID = Love_numbers_id
             else:
                 add_result_to_table(
@@ -239,76 +239,73 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 )
 
             # III - Loops on elastic load signals to compute anelastic load signals.
-            if run_hyper_parameters != ELASTIC_RUN_HYPER_PARAMETERS:
-                for elastic_load_signal_id, (
-                    load_signal_hyper_parameters,
-                    ocean_mask,
-                ) in elastic_load_signal_datas.items():
+            for elastic_load_signal_id, (
+                load_signal_hyper_parameters,
+                ocean_mask,
+            ) in elastic_load_signal_datas.items():
 
-                    # Loads needed datas.
-                    elastic_frequencial_harmonic_load_signal = (
-                        load_complex_array_from_binary(
-                            name=elastic_load_signal_id, path=elastic_load_signals_path
-                        )
+                # Loads needed datas.
+                elastic_frequencial_harmonic_load_signal = (
+                    load_complex_array_from_binary(
+                        name=elastic_load_signal_id, path=elastic_load_signals_path
                     )
-                    dates = array(
-                        object=load_base_model(
-                            name=elastic_load_signal_id, path=dates_path
-                        )
+                )
+                dates = array(
+                    object=load_base_model(name=elastic_load_signal_id, path=dates_path)
+                )
+                frequencies = array(
+                    object=load_base_model(
+                        name=elastic_load_signal_id, path=frequencies_path
                     )
-                    frequencies = array(
-                        object=load_base_model(
-                            name=elastic_load_signal_id, path=frequencies_path
-                        )
-                    )
+                )
 
-                    # Computes anelastic load signal.
-                    (
-                        anelastic_frequencial_harmonic_load_signal,
-                        anelastic_hermitian_Love_numbers,
-                    ) = anelastic_frequencial_harmonic_load_signal_computing(
-                        anelasticity_description_id=anelasticity_description.id,
-                        n_max=load_signal_hyper_parameters.n_max,
-                        Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
-                        signal_frequencies=frequencies,
-                        frequencial_elastic_normalized_load_signal=elastic_frequencial_harmonic_load_signal,
-                    )
+                # Computes anelastic load signal.
+                (
+                    anelastic_frequencial_harmonic_load_signal,
+                    anelastic_hermitian_Love_numbers,
+                ) = anelastic_frequencial_harmonic_load_signal_computing(
+                    anelasticity_description_id=anelasticity_description.id,
+                    n_max=load_signal_hyper_parameters.n_max,
+                    Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+                    signal_frequencies=frequencies,
+                    frequencial_elastic_normalized_load_signal=elastic_frequencial_harmonic_load_signal,
+                )
 
-                    # Derives degree one correction.
-                    anelastic_frequencial_harmonic_load_signal[:, 1, :, :] = (
-                        degree_one_inversion(
-                            anelastic_frequencial_harmonic_load_signal=anelastic_frequencial_harmonic_load_signal,
-                            anelastic_hermitian_Love_numbers=anelastic_hermitian_Love_numbers,
-                            ocean_mask=ocean_mask,
-                        )
+                # Derives degree one correction.
+                anelastic_frequencial_harmonic_load_signal[:, 1, :2, :] = (
+                    degree_one_inversion(
+                        anelastic_frequencial_harmonic_load_signal=anelastic_frequencial_harmonic_load_signal,
+                        anelastic_hermitian_Love_numbers=anelastic_hermitian_Love_numbers,
+                        ocean_mask=ocean_mask,
                     )
+                )
 
-                    # Computes trends.
-                    anelastic_harmonic_load_signal_trends = compute_signal_trends(
-                        signal_dates=dates,
-                        load_signal_hyper_parameters=load_signal_hyper_parameters,
-                        frequencial_harmonic_load_signal=anelastic_frequencial_harmonic_load_signal,
-                    )
+                # Computes trends.
+                anelastic_harmonic_load_signal_trends = compute_signal_trends(
+                    signal_dates=dates,
+                    load_signal_hyper_parameters=load_signal_hyper_parameters,
+                    frequencial_harmonic_load_signal=anelastic_frequencial_harmonic_load_signal,
+                )
 
-                    # Saves.
-                    anelastic_load_signal_id = generate_new_id(
-                        path=anelastic_load_signal_trends_path
-                    )
-                    add_result_to_table(
-                        table_name="anelastic_load_signal_trends",
-                        result_caracteristics={
-                            "ID": anelastic_load_signal_id,
-                            "Love_numbers_ID": Love_numbers_id,
-                            "elastic_load_signal_ID": elastic_load_signal_id,
-                            "ocean_mean": mean_on_mask(
-                                mask=ocean_mask,
-                                harmonics=anelastic_harmonic_load_signal_trends,
-                            ),
-                        }
-                        | load_signal_hyper_parameters.__dict__,
-                    )
-                    save_complex_array_to_binary(
-                        input_array=anelastic_harmonic_load_signal_trends,
-                        name=anelastic_load_signal_id,
-                        path=anelastic_load_signal_trends_path,
-                    )
+                # Saves.
+                anelastic_load_signal_id = generate_new_id(
+                    path=anelastic_load_signal_trends_path
+                )
+                add_result_to_table(
+                    table_name="anelastic_load_signal_trends",
+                    result_caracteristics={
+                        "ID": anelastic_load_signal_id,
+                        "Love_numbers_ID": Love_numbers_id,
+                        "elastic_load_signal_ID": elastic_load_signal_id,
+                        "ocean_mean": mean_on_mask(
+                            mask=ocean_mask,
+                            harmonics=anelastic_harmonic_load_signal_trends,
+                        ),
+                    }
+                    | load_signal_hyper_parameters.__dict__,
+                )
+                save_complex_array_to_binary(
+                    input_array=anelastic_harmonic_load_signal_trends,
+                    name=anelastic_load_signal_id,
+                    path=anelastic_load_signal_trends_path,
+                )

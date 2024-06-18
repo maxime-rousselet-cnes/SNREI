@@ -34,7 +34,7 @@ from .database import (
     save_base_model,
     save_complex_array_to_binary,
 )
-from .geocenter import geocenter_inversion
+from .degree_one import geocenter_inversion
 from .load_signal import (
     anelastic_frequencial_harmonic_load_signal_computing,
     build_frequencial_harmonic_elastic_load_signal,

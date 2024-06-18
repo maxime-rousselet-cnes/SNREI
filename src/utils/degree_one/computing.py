@@ -1,6 +1,6 @@
-from numpy import array, multiply, ndarray, tensordot, zeros
+from numpy import array, concatenate, multiply, ndarray, zeros
 from pyshtools.expand import MakeGridDH
-from scipy.linalg import solve
+from scipy.linalg import lstsq
 
 from ..classes import DENSITY_RATIO, BoundaryCondition, Direction, Result
 
@@ -22,12 +22,11 @@ def degree_one_inversion(
     )
     ocean_mask_indices = ocean_mask.flatten().astype(dtype=bool)
 
-    # RHS includes 1 + k'_n - h'_n.
+    # Right-Hand Side terms that includes 1 + k'_n - h'_n.
     right_hand_side_terms = multiply(
         anelastic_frequencial_harmonic_load_signal.transpose((0, 2, 3, 1)),
         (
-            3
-            * DENSITY_RATIO
+            DENSITY_RATIO
             * multiply(
                 (
                     anelastic_hermitian_Love_numbers.values[Direction.potential][
@@ -37,7 +36,7 @@ def degree_one_inversion(
                         BoundaryCondition.load
                     ]
                 ).T,
-                1 / (2 * anelastic_hermitian_Love_numbers.axes["degrees"] + 1),
+                3 / (2 * anelastic_hermitian_Love_numbers.axes["degrees"] + 1),
             ).T
             - 1.0
         ).T,
@@ -45,60 +44,74 @@ def degree_one_inversion(
 
     # Builds the matrix rows using pyshtools to ensure polynomial normalization is coherent with RHS.
     P_1_0: ndarray = MakeGridDH(
-        array(object=[[[0.0, 0.0], [1.0, 0.0]], [0.0, 0.0], [0.0, 0.0]]),
+        array(object=[[[0.0, 0.0], [1.0, 0.0]], [[0.0, 0.0], [0.0, 0.0]]]),
         sampling=2,
         lmax=anelastic_frequencial_harmonic_load_signal.shape[1] - 1,
     )
     P_1_1_C: ndarray = MakeGridDH(
-        array(object=[[[0.0, 0.0], [0.0, 1.0]], [0.0, 0.0], [0.0, 0.0]]),
+        array(object=[[[0.0, 0.0], [0.0, 1.0]], [[0.0, 0.0], [0.0, 0.0]]]),
         sampling=2,
         lmax=anelastic_frequencial_harmonic_load_signal.shape[1] - 1,
     )
     P_1_1_S: ndarray = MakeGridDH(
-        array(object=[[[0.0, 0.0], [0.0, 0.0]], [0.0, 1.0], [0.0, 0.0]]),
+        array(object=[[[0.0, 0.0], [0.0, 0.0]], [[0.0, 0.0], [0.0, 1.0]]]),
         sampling=2,
         lmax=anelastic_frequencial_harmonic_load_signal.shape[1] - 1,
     )
-    left_hand_sides = tensordot(
-        a=1
-        - DENSITY_RATIO
-        * (
-            anelastic_hermitian_Love_numbers.values[Direction.potential][
-                BoundaryCondition.load
-            ][
-                0
-            ]  # Index 0 for degree 1.
-            - anelastic_hermitian_Love_numbers.values[Direction.radial][
-                BoundaryCondition.load
-            ][
-                0
-            ]  # Index 0 for degree 1.
-        ),
-        b=array(
-            object=[
-                P_1_0.flatten()[ocean_mask_indices],
-                P_1_1_C.flatten()[ocean_mask_indices],
-                P_1_1_S.flatten()[ocean_mask_indices],
-                [1.0] * ocean_mask_indices,
-            ]
-        ).T,
-        axes=0,
+
+    # Preprocesses degree one polynomials and constants.
+    degree_one_Love_numbers = 1 - DENSITY_RATIO * (
+        anelastic_hermitian_Love_numbers.values[Direction.potential][
+            BoundaryCondition.load
+        ][
+            0
+        ]  # Index 0 for degree 1.
+        - anelastic_hermitian_Love_numbers.values[Direction.radial][
+            BoundaryCondition.load
+        ][
+            0
+        ]  # Index 0 for degree 1.
     )
+    degree_one_polynomials = array(
+        object=[
+            P_1_0.flatten()[ocean_mask_indices],
+            P_1_1_C.flatten()[ocean_mask_indices],
+            P_1_1_S.flatten()[ocean_mask_indices],
+        ]
+    )
+    constant_column = [[1.0] * sum(ocean_mask_indices)]
 
     # Solves a system per frequency.
-    for frequencial_index, (left_hand_side, harmonic_right_hand_side) in enumerate(
-        zip(left_hand_sides, right_hand_side_terms.transpose((3, 0, 1, 2)))
+    degree_one_Love_number: complex
+    harmonic_right_hand_side: ndarray[complex]
+    for frequencial_index, (
+        degree_one_Love_number,
+        harmonic_right_hand_side,
+    ) in enumerate(
+        zip(
+            degree_one_Love_numbers,
+            right_hand_side_terms.transpose((3, 0, 1, 2)),
+        )
     ):
+
+        # Left-Hand Side.
+        left_hand_side = concatenate(
+            (degree_one_Love_number * degree_one_polynomials, constant_column),
+        ).T
+
+        # Right-Hand Side.
         harmonic_right_hand_side[:, :2, :] = 0.0
         spatial_right_hand_side: ndarray = MakeGridDH(
-            harmonic_right_hand_side, sampling=2
-        )
+            harmonic_right_hand_side.real, sampling=2
+        ) + 1.0j * MakeGridDH(harmonic_right_hand_side.imag, sampling=2)
         right_hand_side = spatial_right_hand_side.flatten()[ocean_mask_indices]
-        solution_vector = solve(a=left_hand_side, b=right_hand_side)
+
+        # Inversion.
+        solution_vector, _, _, _ = lstsq(a=left_hand_side, b=right_hand_side)
         degree_one[:, :, :2, frequencial_index] = array(
             object=[
-                [[0.0, 0.0], [solution_vector[0], solution_vector[1]]],
-                [[0.0, 0.0], [0.0, solution_vector[2]]],
+                [[solution_vector[0], solution_vector[1]]],
+                [[0.0, solution_vector[2]]],
             ]
         )
 

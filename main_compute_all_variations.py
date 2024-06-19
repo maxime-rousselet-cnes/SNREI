@@ -9,13 +9,13 @@ clear_subs()
 
 compute_load_signal_trends_for_anelastic_Earth_models(
     elasticity_model_names=["PREM"],
-    long_term_anelasticity_model_names=["Mao_Zhong"],
+    long_term_anelasticity_model_names=["Lau_2016"],
     short_term_anelasticity_model_names=[
         "Benjamin_Q_Resovsky",
     ],
     rheological_parameters={
         ModelPart.long_term_anelasticity: {"eta_m": {"ASTHENOSPHERE": [[3e19]]}},
-        ModelPart.short_term_anelasticity: {"asymptotic_mu_ratio": {"MANTLE": [[0.1]]}},
+        ModelPart.short_term_anelasticity: {"asymptotic_mu_ratio": {"MANTLE": [[0.2]]}},
     },
     load_signal_parameters={
         "case": ["lower"],

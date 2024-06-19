@@ -279,43 +279,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     )
 
                 print("description id:", anelasticity_description.id)
-                print("elastic load id:", elastic_load_signal_id)
                 print("run:", run_hyper_parameters)
-                print(
-                    "Love parameters run:",
-                    Love_numbers_hyper_parameters.run_hyper_parameters,
-                )
-                print(
-                    "elastic Love numbers shape:",
-                    elastic_Love_numbers.values[Direction.potential][
-                        BoundaryCondition.load
-                    ].shape,
-                )
-                print(
-                    "Love numbers shape:",
-                    Love_numbers.values[Direction.potential][
-                        BoundaryCondition.load
-                    ].shape,
-                )
-                print(
-                    "elastic frequencial harmonic load signal shape:",
-                    elastic_frequencial_harmonic_load_signal.shape,
-                )
-                print(
-                    "frequencial harmonic load signal shape:",
-                    frequencial_harmonic_load_signal.shape,
-                )
-                print(
-                    "elastic load mean:",
-                    mean_on_mask(
-                        mask=ocean_mask,
-                        harmonics=compute_signal_trends(
-                            signal_dates=dates,
-                            load_signal_hyper_parameters=load_signal_hyper_parameters,
-                            frequencial_harmonic_load_signal=elastic_frequencial_harmonic_load_signal,
-                        ),
-                    ),
-                )
                 print(
                     "load mean:",
                     mean_on_mask(

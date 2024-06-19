@@ -1,4 +1,4 @@
-from numpy import Inf, arange, array, multiply, ndarray, zeros
+from numpy import Inf, arange, array, expand_dims, multiply, ndarray, zeros
 from scipy.fft import ifft
 
 from ...functions import signal_trend
@@ -22,7 +22,7 @@ def elastic_Love_numbers_computing(
     anelasticity_description_id: str,
     n_max: int,
     Love_numbers_hyper_parameters: LoveNumbersHyperParameters,
-) -> tuple[ndarray[complex], Result]:
+) -> Result:
     """
     Gets already computed Love numbers and computes elastic frequential-harmonic load signal.
     """
@@ -66,7 +66,12 @@ def anelastic_frequencial_harmonic_load_signal_computing(
     # Computes anelastic induced signal in frequencial-harmonic domain.
     return (  # (1 + k_el) / (1 + k_anel) * {C, S}.
         multiply(
-            elastic_Love_numbers.values[Direction.potential][BoundaryCondition.load].T
+            expand_dims(
+                a=elastic_Love_numbers.values[Direction.potential][
+                    BoundaryCondition.load
+                ],
+                axis=0,
+            )
             / anelastic_hermitian_Love_numbers.values[Direction.potential][
                 BoundaryCondition.load
             ].T,

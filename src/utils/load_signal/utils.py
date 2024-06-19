@@ -192,7 +192,11 @@ def build_frequencial_elastic_load_signal(
 
 def build_frequencial_harmonic_elastic_load_signal(
     load_signal_hyper_parameters: LoadSignalHyperParameters,
-) -> tuple[ndarray[float], ndarray[float], ndarray[complex], ndarray[float], float]:
+) -> tuple[
+    ndarray[float],
+    ndarray[float],
+    ndarray[complex],
+]:
     """
     Builds the load in the frequential-harmonic domain.
     Returns:
@@ -260,7 +264,6 @@ def build_frequencial_harmonic_elastic_load_signal(
                 a=spatial_component, b=elastic_load_signal_frequencial_component, axes=0
             )
             / elastic_load_signal_trend,
-            spatial_component,
         )
 
     else:

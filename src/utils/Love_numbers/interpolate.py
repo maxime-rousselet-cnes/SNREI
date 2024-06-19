@@ -122,14 +122,14 @@ def interpolate_anelastic_Love_numbers(
                     y=source_degrees,
                     z=hermitian_Love_numbers[direction][boundary_condition].real,
                     kind="linear",
-                )(x=target_degrees, y=target_frequencies).T
+                )(x=target_frequencies, y=target_degrees)
                 + 1.0j
                 * interpolate.interp2d(
                     x=symmetric_source_frequencies,
                     y=source_degrees,
                     z=hermitian_Love_numbers[direction][boundary_condition].imag,
                     kind="linear",
-                )(x=target_degrees, y=target_frequencies).T
+                )(x=target_frequencies, y=target_degrees)
                 for boundary_condition in boundary_conditions
             }
             for direction in directions

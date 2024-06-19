@@ -39,6 +39,7 @@ from ...utils import (
     save_base_model,
     save_complex_array_to_binary,
 )
+from ...utils.classes import BoundaryCondition, Direction
 
 
 def compute_load_signal_trends_for_anelastic_Earth_models(
@@ -104,7 +105,6 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             dates,
             frequencies,
             frequencial_harmonic_elastic_load_signal,
-            harmonic_elastic_load_signal_trends,
         ) = build_frequencial_harmonic_elastic_load_signal(
             load_signal_hyper_parameters=load_signal_hyper_parameters
         )
@@ -112,7 +112,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             name=load_signal_hyper_parameters.ocean_mask,
             n_max=redefine_n_max(
                 n_max=load_signal_hyper_parameters.n_max,
-                harmonics=harmonic_elastic_load_signal_trends,
+                harmonics=frequencial_harmonic_elastic_load_signal,
             ),
         )
 
@@ -126,6 +126,11 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             input_array=frequencial_harmonic_elastic_load_signal,
             name=elastic_load_signal_id,
             path=elastic_load_signals_path,
+        )
+        harmonic_elastic_load_signal_trends = compute_signal_trends(
+            signal_dates=dates,
+            load_signal_hyper_parameters=load_signal_hyper_parameters,
+            frequencial_harmonic_load_signal=frequencial_harmonic_elastic_load_signal,
         )
         save_complex_array_to_binary(
             input_array=harmonic_elastic_load_signal_trends,
@@ -249,6 +254,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 )
 
                 if run_hyper_parameters == ELASTIC_RUN_HYPER_PARAMETERS:
+                    # Memorizes elastic Love numbers for other runs.
                     elastic_Love_numbers = elastic_Love_numbers_computing(
                         anelasticity_description_id=anelasticity_description.id,
                         n_max=load_signal_hyper_parameters.n_max,
@@ -271,6 +277,57 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         frequencial_elastic_normalized_load_signal=elastic_frequencial_harmonic_load_signal,
                         elastic_Love_numbers=elastic_Love_numbers,
                     )
+
+                print("description id:", anelasticity_description.id)
+                print("elastic load id:", elastic_load_signal_id)
+                print("run:", run_hyper_parameters)
+                print(
+                    "Love parameters run:",
+                    Love_numbers_hyper_parameters.run_hyper_parameters,
+                )
+                print(
+                    "elastic Love numbers shape:",
+                    elastic_Love_numbers.values[Direction.potential][
+                        BoundaryCondition.load
+                    ].shape,
+                )
+                print(
+                    "Love numbers shape:",
+                    Love_numbers.values[Direction.potential][
+                        BoundaryCondition.load
+                    ].shape,
+                )
+                print(
+                    "elastic frequencial harmonic load signal shape:",
+                    elastic_frequencial_harmonic_load_signal.shape,
+                )
+                print(
+                    "frequencial harmonic load signal shape:",
+                    frequencial_harmonic_load_signal.shape,
+                )
+                print(
+                    "elastic load mean:",
+                    mean_on_mask(
+                        mask=ocean_mask,
+                        harmonics=compute_signal_trends(
+                            signal_dates=dates,
+                            load_signal_hyper_parameters=load_signal_hyper_parameters,
+                            frequencial_harmonic_load_signal=elastic_frequencial_harmonic_load_signal,
+                        ),
+                    ),
+                )
+                print(
+                    "load mean:",
+                    mean_on_mask(
+                        mask=ocean_mask,
+                        harmonics=compute_signal_trends(
+                            signal_dates=dates,
+                            load_signal_hyper_parameters=load_signal_hyper_parameters,
+                            frequencial_harmonic_load_signal=frequencial_harmonic_load_signal,
+                        ),
+                    ),
+                )
+                print()
 
                 # Derives degree one correction.
                 frequencial_harmonic_load_signal[:, 1, :2, :] = degree_one_inversion(

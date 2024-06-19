@@ -2,7 +2,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional
 
-from numpy import array, expand_dims, ndarray, ones
+from numpy import Inf, array, expand_dims, ndarray, ones
 
 from ..database import load_base_model, save_base_model
 from .hyper_parameters import HyperParameters
@@ -112,9 +112,11 @@ class Result:
                 },
                 "axes": {
                     axe_name: (
-                        {"real": axe_values}
-                        if not isinstance(axe_values.flatten()[0], complex)
-                        else {"real": axe_values.real, "imag": axe_values.imag}
+                        (
+                            {"real": ["Inf"] if axe_values[0] == Inf else axe_values}
+                            if not isinstance(axe_values.flatten()[0], complex)
+                            else {"real": axe_values.real, "imag": axe_values.imag}
+                        )
                     )
                     for axe_name, axe_values in self.axes.items()
                 },
@@ -157,7 +159,9 @@ class Result:
         )
 
         self.axes = {
-            axe_name: array(object=axe_values["real"])
+            axe_name: array(
+                object=[Inf] if "Inf" in axe_values["real"] else axe_values["real"]
+            )
             + (
                 0.0
                 if not ("imag" in axe_values.keys())

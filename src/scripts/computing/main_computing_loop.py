@@ -22,9 +22,9 @@ from ...utils import (
     dates_path,
     degree_one_inversion,
     dynamic_load_signal_trends_path,
-    elastic_frequencial_harmonic_load_signal_computing,
     elastic_load_signal_trends_path,
     elastic_load_signals_path,
+    elastic_Love_numbers_computing,
     find_minimal_computing_options,
     frequencies_path,
     generate_degrees_list,
@@ -173,15 +173,6 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             short_term_anelasticity_name=short_term_anelasticity_model_name,
         )
 
-        # Eventually indicates equalvalent model's elastic results path.
-        if not ELASTIC_RUN_HYPER_PARAMETERS in options_to_compute:
-            add_result_to_table(
-                table_name="Love_numbers",
-                result_caracteristics=result_caracteristics
-                | ELASTIC_RUN_HYPER_PARAMETERS.__dict__
-                | {"ID": elastic_equivalent_ID},
-            )
-
         # If the option needs to be computed for this rheological description.
         for run_hyper_parameters in options_to_compute:
 
@@ -204,21 +195,22 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             )
 
             # Saves.
-            axes = {
-                "degrees": array(object=degrees),
-                "frequencies": anelasticity_description.frequency_unit
-                * 10.0**log_frequencies,
-            }
             Love_numbers_result = Result(
-                hyper_parameters=Love_numbers_hyper_parameters, axes=axes
+                hyper_parameters=Love_numbers_hyper_parameters,
+                axes={
+                    "degrees": array(object=degrees),
+                    "frequencies": anelasticity_description.frequency_unit
+                    * 10.0**log_frequencies,
+                },
             )
             Love_numbers_result.update_values_from_array(
                 result_array=Love_numbers_array,
             )
             Love_numbers_id = generate_new_id(path=Love_numbers_path)
             Love_numbers_result.save(name=Love_numbers_id, path=Love_numbers_path)
-            result_caracteristics = (
-                {
+            add_result_to_table(
+                table_name="Love_numbers",
+                result_caracteristics={
                     "ID": Love_numbers_id,
                     "elasticity_model": elasticity_model_name,
                     "long_term_anelasticity_model": long_term_anelasticity_model_name,
@@ -232,15 +224,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     for key, value in Love_numbers_hyper_parameters.y_system_hyper_parameters.__dict__.items()
                     if type(value) is bool
                 }
-                | run_hyper_parameters.__dict__
+                | run_hyper_parameters.__dict__,
             )
-            add_result_to_table(
-                table_name="Love_numbers", result_caracteristics=result_caracteristics
-            )
-
-            # Eventually indicates equalvalent model's elastic results path.
-            if run_hyper_parameters == ELASTIC_RUN_HYPER_PARAMETERS:
-                elastic_equivalent_ID = Love_numbers_id
 
             # III - Loops on elastic load signals to compute anelastic load signals.
             for elastic_load_signal_id, (
@@ -264,13 +249,13 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 )
 
                 if run_hyper_parameters == ELASTIC_RUN_HYPER_PARAMETERS:
-                    frequencial_harmonic_load_signal, elastic_Love_numbers = (
-                        elastic_frequencial_harmonic_load_signal_computing(
-                            anelasticity_description_id=anelasticity_description.id,
-                            n_max=load_signal_hyper_parameters.n_max,
-                            Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
-                            frequencial_elastic_normalized_load_signal=elastic_frequencial_harmonic_load_signal,
-                        )
+                    elastic_Love_numbers = elastic_Love_numbers_computing(
+                        anelasticity_description_id=anelasticity_description.id,
+                        n_max=load_signal_hyper_parameters.n_max,
+                        Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
+                    )
+                    frequencial_harmonic_load_signal = (
+                        elastic_frequencial_harmonic_load_signal
                     )
                     Love_numbers = elastic_Love_numbers
                 else:
@@ -300,20 +285,6 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     load_signal_hyper_parameters=load_signal_hyper_parameters,
                     frequencial_harmonic_load_signal=frequencial_harmonic_load_signal,
                 )
-
-                from pyshtools import SHCoeffs
-
-                elastic_harmonic_load_signal_trends = load_complex_array_from_binary(
-                    name=elastic_load_signal_id, path=elastic_load_signal_trends_path
-                )
-                clm = SHCoeffs.from_array(
-                    coeffs=harmonic_load_signal_trends
-                    - elastic_harmonic_load_signal_trends
-                )
-                fig, ax = clm.plot_spectrum(show=True)
-                from matplotlib.pyplot import show
-
-                show()
 
                 # Saves.
                 dynamic_load_signal_id = generate_new_id(

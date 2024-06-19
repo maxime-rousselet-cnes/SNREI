@@ -39,7 +39,7 @@ from .load_signal import (
     anelastic_frequencial_harmonic_load_signal_computing,
     build_frequencial_harmonic_elastic_load_signal,
     compute_signal_trends,
-    elastic_frequencial_harmonic_load_signal_computing,
+    elastic_Love_numbers_computing,
 )
 from .Love_numbers import Love_numbers_computing, generate_log_frequency_initial_values
 from .seismic_fit import remove_earthquakes
@@ -84,7 +84,7 @@ from .variations import (
     anelastic_frequencial_harmonic_load_signal_computing,
     build_frequencial_harmonic_elastic_load_signal,
     compute_signal_trends,
-    elastic_frequencial_harmonic_load_signal_computing,
+    elastic_Love_numbers_computing,
     Love_numbers_computing,
     generate_log_frequency_initial_values,
     remove_earthquakes,

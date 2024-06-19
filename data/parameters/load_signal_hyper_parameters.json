@@ -17,9 +17,5 @@
     "ocean_mask": "IMERG_land_sea_mask.nc",
     "pixels_to_coast": 10,
     "first_year_for_trend": 2003,
-    "last_year_for_trend": 2024,
-    "save_load": true,
-    "remove_load": false,
-    "do_elastic": true,
-    "elastic_reference": null
+    "last_year_for_trend": 2024
 }

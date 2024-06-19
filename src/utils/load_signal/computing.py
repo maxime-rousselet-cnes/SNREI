@@ -63,6 +63,17 @@ def anelastic_frequencial_harmonic_load_signal_computing(
         boundary_conditions=[BoundaryCondition.load],
     )
 
+    import matplotlib.pyplot as plt
+
+    plt.plot(
+        1 / signal_frequencies,
+        anelastic_hermitian_Love_numbers.values[Direction.potential][
+            BoundaryCondition.load
+        ][1]
+        / elastic_Love_numbers.values[Direction.potential][BoundaryCondition.load][1],
+    )
+    plt.show()
+
     # Computes anelastic induced signal in frequencial-harmonic domain.
     return (  # (1 + k_el) / (1 + k_anel) * {C, S}.
         multiply(

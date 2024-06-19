@@ -292,6 +292,12 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     ),
                 )
                 print()
+                import matplotlib.pyplot as plt
+                from scipy.fft import ifft
+
+                plt.plot(dates, ifft(frequencial_harmonic_elastic_load_signal[0, 2, 0]))
+                plt.plot(dates, ifft(frequencial_harmonic_load_signal[0, 2, 0]))
+                plt.show()
 
                 # Derives degree one correction.
                 frequencial_harmonic_load_signal[:, 1, :2, :] = degree_one_inversion(

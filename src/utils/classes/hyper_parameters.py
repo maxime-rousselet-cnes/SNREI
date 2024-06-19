@@ -209,12 +209,6 @@ class LoadSignalHyperParameters(HyperParameters):
     first_year_for_trend: int
     last_year_for_trend: int
 
-    # Loop logistic parameters.
-    save_load: bool
-    remove_load: bool
-    do_elastic: bool
-    elastic_reference_id: Optional[str]
-
 
 def load_load_signal_hyper_parameters(
     name: Optional[str] = None,

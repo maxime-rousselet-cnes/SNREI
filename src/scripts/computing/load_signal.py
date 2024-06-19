@@ -2,9 +2,9 @@ from ...utils import (
     OPTIONS,
     LoadSignalHyperParameters,
     RunHyperParameters,
-    anelastic_load_signal_per_degree,
     build_elastic_load_signal,
     compute_anelastic_harmonic_load_per_description_per_options,
+    dynamic_load_signal_per_degree,
     load_load_signal_hyper_parameters,
 )
 
@@ -34,7 +34,7 @@ def compute_anelastic_load_per_degree_per_description_per_options(
         for run_hyper_parameters in options:
             load_signal_hyper_parameters.run_hyper_parameters = run_hyper_parameters
             # Computes anelastic induced load signal per degree.
-            anelastic_load_signal_per_degree(
+            dynamic_load_signal_per_degree(
                 anelasticity_description_id=anelasticity_description_id,
                 load_signal_hyper_parameters=load_signal_hyper_parameters,
                 signal_dates=signal_dates,

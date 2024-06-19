@@ -15,13 +15,13 @@ from ...utils import (
     RunHyperParameters,
     add_result_to_table,
     anelastic_frequencial_harmonic_load_signal_computing,
-    anelastic_load_signal_trends_path,
     build_frequencial_harmonic_elastic_load_signal,
     compute_signal_trends,
     create_all_load_signal_hyper_parameters_variations,
     create_all_model_variations,
     dates_path,
     degree_one_inversion,
+    dynamic_load_signal_trends_path,
     elastic_frequencial_harmonic_load_signal_computing,
     elastic_load_signal_trends_path,
     elastic_load_signals_path,
@@ -264,7 +264,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 )
 
                 if run_hyper_parameters == ELASTIC_RUN_HYPER_PARAMETERS:
-                    frequencial_harmonic_load_signal, Love_numbers = (
+                    frequencial_harmonic_load_signal, elastic_Love_numbers = (
                         elastic_frequencial_harmonic_load_signal_computing(
                             anelasticity_description_id=anelasticity_description.id,
                             n_max=load_signal_hyper_parameters.n_max,
@@ -272,6 +272,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             frequencial_elastic_normalized_load_signal=elastic_frequencial_harmonic_load_signal,
                         )
                     )
+                    Love_numbers = elastic_Love_numbers
                 else:
                     # Computes anelastic load signal.
                     (
@@ -315,13 +316,13 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 show()
 
                 # Saves.
-                anelastic_load_signal_id = generate_new_id(
-                    path=anelastic_load_signal_trends_path
+                dynamic_load_signal_id = generate_new_id(
+                    path=dynamic_load_signal_trends_path
                 )
                 add_result_to_table(
-                    table_name="anelastic_load_signal_trends",
+                    table_name="dynamic_load_signal_trends",
                     result_caracteristics={
-                        "ID": anelastic_load_signal_id,
+                        "ID": dynamic_load_signal_id,
                         "Love_numbers_ID": Love_numbers_id,
                         "elastic_load_signal_ID": elastic_load_signal_id,
                         "ocean_mean": mean_on_mask(
@@ -333,6 +334,6 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 )
                 save_complex_array_to_binary(
                     input_array=harmonic_load_signal_trends,
-                    name=anelastic_load_signal_id,
-                    path=anelastic_load_signal_trends_path,
+                    name=dynamic_load_signal_id,
+                    path=dynamic_load_signal_trends_path,
                 )

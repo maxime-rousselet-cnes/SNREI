@@ -43,8 +43,6 @@ frequencies_path = results_path.joinpath("frequencies")
 Love_numbers_path = results_path.joinpath("Love_numbers")
 elastic_load_signals_path = results_path.joinpath("elastic_load_signals")
 elastic_load_signal_trends_path = results_path.joinpath("elastic_load_signal_trends")
-anelastic_load_signal_trends_path = results_path.joinpath(
-    "anelastic_load_signal_trends"
-)
+dynamic_load_signal_trends_path = results_path.joinpath("dynamic_load_signal_trends")
 
 figures_path = data_path.joinpath("figures")

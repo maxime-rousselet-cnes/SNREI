@@ -114,7 +114,7 @@ def degree_one_inversion(
 
         # Inversion.
         solution_vector, _, _, _ = lstsq(a=left_hand_side, b=right_hand_side)
-        degree_one[:, :2, frequencial_index] = array(
+        degree_one[:, :, frequencial_index] = array(
             object=[
                 [solution_vector[0], solution_vector[1]],
                 [0.0, solution_vector[2]],

@@ -1,7 +1,8 @@
-from numpy import array, concatenate, multiply, ndarray, zeros
+from numpy import array, concatenate, multiply, ndarray, sqrt, zeros
 from pyshtools.expand import MakeGridDH
 from scipy.linalg import lstsq
 
+from ...functions import surface_ponderation
 from ..classes import DENSITY_RATIO, BoundaryCondition, Direction, Result
 
 
@@ -23,6 +24,9 @@ def degree_one_inversion(
         dtype=complex,
     )
     ocean_mask_indices = ocean_mask.flatten().astype(dtype=bool)
+    least_square_weights = sqrt(
+        surface_ponderation(mask=ocean_mask).flatten()[ocean_mask_indices]
+    )
 
     # Right-Hand Side terms that includes 1 + k'_n - h'_n.
     right_hand_side_terms = multiply(
@@ -113,7 +117,10 @@ def degree_one_inversion(
         right_hand_side = spatial_right_hand_side.flatten()[ocean_mask_indices]
 
         # Inversion.
-        solution_vector, _, _, _ = lstsq(a=left_hand_side, b=right_hand_side)
+        solution_vector, _, _, _ = lstsq(
+            a=multiply(a=least_square_weights, b=left_hand_side.T).T,
+            b=least_square_weights * right_hand_side,
+        )
         degree_one[:, :, frequencial_index] = array(
             object=[
                 [solution_vector[0], solution_vector[1]],

@@ -39,7 +39,6 @@ from ...utils import (
     save_base_model,
     save_complex_array_to_binary,
 )
-from ...utils.classes import BoundaryCondition, Direction
 
 
 def compute_load_signal_trends_for_anelastic_Earth_models(

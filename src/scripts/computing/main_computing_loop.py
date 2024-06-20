@@ -281,7 +281,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 print("description id:", anelasticity_description.id)
                 print("run:", run_hyper_parameters)
                 print(
-                    "load mean:",
+                    "load mean before degree one replacement:",
                     mean_on_mask(
                         mask=ocean_mask,
                         harmonics=compute_signal_trends(
@@ -291,13 +291,6 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         ),
                     ),
                 )
-                print()
-                import matplotlib.pyplot as plt
-                from scipy.fft import ifft
-
-                plt.plot(dates, ifft(frequencial_harmonic_elastic_load_signal[0, 2, 0]))
-                plt.plot(dates, ifft(frequencial_harmonic_load_signal[0, 2, 0]))
-                plt.show()
 
                 # Derives degree one correction.
                 frequencial_harmonic_load_signal[:, 1, :2, :] = degree_one_inversion(
@@ -312,6 +305,14 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     load_signal_hyper_parameters=load_signal_hyper_parameters,
                     frequencial_harmonic_load_signal=frequencial_harmonic_load_signal,
                 )
+
+                print(
+                    "load mean after degree one replacement:",
+                    mean_on_mask(
+                        mask=ocean_mask, harmonics=harmonic_load_signal_trends
+                    ),
+                )
+                print()
 
                 # Saves.
                 dynamic_load_signal_id = generate_new_id(

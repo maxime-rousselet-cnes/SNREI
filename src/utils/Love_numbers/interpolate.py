@@ -1,4 +1,4 @@
-from numpy import Inf, array, concatenate, flip, ndarray
+from numpy import Inf, array, concatenate, flip, meshgrid, ndarray
 from scipy import interpolate
 
 from ...functions import build_hermitian
@@ -114,22 +114,27 @@ def interpolate_anelastic_Love_numbers(
         }
         for direction in directions
     }
+    target_grid_degrees, target_grid_frequencies = meshgrid(
+        target_degrees, target_frequencies
+    )
     return Result(
         values={
             direction: {
-                boundary_condition: interpolate.interp2d(
-                    x=symmetric_source_frequencies,
-                    y=source_degrees,
+                boundary_condition: interpolate.RectBivariateSpline(
+                    x=source_degrees.real,
+                    y=symmetric_source_frequencies.real,
                     z=hermitian_Love_numbers[direction][boundary_condition].real,
-                    kind="linear",
-                )(x=target_frequencies, y=target_degrees)
+                )
+                .ev(xi=target_grid_degrees, yi=target_grid_frequencies)
+                .T
                 + 1.0j
-                * interpolate.interp2d(
-                    x=symmetric_source_frequencies,
-                    y=source_degrees,
+                * interpolate.RectBivariateSpline(
+                    x=source_degrees.real,
+                    y=symmetric_source_frequencies.real,
                     z=hermitian_Love_numbers[direction][boundary_condition].imag,
-                    kind="linear",
-                )(x=target_frequencies, y=target_degrees)
+                )
+                .ev(xi=target_grid_degrees, yi=target_grid_frequencies)
+                .T
                 for boundary_condition in boundary_conditions
             }
             for direction in directions

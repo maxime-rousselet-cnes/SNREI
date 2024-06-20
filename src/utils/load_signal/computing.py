@@ -27,7 +27,6 @@ def elastic_Love_numbers_computing(
     Gets already computed Love numbers and computes elastic frequential-harmonic load signal.
     """
 
-    Love_numbers_hyper_parameters.run_hyper_parameters = ELASTIC_RUN_HYPER_PARAMETERS
     # Interpolates elastic Love numbers on signal degrees.
     elastic_Love_numbers: Result = interpolate_elastic_Love_numbers(
         anelasticity_description_id=anelasticity_description_id,
@@ -62,17 +61,6 @@ def anelastic_frequencial_harmonic_load_signal_computing(
         directions=[Direction.radial, Direction.potential],
         boundary_conditions=[BoundaryCondition.load],
     )
-
-    import matplotlib.pyplot as plt
-
-    plt.plot(
-        1 / signal_frequencies,
-        anelastic_hermitian_Love_numbers.values[Direction.potential][
-            BoundaryCondition.load
-        ][1]
-        / elastic_Love_numbers.values[Direction.potential][BoundaryCondition.load][1],
-    )
-    plt.show()
 
     # Computes anelastic induced signal in frequencial-harmonic domain.
     return (  # (1 + k_el) / (1 + k_anel) * {C, S}.

@@ -118,7 +118,7 @@ def degree_one_inversion(
 
         # Inversion.
         solution_vector, _, _, _ = lstsq(
-            a=multiply(a=least_square_weights, b=left_hand_side.T).T,
+            a=multiply(least_square_weights, left_hand_side.T).T,
             b=least_square_weights * right_hand_side,
         )
         degree_one[:, :, frequencial_index] = array(

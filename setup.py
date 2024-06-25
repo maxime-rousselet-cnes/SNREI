@@ -18,5 +18,6 @@ setup(
         "pathlib",
         "pydantic",
         "multiprocessing",
+        "cmocean",
     ],
 )

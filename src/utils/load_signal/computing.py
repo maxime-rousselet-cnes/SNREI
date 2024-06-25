@@ -3,7 +3,6 @@ from scipy.fft import ifft
 
 from ...functions import signal_trend
 from ..classes import (
-    ELASTIC_RUN_HYPER_PARAMETERS,
     SECONDS_PER_YEAR,
     BoundaryCondition,
     Direction,
@@ -66,24 +65,20 @@ def anelastic_frequencial_harmonic_load_signal_computing(
     return (  # (1 + k_el) / (1 + k_anel) * {C, S}.
         multiply(
             expand_dims(
-                a=elastic_Love_numbers.values[Direction.potential][
-                    BoundaryCondition.load
-                ],
+                a=elastic_Love_numbers.values[Direction.potential][BoundaryCondition.load],
                 axis=0,
             )
-            / anelastic_hermitian_Love_numbers.values[Direction.potential][
-                BoundaryCondition.load
-            ].T,
+            / anelastic_hermitian_Love_numbers.values[Direction.potential][BoundaryCondition.load].T,
             frequencial_elastic_normalized_load_signal.transpose((0, 2, 3, 1)),
         ).transpose((0, 3, 1, 2)),
         anelastic_hermitian_Love_numbers,
     )
 
 
-def compute_signal_trends(
+def compute_harmonic_signal_trends(
     signal_dates: ndarray,
     load_signal_hyper_parameters: LoadSignalHyperParameters,
-    frequencial_harmonic_load_signal: ndarray[complex],
+    frequencial_harmonic_signal: ndarray[complex],
 ) -> ndarray[float]:
     """
     Computes harmonic trends (C/S, degrees, orders) from frequencial harmonic data (C/S, degrees, orders, frequencies).
@@ -94,18 +89,12 @@ def compute_signal_trends(
         signal_dates=signal_dates,
         load_signal_hyper_parameters=load_signal_hyper_parameters,
     )
-    signal_trends = zeros(shape=frequencial_harmonic_load_signal.shape[:-1])
+    signal_trends = zeros(shape=frequencial_harmonic_signal.shape[:-1])
 
     # Computes trend for all harmonics.
-    for i_sign, frequencial_harmonics_per_degree in enumerate(
-        frequencial_harmonic_load_signal
-    ):
-        for i_degree, frequencial_harmonic_load_signal_per_order in enumerate(
-            frequencial_harmonics_per_degree
-        ):
-            for i_order, frequencial_signal in enumerate(
-                frequencial_harmonic_load_signal_per_order
-            ):
+    for i_sign, frequencial_harmonics_per_degree in enumerate(frequencial_harmonic_signal):
+        for i_degree, frequencial_harmonic_load_signal_per_order in enumerate(frequencial_harmonics_per_degree):
+            for i_order, frequencial_signal in enumerate(frequencial_harmonic_load_signal_per_order):
                 signal: ndarray = ifft(frequencial_signal)[trend_indices]
                 signal_trends[i_sign, i_degree, i_order] = signal_trend(
                     trend_dates=trend_dates,
@@ -113,3 +102,27 @@ def compute_signal_trends(
                 )[0]
 
     return signal_trends
+
+
+def compute_signal_trend(
+    signal_dates: ndarray,
+    load_signal_hyper_parameters: LoadSignalHyperParameters,
+    input_signal: ndarray[complex],
+) -> ndarray[float]:
+    """
+    Computes trend from frequencial data.
+    """
+
+    # Initializes.
+    trend_indices, trend_dates = get_trend_dates(
+        signal_dates=signal_dates,
+        load_signal_hyper_parameters=load_signal_hyper_parameters,
+    )
+
+    # Computes trend for all harmonics.
+    signal: ndarray = ifft(input_signal)[trend_indices]
+
+    return signal_trend(
+        trend_dates=trend_dates,
+        signal=signal.real,
+    )[0]

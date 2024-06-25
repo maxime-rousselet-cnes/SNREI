@@ -3,7 +3,7 @@
     "load_history": "Frederikse/global_basin_timeseries.csv",
     "case": "lower",
     "spline_time_years": 50,
-    "initial_plateau_time_years": 2000,
+    "initial_plateau_time_years": 1500,
     "anti_Gibbs_effect_factor": 1,
     "LIA": false,
     "LIA_end_date": 1400,

@@ -1,0 +1,3 @@
+from .load_signal_components import generate_load_signal_components_figure
+
+[generate_load_signal_components_figure]

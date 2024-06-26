@@ -1,4 +1,4 @@
-from numpy import array, concatenate, multiply, ndarray, sqrt, zeros
+from numpy import array, concatenate, multiply, ndarray, ones, sqrt, zeros
 from pyshtools.expand import MakeGridDH
 from scipy.linalg import lstsq
 
@@ -16,14 +16,20 @@ def frequencial_harmonic_component(
     Optimally performs the multiplication Love_number_term(n, omega) * frequencial_harmonic_load(C/S, n, m, omega).
     """
 
+    n_frequencies = len(Love_numbers.axes["frequencies"])
     return multiply(
         anelastic_frequencial_harmonic_load_signal.transpose((0, 2, 3, 1)),
         (
             DENSITY_RATIO
-            * multiply(
-                (Love_numbers.values[direction][boundary_condition]).T,
-                3 / (2 * Love_numbers.axes["degrees"] + 1),
-            ).T
+            * concatenate(
+                (  # Adds a line of zeros values for order zero.
+                    ones(shape=(1, n_frequencies)),
+                    multiply(
+                        Love_numbers.values[direction][boundary_condition].T,
+                        3 / (2 * Love_numbers.axes["degrees"] + 1),
+                    ).T,
+                )
+            )
         ).T,
     ).transpose((0, 3, 1, 2))
 

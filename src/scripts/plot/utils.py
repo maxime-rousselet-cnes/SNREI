@@ -1,11 +1,10 @@
-from typing import Optional
+from typing import Any
 
 from cartopy.crs import PlateCarree
 from cartopy.mpl.geoaxes import GeoAxes
-from cartopy.mpl.gridliner import LATITUDE_FORMATTER, LONGITUDE_FORMATTER
+from cartopy.mpl.gridliner import LATITUDE_FORMATTER
 from cmocean import cm
 from matplotlib.colors import TwoSlopeNorm
-from matplotlib.ticker import FixedLocator
 from numpy import Inf, linspace, maximum, minimum, ndarray, round
 from pyshtools.expand import MakeGridDH
 
@@ -13,9 +12,9 @@ from pyshtools.expand import MakeGridDH
 def natural_projection(
     ax: GeoAxes,
     harmonics: ndarray[float],
-    saturation_threshold: Optional[float] = 50,
+    saturation_threshold: float,
     decimals: int = 4,
-):
+) -> Any:
     """
     Displays a projection of a given harmonic quantity on the given matplotlib Axes.
     """
@@ -46,10 +45,7 @@ def natural_projection(
     gl.top_labels = False
     gl.left_labels = False
     gl.xlines = False
-    gl.xlocator = FixedLocator([-90, 90, 180])
-    gl.xformatter = LONGITUDE_FORMATTER
     gl.yformatter = LATITUDE_FORMATTER
-    gl.xlabel_style = {"size": 15, "color": "gray"}
-    gl.xlabel_style = {"color": "red", "weight": "bold"}
+    gl.xlabel_style = {"color": "gray"}
 
     return contour

@@ -56,7 +56,7 @@ def save_complex_array_to_binary(input_array: ndarray, name: str, path: Path) ->
     path.mkdir(parents=True, exist_ok=True)
     filename = path.joinpath(name)
     with open(filename, "wb") as f:
-        input_array.astype(complex).tofile(f)
+        input_array.flatten().astype(complex).tofile(f)
     shape_filename = path.joinpath(name + "_shape")
     with open(shape_filename, "wb") as f:
         array(object=input_array.shape).tofile(f)
@@ -70,9 +70,7 @@ def load_complex_array_from_binary(name: str, path: Path) -> ndarray[complex128]
     # Load the array from binary file
     filename = path.joinpath(name)
     shape_filename = path.joinpath(name + "_shape")
-    return fromfile(filename, dtype=complex).reshape(
-        fromfile(shape_filename, dtype=int)
-    )
+    return fromfile(filename, dtype=complex).reshape(fromfile(shape_filename, dtype=int))
 
 
 def generate_degrees_list(
@@ -84,9 +82,7 @@ def generate_degrees_list(
     """
     return concatenate(
         [
-            arange(
-                degree_thresholds[i], degree_thresholds[i + 1], degree_step, dtype=int
-            )
+            arange(degree_thresholds[i], degree_thresholds[i + 1], degree_step, dtype=int)
             for i, degree_step in enumerate(degree_steps)
         ],
         dtype=int,

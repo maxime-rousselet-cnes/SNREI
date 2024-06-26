@@ -98,7 +98,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
     # I - Loops on all load history models to produce elastic load signals.
     elastic_load_signal_datas: dict[
         str,
-        tuple[LoadSignalHyperParameters, ndarray],  # ID and ocean mask.
+        tuple[LoadSignalHyperParameters, ndarray],  # ID, redefined n_max and ocean mask.
     ] = {}
     for load_signal_hyper_parameters in load_signal_hyper_parameter_variations:
 
@@ -108,12 +108,13 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             frequencies,
             frequencial_harmonic_elastic_load_signal,
         ) = build_frequencial_harmonic_elastic_load_signal(load_signal_hyper_parameters=load_signal_hyper_parameters)
+        load_signal_hyper_parameters.n_max = redefine_n_max(
+            n_max=load_signal_hyper_parameters.n_max,
+            harmonics=frequencial_harmonic_elastic_load_signal,
+        )
         ocean_mask = get_ocean_mask(
             name=load_signal_hyper_parameters.ocean_mask,
-            n_max=redefine_n_max(
-                n_max=load_signal_hyper_parameters.n_max,
-                harmonics=frequencial_harmonic_elastic_load_signal,
-            ),
+            n_max=load_signal_hyper_parameters.n_max,
         )
 
         # Saves dates, frequencies, the load signal and its trends.

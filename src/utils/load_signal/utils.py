@@ -1,26 +1,8 @@
-from numpy import (
-    arange,
-    array,
-    ceil,
-    concatenate,
-    flip,
-    linspace,
-    log2,
-    ndarray,
-    round,
-    tensordot,
-    where,
-    zeros,
-)
+from numpy import arange, array, ceil, concatenate, flip, linspace, log2, ndarray, round, tensordot, where, zeros
 from scipy import interpolate
 from scipy.fft import fft, fftfreq
 
-from ...functions import (
-    map_normalizing,
-    mean_on_mask,
-    signal_trend,
-    surface_ponderation,
-)
+from ...functions import map_normalizing, mean_on_mask, signal_trend, surface_ponderation
 from ..classes import GRACE_trends_data_path, LoadSignalHyperParameters
 from ..data import (
     extract_GRACE_data,

@@ -1,5 +1,5 @@
 {
-    "period_min_year": 1e-3,
+    "period_min_year": 1e-1,
     "period_max_year": 1e5,
     "n_frequency_0": 30,
     "max_tol": 0.1,

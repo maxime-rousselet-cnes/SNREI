@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from cartopy.crs import Robinson
+from cartopy.feature import NaturalEarthFeature
 from cartopy.mpl.geoaxes import GeoAxes
 from matplotlib.pyplot import figure, show
 from numpy import ndarray
@@ -18,6 +19,8 @@ from .utils import natural_projection
 ROW_PATHS: dict[str, Path] = {
     "load signal before degree one replacement": harmonic_load_signal_trends_before_degree_one_replacement_path,
     "load signal after degree one replacement": harmonic_load_signal_trends_path,
+    "degree one only before degree one replacement": harmonic_load_signal_trends_before_degree_one_replacement_path,
+    "degree one only after degree one replacement": harmonic_load_signal_trends_path,
     "geoid height": harmonic_geoid_trends_path,
     "radial displacement": harmonic_radial_displacement_trends_path,
     "residuals": harmonic_residual_trends_path,
@@ -25,17 +28,24 @@ ROW_PATHS: dict[str, Path] = {
 SATURATION_THRESHOLDS: dict[str, float] = {
     "load signal before degree one replacement": 50.0,
     "load signal after degree one replacement": 50.0,
+    "degree one only before degree one replacement": 5.0,
+    "degree one only after degree one replacement": 5.0,
     "geoid height": 2.0,
     "radial displacement": 2.0,
-    "residuals": 20.0,
+    "residuals": 10.0,
 }
 
 
 def generate_load_signal_components_figure(
     elastic_load_signal_id: str = "0",
     anelastic_load_signal_id: str = "2",
-    rows: list[str] = ["load signal before degree one replacement", "load signal after degree one replacement"],
-    difference: bool = True,
+    rows: list[str] = [
+        "geoid height",
+        "radial displacement",
+        "residuals",
+    ],
+    difference: bool = False,
+    continents: bool = False,
 ):
     """
     Generates a figure showing maps for all components of a computed load signal.
@@ -78,8 +88,13 @@ def generate_load_signal_components_figure(
             )
             contour = natural_projection(
                 ax=current_ax,
-                harmonics=trend_harmonic_components[row].real,
+                harmonics=(
+                    trend_harmonic_components[row][:, :2, :].real
+                    if "degree one only" in row
+                    else trend_harmonic_components[row].real
+                ),
                 saturation_threshold=SATURATION_THRESHOLDS[row],
+                n_max=trend_harmonic_components[row].shape[1] - 1,
             )
             ax += [current_ax]
             # Adds layout.
@@ -87,6 +102,10 @@ def generate_load_signal_components_figure(
             # Eventually memorizes the contour for scale.
             if column == "anelastic":
                 colorbar_contour = contour
+            if not continents:
+                current_ax.add_feature(
+                    NaturalEarthFeature("physical", "land", "50m", edgecolor="face", facecolor="grey")
+                )
 
         # ...and their difference.
         if difference:
@@ -95,11 +114,15 @@ def generate_load_signal_components_figure(
             )
             if i_row == 0:
                 current_ax.set_title("difference")
+                difference_term = (
+                    trend_harmonic_components_per_column["anelastic"][row].real
+                    - trend_harmonic_components_per_column["elastic"][row].real
+                )
             contour = natural_projection(
                 ax=current_ax,
-                harmonics=trend_harmonic_components_per_column["anelastic"][row].real
-                - trend_harmonic_components_per_column["elastic"][row].real,
+                harmonics=difference_term[:, :2, :] if "degree one only" in row else difference_term,
                 saturation_threshold=SATURATION_THRESHOLDS[row],
+                n_max=difference_term.shape[1] - 1,
             )
             ax += [current_ax]
 

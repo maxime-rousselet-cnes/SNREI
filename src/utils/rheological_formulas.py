@@ -1,16 +1,4 @@
-from numpy import (
-    array,
-    convolve,
-    cumsum,
-    diff,
-    errstate,
-    exp,
-    log,
-    nan_to_num,
-    ndarray,
-    pi,
-    zeros,
-)
+from numpy import array, convolve, cumsum, diff, errstate, exp, log, nan_to_num, ndarray, pi, zeros
 from scipy import integrate
 
 from .classes import ASYMPTOTIC_MU_RATIO_DECIMALS, SECONDS_PER_YEAR
@@ -98,25 +86,14 @@ def m_prime_computing(omega_cut_m: ndarray[complex], omega_j: complex) -> ndarra
     return omega_cut_m / (omega_cut_m + omega_j)
 
 
-def b_computing(omega_cut_m: ndarray, omega_cut_k: ndarray, omega_cut_b: ndarray, omega_j: complex) -> ndarray[complex]:
+def b_computing(
+    omega_cut_m: ndarray, omega_cut_k: ndarray, omega_cut_b: ndarray, omega_j: complex
+) -> ndarray[complex]:
     """
     Computes b transfert function value given the Maxwell's, Kelvin's and Burgers cut frequencies omega_cut_m, omega_cut_k and
     omega_cut_b and pulsation value omega.
     """
     return (omega_j * omega_cut_b) / ((omega_j + omega_cut_k) * (omega_j + omega_cut_m))
-
-
-def lambda_computing(
-    mu_complex: ndarray[complex],
-    lambda_complex: ndarray[complex],
-    m_prime: ndarray[complex],
-    b: ndarray[complex],
-) -> ndarray[complex]:
-    """
-    Computes complex analog lambda values, given the complex elastic moduli mu and lambda and m_prime and b transfert function
-    values at pulsation value omega.
-    """
-    return lambda_complex + (2.0 / 3.0) * mu_complex * (m_prime + b) / (1 + b)
 
 
 def mu_computing(
@@ -175,7 +152,8 @@ def f_attenuation_computing(
             return nan_to_num(  # Alpha or omega_m may be equal to 0.0, meaning no attenuation should be taken into account.
                 x=((2.0 / pi) * log(frequency / omega_0) + 1.0j) * high_frequency_domain
                 + (
-                    (2.0 / pi) * (log(omega_m_tab / omega_0) + (1 / alpha_tab) * (1 - (omega_m_tab / frequency) ** alpha_tab))
+                    (2.0 / pi)
+                    * (log(omega_m_tab / omega_0) + (1 / alpha_tab) * (1 - (omega_m_tab / frequency) ** alpha_tab))
                     + (omega_m_tab / frequency) ** alpha_tab * 1.0j
                 )
                 * (1 - high_frequency_domain),

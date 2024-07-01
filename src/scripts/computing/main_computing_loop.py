@@ -1,11 +1,11 @@
 from itertools import product
 
 from numpy import array, ndarray
-from pyshtools import SHCoeffs
 
 from ...functions import mean_on_mask
 from ...utils import (
     ELASTIC_RUN_HYPER_PARAMETERS,
+    SECONDS_PER_YEAR,
     AnelasticityDescription,
     LoadSignalHyperParameters,
     Love_numbers_computing,
@@ -46,6 +46,7 @@ from ...utils import (
     save_base_model,
     save_complex_array_to_binary,
 )
+from ...utils.classes import BoundaryCondition, Direction
 
 
 def compute_load_signal_trends_for_anelastic_Earth_models(
@@ -201,8 +202,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 hyper_parameters=Love_numbers_hyper_parameters,
                 axes={
                     "degrees": array(object=degrees),
-                    "frequencies": anelasticity_description.frequency_unit * 10.0**log_frequencies,
-                },
+                    "frequencies": anelasticity_description.frequency_unit * 10.0**log_frequencies * SECONDS_PER_YEAR,
+                },  # (yr^-1)
             )
             Love_numbers_result.update_values_from_array(
                 result_array=Love_numbers_array,

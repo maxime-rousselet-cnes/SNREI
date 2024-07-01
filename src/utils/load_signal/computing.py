@@ -1,15 +1,8 @@
-from numpy import Inf, arange, concatenate, expand_dims, multiply, ndarray, ones, zeros
+from numpy import arange, concatenate, errstate, multiply, nan_to_num, ndarray, ones, zeros
 from scipy.fft import ifft
 
 from ...functions import signal_trend
-from ..classes import (
-    SECONDS_PER_YEAR,
-    BoundaryCondition,
-    Direction,
-    LoadSignalHyperParameters,
-    LoveNumbersHyperParameters,
-    Result,
-)
+from ..classes import BoundaryCondition, Direction, LoadSignalHyperParameters, LoveNumbersHyperParameters, Result
 from ..Love_numbers import interpolate_anelastic_Love_numbers, interpolate_elastic_Love_numbers
 from .utils import get_trend_dates
 
@@ -51,7 +44,7 @@ def anelastic_frequencial_harmonic_load_signal_computing(
     # Interpolates anelastic Love numbers on signal degrees and frequencies as hermitian signal.
     anelastic_hermitian_Love_numbers: Result = interpolate_anelastic_Love_numbers(
         anelasticity_description_id=anelasticity_description_id,
-        target_frequencies=signal_frequencies / SECONDS_PER_YEAR,  # (yr^-1) -> (Hz).
+        target_frequencies=signal_frequencies,  # (yr^-1) -> (Hz).
         target_degrees=arange(n_max) + 1,  # Does not include n = 0.
         Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
         directions=[Direction.radial, Direction.potential],
@@ -59,20 +52,24 @@ def anelastic_frequencial_harmonic_load_signal_computing(
     )
 
     # Computes anelastic induced signal in frequencial-harmonic domain.
-    return (  # (1 + k_el) / (1 + k_anel) * {C, S}.
-        multiply(
-            concatenate(
-                (  # Adds a line of zeros values for order zero.
-                    zeros(shape=(len(signal_frequencies), 1)),
-                    elastic_Love_numbers.values[Direction.potential][BoundaryCondition.load]
-                    / anelastic_hermitian_Love_numbers.values[Direction.potential][BoundaryCondition.load].T,
-                ),
-                axis=1,
-            ),
-            frequencial_elastic_normalized_load_signal.transpose((0, 2, 3, 1)),
-        ).transpose((0, 3, 1, 2)),
-        anelastic_hermitian_Love_numbers,
-    )
+    with errstate(invalid="ignore", divide="ignore"):
+        return (  # (1 + k_el) / (1 + k_anel) * {C, S}.
+            multiply(
+                concatenate(
+                    (  # Adds a line of one values for degree zero.
+                        ones(shape=(1, len(signal_frequencies))),
+                        nan_to_num(
+                            x=elastic_Love_numbers.values[Direction.potential][BoundaryCondition.load]
+                            / anelastic_hermitian_Love_numbers.values[Direction.potential][BoundaryCondition.load],
+                            nan=0.0,
+                        ),
+                    ),
+                    axis=0,
+                ).T,
+                frequencial_elastic_normalized_load_signal.transpose((0, 2, 3, 1)),
+            ).transpose((0, 3, 1, 2)),
+            anelastic_hermitian_Love_numbers,
+        )
 
 
 def compute_harmonic_signal_trends(

@@ -13,6 +13,7 @@ def natural_projection(
     ax: GeoAxes,
     harmonics: ndarray[float],
     saturation_threshold: float,
+    n_max: int,
     decimals: int = 4,
 ) -> Any:
     """
@@ -21,7 +22,7 @@ def natural_projection(
 
     # Gets quantity in spatial domain.
     spatial_result: ndarray[float] = round(
-        a=MakeGridDH(harmonics, sampling=2),
+        a=MakeGridDH(harmonics, sampling=2, lmax=n_max),
         decimals=decimals,
     )
 

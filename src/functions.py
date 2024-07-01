@@ -19,6 +19,7 @@ from numpy import (
     prod,
     round,
     setdiff1d,
+    sign,
     unique,
     vstack,
     zeros,
@@ -51,11 +52,7 @@ def precise_curvature(
 
         # Updates.
         x_values = concatenate((x_values, x_new_values))
-        f_values = (
-            f_new_values
-            if len(f_values) == 0
-            else concatenate((f_values, f_new_values))
-        )
+        f_values = f_new_values if len(f_values) == 0 else concatenate((f_values, f_new_values))
         order = argsort(x_values)
         x_values = x_values[order]
         f_values = f_values[order]
@@ -76,21 +73,15 @@ def precise_curvature(
             ) > max_tol * max(a=abs([f_left, f_x, f_right]), axis=0)
             if condition.any():
                 # Updates sampling.
-                x_new_values = concatenate(
-                    (x_new_values, [(x + x_left) / 2.0, (x + x_right) / 2.0])
-                )
+                x_new_values = concatenate((x_new_values, [(x + x_left) / 2.0, (x + x_right) / 2.0]))
 
         # Keeps only values that are not already taken into account.
-        x_new_values = setdiff1d(
-            ar1=unique(round(a=x_new_values, decimals=decimals)), ar2=x_values
-        )
+        x_new_values = setdiff1d(ar1=unique(round(a=x_new_values, decimals=decimals)), ar2=x_values)
 
     return x_values, f_values
 
 
-def interpolate_array(
-    x_values: ndarray, y_values: ndarray, new_x_values: ndarray
-) -> ndarray:
+def interpolate_array(x_values: ndarray, y_values: ndarray, new_x_values: ndarray) -> ndarray:
     """
     1D-Interpolates the given data on its first axis, whatever its shape is.
     """
@@ -128,27 +119,17 @@ def interpolate_all(
     return array(
         object=(
             function_values
-            if len(x_shared_values) == 1
-            and x_shared_values[0] == Inf  # Manages elastic case.
+            if len(x_shared_values) == 1 and x_shared_values[0] == Inf  # Manages elastic case.
             else [
                 interpolate_array(
                     x_values=x_tab,
                     y_values=function_values_tab,
                     new_x_values=x_shared_values,
                 )
-                for x_tab, function_values_tab in zip(
-                    x_values_per_component, function_values
-                )
+                for x_tab, function_values_tab in zip(x_values_per_component, function_values)
             ]
         )
     )
-
-
-def build_hermitian(signal: ndarray[complex]) -> ndarray[complex]:
-    """
-    For a given signal defined for positive values, builds the corresponding extended signal that has hermitian symetry.
-    """
-    return concatenate((conjugate(flip(m=signal)), signal))
 
 
 def get_degrees_indices(degrees: list[int], degrees_to_plot: list[int]) -> list[int]:
@@ -158,9 +139,7 @@ def get_degrees_indices(degrees: list[int], degrees_to_plot: list[int]) -> list[
     return [list(degrees).index(degree) for degree in degrees_to_plot]
 
 
-def signal_trend(
-    trend_dates: ndarray[float], signal: ndarray[float]
-) -> tuple[float, float]:
+def signal_trend(trend_dates: ndarray[float], signal: ndarray[float]) -> tuple[float, float]:
     """
     Returns signal's trend: mean slope and additive constant during last years (LSE).
     """
@@ -173,9 +152,7 @@ def signal_trend(
     ).T
     # Direct least square regression using pseudo-inverse.
     result: ndarray = pinv(A).dot(signal[:, newaxis])
-    return (
-        result.flatten()
-    )  # Turn the signal into a column vector. (slope, additive_constant)
+    return result.flatten()  # Turn the signal into a column vector. (slope, additive_constant)
 
 
 def map_normalizing(
@@ -196,9 +173,7 @@ def surface_ponderation(
     """
     Gets the surface of a (latitude * longitude) array.
     """
-    return mask * expand_dims(
-        a=cos(linspace(start=-pi / 2, stop=pi / 2, num=len(mask))), axis=1
-    )
+    return mask * expand_dims(a=cos(linspace(start=-pi / 2, stop=pi / 2, num=len(mask))), axis=1)
 
 
 def mean_on_mask(

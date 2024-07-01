@@ -9,7 +9,6 @@ from ...rheological_formulas import (
     build_cutting_omegas,
     delta_mu_computing,
     f_attenuation_computing,
-    lambda_computing,
     m_prime_computing,
     mu_computing,
 )
@@ -118,6 +117,10 @@ class Integration(Description):
             # Computes complex mu and lambda.
             if i_layer >= self.below_CMB_layers:
 
+                # Default.
+                variables["lambda"] = array(object=variables["lambda_0"], dtype=complex)
+                variables["mu"] = array(object=variables["mu_0"], dtype=complex)
+
                 # Attenuation.
                 if use_short_term_anelasticity:
 
@@ -144,56 +147,31 @@ class Integration(Description):
                         Q_mu=variables["Q_mu"],
                         f=f,
                     )
-                    variables["lambda"] = variables["lambda_0"] - 2.0 / 3.0 * delta_mu
                     variables["mu"] = variables["mu_0"] + delta_mu
 
-                else:
-
-                    # No attenuation: mu = mu_0 and lambda = lambda_0.
-                    variables["lambda"] = array(
-                        object=variables["lambda_0"], dtype=complex
-                    )
-                    variables["mu"] = array(object=variables["mu_0"], dtype=complex)
-
-                # Complex cut frequency variables.
-                variables.update(build_cutting_omegas(variables=variables))
-
-                # Anelasticity.
+                # Long-term anelasticity.
                 if use_long_term_anelasticity:
-                    m_prime = m_prime_computing(
-                        omega_cut_m=variables["omega_cut_m"], omega_j=self.omega_j
-                    )
+                    # Complex cut frequency variables.
+                    variables.update(build_cutting_omegas(variables=variables))
+                    # Frequency filtering functions.
+                    m_prime = m_prime_computing(omega_cut_m=variables["omega_cut_m"], omega_j=self.omega_j)
                     b = b_computing(
                         omega_cut_m=variables["omega_cut_m"],
                         omega_cut_k=variables["omega_cut_k"],
                         omega_cut_b=variables["omega_cut_b"],
                         omega_j=self.omega_j,
                     )
-                    variables["lambda"] = lambda_computing(
-                        mu_complex=variables["mu"],
-                        lambda_complex=variables["lambda"],
-                        m_prime=m_prime,
-                        b=b,
-                    )
-                    variables["mu"] = mu_computing(
-                        mu_complex=variables["mu"], m_prime=m_prime, b=b
-                    )
+                    variables["mu"] = mu_computing(mu_complex=variables["mu"], m_prime=m_prime, b=b)
+
+                variables["lambda"] = variables["lambda_0"] - 2.0 / 3.0 * (variables["mu"] - variables["mu_0"])
 
                 # Updates.
                 description_layer.splines.update(
                     {
-                        "lambda_real": interpolate.splrep(
-                            x=variables["x"], y=variables["lambda"].real
-                        ),
-                        "lambda_imag": interpolate.splrep(
-                            x=variables["x"], y=variables["lambda"].imag
-                        ),
-                        "mu_real": interpolate.splrep(
-                            x=variables["x"], y=variables["mu"].real
-                        ),
-                        "mu_imag": interpolate.splrep(
-                            x=variables["x"], y=variables["mu"].imag
-                        ),
+                        "lambda_real": interpolate.splrep(x=variables["x"], y=variables["lambda"].real),
+                        "lambda_imag": interpolate.splrep(x=variables["x"], y=variables["lambda"].imag),
+                        "mu_real": interpolate.splrep(x=variables["x"], y=variables["mu"].real),
+                        "mu_imag": interpolate.splrep(x=variables["x"], y=variables["mu"].imag),
                     },
                 )
 
@@ -248,9 +226,7 @@ class Integration(Description):
         else:
             print(":: RUNTINE ERROR ::")
 
-    def y_system_integration(
-        self, n: int, hyper_parameters: YSystemHyperParameters
-    ) -> ndarray[complex]:
+    def y_system_integration(self, n: int, hyper_parameters: YSystemHyperParameters) -> ndarray[complex]:
         """
         Integrates the unitless gravito-elastic system from the Geocenter to the surface, at given n, omega and rheology.
         """
@@ -344,11 +320,7 @@ class Integration(Description):
         else:
             # Integrate from Geocenter to CMB with high degrees approximation.
             n_start_layer: int = (
-                where(
-                    (array([layer.x_inf for layer in self.description_layers]) ** n)
-                    > (self.x_CMB**n)
-                )[0][0]
-                + 1
+                where((array([layer.x_inf for layer in self.description_layers]) ** n) > (self.x_CMB**n))[0][0] + 1
             )
 
             Y = (
@@ -426,6 +398,4 @@ class Integration(Description):
             g_0_surface=g_0_surface,
         )
 
-        return array(
-            object=[h_load, l_load, k_load, h_shr, l_shr, k_shr, h_pot, l_pot, k_pot]
-        )
+        return array(object=[h_load, l_load, k_load, h_shr, l_shr, k_shr, h_pot, l_pot, k_pot])

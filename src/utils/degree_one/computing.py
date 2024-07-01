@@ -22,7 +22,7 @@ def frequencial_harmonic_component(
         (
             DENSITY_RATIO
             * concatenate(
-                (  # Adds a line of zeros values for order zero.
+                (  # Adds a line of one values for degree zero.
                     ones(shape=(1, n_frequencies)),
                     multiply(
                         Love_numbers.values[direction][boundary_condition].T,
@@ -116,6 +116,12 @@ def degree_one_inversion(
     )
     constant_column = [[1.0] * sum(ocean_mask_indices)]
 
+    # Handles elstic case.
+    if len(anelastic_hermitian_Love_numbers.axes["frequencies"]) == 1:
+        degree_one_Love_numbers_term = [degree_one_Love_numbers_term] * n_frequencies
+        degree_one_radial_Love_numbers = [degree_one_radial_Love_numbers] * n_frequencies
+        degree_one_potential_Love_numbers = [degree_one_potential_Love_numbers] * n_frequencies
+
     # Solves a system per frequency.
     degree_one_Love_number_term: complex
     harmonic_right_hand_side: ndarray[complex]
@@ -126,22 +132,10 @@ def degree_one_inversion(
         degree_one_radial_Love_number,
     ) in enumerate(
         zip(
-            (
-                degree_one_Love_numbers_term
-                if len(anelastic_hermitian_Love_numbers.axes["frequencies"]) != 1
-                else [degree_one_Love_numbers_term] * n_frequencies
-            ),  # Handles elastic case.
+            degree_one_Love_numbers_term,  # Handles elastic case.
             right_hand_side_terms.transpose((3, 0, 1, 2)),
-            (
-                degree_one_potential_Love_numbers
-                if len(anelastic_hermitian_Love_numbers.axes["frequencies"]) != 1
-                else [degree_one_potential_Love_numbers] * n_frequencies
-            ),  # Handles elastic case.
-            (
-                degree_one_radial_Love_numbers
-                if len(anelastic_hermitian_Love_numbers.axes["frequencies"]) != 1
-                else [degree_one_radial_Love_numbers] * n_frequencies
-            ),  # Handles elastic case.
+            degree_one_potential_Love_numbers,  # Handles elastic case.
+            degree_one_radial_Love_numbers,  # Handles elastic case.
         )
     ):
 

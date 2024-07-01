@@ -1,7 +1,8 @@
-
-add README.md infography and figures
-Parallelize harmonic load signal computing for descriptions and options on processes
-Vectorize and implement minimal computing policy for:
-    integration.py: y_system_integration method and subfunctions
-    surface_solutiuons.py
-    system_definitions.py
+Love numbers plot rewrite
+mu as fnt of depth/frequency plots rewrite
+attenuation functions plot rewrite
+profiles rewrite
+main notebooks & tutorial rewrite
+earthquake fit modif : independent parameters
+stat analysis main rewrite
+README

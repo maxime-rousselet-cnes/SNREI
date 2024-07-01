@@ -27,7 +27,7 @@ ROW_PATHS: dict[str, Path] = {
 }
 SATURATION_THRESHOLDS: dict[str, float] = {
     "load signal before degree one replacement": 50.0,
-    "load signal after degree one replacement": 50.0,
+    "load signal after degree one replacement": 3.0,
     "degree one only before degree one replacement": 5.0,
     "degree one only after degree one replacement": 5.0,
     "geoid height": 2.0,
@@ -40,12 +40,11 @@ def generate_load_signal_components_figure(
     elastic_load_signal_id: str = "0",
     anelastic_load_signal_id: str = "2",
     rows: list[str] = [
-        "geoid height",
-        "radial displacement",
-        "residuals",
+        "load signal after degree one replacement",
+        "degree one only after degree one replacement",
     ],
-    difference: bool = False,
-    continents: bool = False,
+    difference: bool = True,
+    continents: bool = True,
 ):
     """
     Generates a figure showing maps for all components of a computed load signal.

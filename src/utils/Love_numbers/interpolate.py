@@ -88,8 +88,7 @@ def interpolate_anelastic_Love_numbers(
     # Interpolates Love numbers on signal positive frequencies.
     abs_target_frequencies = abs(target_frequencies)
     min_positive_frequency = min(source_frequencies)
-    print(min_positive_frequency)
-    with errstate(invalid="ignore"):
+    with errstate(invalid="ignore", divide="ignore"):
         target_absolute_frequencies = nan_to_num(x=log(abs_target_frequencies / min_positive_frequency), nan=0.0)
 
     target_grid_degrees, target_grid_absolute_frequencies = meshgrid(

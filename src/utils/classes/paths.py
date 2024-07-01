@@ -47,5 +47,6 @@ harmonic_load_signal_trends_before_degree_one_replacement_path = results_path.jo
     "harmonic_load_signal_trends_before_degree_one_replacement"
 )
 harmonic_residual_trends_path = results_path.joinpath("harmonic_residual_trends")
+base_format_load_signal_trends_path = results_path.joinpath("base_format_load_signal_trends")
 
 figures_path = data_path.joinpath("figures")

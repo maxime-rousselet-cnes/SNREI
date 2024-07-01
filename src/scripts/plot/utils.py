@@ -8,6 +8,15 @@ from matplotlib.colors import TwoSlopeNorm
 from numpy import Inf, linspace, maximum, minimum, ndarray, round
 from pyshtools.expand import MakeGridDH
 
+from ...utils import BoundaryCondition, Direction
+
+SYMBOLS_PER_BOUNDARY_CONDITION = {
+    BoundaryCondition.load: "'",
+    BoundaryCondition.shear: "*",
+    BoundaryCondition.potential: "",
+}
+SYMBOLS_PER_DIRECTION = {Direction.radial: "h", Direction.tangential: "l", Direction.potential: "k"}
+
 
 def natural_projection(
     ax: GeoAxes,

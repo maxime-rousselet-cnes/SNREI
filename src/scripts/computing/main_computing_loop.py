@@ -1,6 +1,7 @@
 from itertools import product
 
 from numpy import array, ndarray
+from pyshtools.expand import MakeGridDH
 
 from ...functions import mean_on_mask
 from ...utils import (
@@ -16,6 +17,7 @@ from ...utils import (
     RunHyperParameters,
     add_result_to_table,
     anelastic_frequencial_harmonic_load_signal_computing,
+    base_format_load_signal_trends_path,
     build_frequencial_harmonic_elastic_load_signal,
     compute_harmonic_signal_trends,
     compute_signal_trend,
@@ -46,7 +48,7 @@ from ...utils import (
     save_base_model,
     save_complex_array_to_binary,
 )
-from ...utils.classes import BoundaryCondition, Direction
+from ...utils.database import save_base_model
 
 
 def compute_load_signal_trends_for_anelastic_Earth_models(
@@ -58,6 +60,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
     options: list[RunHyperParameters],
     print_status: bool = True,
     save_components: bool = True,
+    base_format_export: bool = False,
 ) -> None:
     """
     Computes the load signal trends estimated with anelastic Earth hypothesis for several rheological models and load history
@@ -292,6 +295,15 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         path=harmonic_load_signal_trends_before_degree_one_replacement_path,
                     )
 
+                    if base_format_export:
+                        save_base_model(
+                            obj=MakeGridDH(
+                                harmonic_load_signal_trends_before_degree_one_replacement.real, sampling=2
+                            ).tolist(),
+                            name=harmonic_load_signal_id + "_before_degree_one_replacement",
+                            path=base_format_load_signal_trends_path,
+                        )
+
                 # Derives degree one correction.
                 (
                     frequencial_harmonic_load_signal[:, 1, :2, :],
@@ -371,6 +383,13 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         name=harmonic_load_signal_id,
                         path=harmonic_load_signal_trends_path,
                     )
+
+                    if base_format_export:
+                        save_base_model(
+                            obj=MakeGridDH(harmonic_load_signal_trends.real, sampling=2).tolist(),
+                            name=harmonic_load_signal_id + "_after_degree_one_replacement",
+                            path=base_format_load_signal_trends_path,
+                        )
 
                     # Geoid height.
                     save_complex_array_to_binary(

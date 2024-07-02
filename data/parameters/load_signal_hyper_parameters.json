@@ -11,7 +11,7 @@
     "LIA_amplitude_effect": 0.25,
     "load_spatial_behaviour_data": "GRACE",
     "opposite_load_on_continents": false,
-    "n_max": 100,
+    "n_max": 89,
     "load_spatial_behaviour_file": "GRACE(-FO)_MSSA_2003_2022.xyz",
     "skiprows": 3,
     "ocean_mask": "IMERG_land_sea_mask.nc",

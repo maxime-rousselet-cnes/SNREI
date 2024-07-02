@@ -6,10 +6,8 @@ from numpy import (
     argsort,
     array,
     concatenate,
-    conjugate,
     cos,
     expand_dims,
-    flip,
     linspace,
     max,
     ndarray,
@@ -27,6 +25,8 @@ from numpy import (
 from numpy.linalg import pinv
 from pyshtools.expand import MakeGridDH
 from scipy import interpolate
+
+MASK_DECIMALS = 5
 
 
 def precise_curvature(
@@ -188,4 +188,4 @@ def mean_on_mask(
         grid: ndarray[float] = MakeGridDH(harmonics, sampling=2)
     surface = surface_ponderation(mask=mask)
     weighted_values = grid * surface
-    return round(a=sum(weighted_values.flatten()) / sum(surface.flatten()), decimals=5)
+    return round(a=sum(weighted_values.flatten()) / sum(surface.flatten()), decimals=MASK_DECIMALS)

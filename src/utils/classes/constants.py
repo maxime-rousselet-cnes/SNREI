@@ -79,6 +79,7 @@ DEFAULT_SPLINE_NUMBER = 10
 
 # Other low level parameters.
 ASYMPTOTIC_MU_RATIO_DECIMALS = 5
+LAYER_DECIMALS = 5
 
 # (cm/yr) -> (mm/yr).
 GRACE_DATA_UNIT_FACTOR = 10

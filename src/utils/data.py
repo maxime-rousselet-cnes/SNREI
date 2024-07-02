@@ -284,17 +284,6 @@ def add_result_to_table(table_name: str, result_caracteristics: dict[str, str | 
         writer.writerow(result_caracteristics)
 
 
-def save_frequencies(log_frequency_values: ndarray[float], frequency_unit: float) -> None:
-    """
-    Maps back log unitless frequencies to (Hz) and save to (.JSON) file.
-    """
-    save_base_model(
-        obj=10.0**log_frequency_values * frequency_unit,
-        name="frequencies",
-        path=frequencies_path,
-    )
-
-
 def save_map(
     map: ndarray[float],
     lat: ndarray[float],

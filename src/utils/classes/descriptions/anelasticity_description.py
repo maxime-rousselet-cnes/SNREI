@@ -5,7 +5,7 @@ from scipy import interpolate
 
 from ...database import load_base_model
 from ...rheological_formulas import find_tau_M, mu_k_computing
-from ..constants import ASYMPTOTIC_MU_RATIO_DECIMALS, SECONDS_PER_YEAR
+from ..constants import ASYMPTOTIC_MU_RATIO_DECIMALS, LAYER_DECIMALS, SECONDS_PER_YEAR
 from ..description_layer import DescriptionLayer
 from ..hyper_parameters import AnelasticityDescriptionParameters
 from ..model import ModelPart
@@ -99,7 +99,9 @@ class AnelasticityDescription(Description):
     def __init__(
         self,
         anelasticity_description_parameters: AnelasticityDescriptionParameters = load_base_model(
-            name="anelasticity_description_parameters", path=parameters_path, base_model_type=AnelasticityDescriptionParameters
+            name="anelasticity_description_parameters",
+            path=parameters_path,
+            base_model_type=AnelasticityDescriptionParameters,
         ),
         load_description: bool = False,
         id: Optional[str] = None,
@@ -221,7 +223,8 @@ class AnelasticityDescription(Description):
             # Checks which layer ends first.
             x_sup_per_part: dict[ModelPart, float] = {
                 model_part: round(
-                    a=description_parts[model_part].description_layers[layer_indices_per_part[model_part]].x_sup, decimals=5
+                    a=description_parts[model_part].description_layers[layer_indices_per_part[model_part]].x_sup,
+                    decimals=LAYER_DECIMALS,
                 )
                 for model_part in ModelPart
             }
@@ -233,7 +236,9 @@ class AnelasticityDescription(Description):
                     x_inf=x_inf,
                     x_sup=x_sup,
                     layers_per_part={
-                        model_part: description_parts[model_part].description_layers[layer_indices_per_part[model_part]]
+                        model_part: description_parts[model_part].description_layers[
+                            layer_indices_per_part[model_part]
+                        ]
                         for model_part in ModelPart
                     },
                 )

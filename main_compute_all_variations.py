@@ -1,9 +1,4 @@
-from src import (
-    ModelPart,
-    RunHyperParameters,
-    clear_subs,
-    compute_load_signal_trends_for_anelastic_Earth_models,
-)
+from src import ModelPart, RunHyperParameters, clear_subs, compute_load_signal_trends_for_anelastic_Earth_models
 
 clear_subs()
 
@@ -18,7 +13,7 @@ compute_load_signal_trends_for_anelastic_Earth_models(
         ModelPart.short_term_anelasticity: {"asymptotic_mu_ratio": {"MANTLE": [[0.2]]}},
     },
     load_signal_parameters={
-        "case": ["lower"],
+        "case": ["mean"],
         "LIA": [False],
         "opposite_load_on_continents": [False],
     },

@@ -1,8 +1,8 @@
 {
     "period_min_year": 1e-1,
-    "period_max_year": 1e5,
+    "period_max_year": 1e6,
     "n_frequency_0": 30,
-    "max_tol": 0.1,
+    "max_tol": 0.05,
     "decimals": 2,
     "anelasticity_description_parameters": "anelasticity_description_parameters",
     "y_system_hyper_parameters": "Y_system_hyper_parameters",

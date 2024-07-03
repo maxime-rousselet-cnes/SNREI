@@ -5,8 +5,11 @@ from cartopy.feature import NaturalEarthFeature
 from cartopy.mpl.geoaxes import GeoAxes
 from matplotlib.pyplot import figure, show
 from numpy import ndarray
+from pyshtools.expand import MakeGridDH
 
+from ...functions import mean_on_mask
 from ...utils import (
+    get_ocean_mask,
     harmonic_geoid_trends_path,
     harmonic_load_signal_trends_before_degree_one_replacement_path,
     harmonic_load_signal_trends_path,
@@ -14,7 +17,7 @@ from ...utils import (
     harmonic_residual_trends_path,
     load_complex_array_from_binary,
 )
-from .utils import natural_projection
+from .utils import get_grid, natural_projection
 
 ROW_PATHS: dict[str, Path] = {
     "load signal before degree one replacement": harmonic_load_signal_trends_before_degree_one_replacement_path,
@@ -27,7 +30,7 @@ ROW_PATHS: dict[str, Path] = {
 }
 SATURATION_THRESHOLDS: dict[str, float] = {
     "load signal before degree one replacement": 50.0,
-    "load signal after degree one replacement": 3.0,
+    "load signal after degree one replacement": 50.0,
     "degree one only before degree one replacement": 5.0,
     "degree one only after degree one replacement": 5.0,
     "geoid height": 2.0,
@@ -36,15 +39,23 @@ SATURATION_THRESHOLDS: dict[str, float] = {
 }
 
 
+def select_degrees(harmonics: dict[str, ndarray[complex]], row: str) -> ndarray[float]:
+    """
+    Subfunction to avoid copy-paste.
+    """
+    return harmonics[row][:, :2, :].real if "degree one only" in row else harmonics[row].real
+
+
 def generate_load_signal_components_figure(
     elastic_load_signal_id: str = "0",
     anelastic_load_signal_id: str = "2",
     rows: list[str] = [
-        "load signal after degree one replacement",
-        "degree one only after degree one replacement",
+        "load signal before degree one replacement",
+        "degree one only before degree one replacement",
     ],
     difference: bool = True,
-    continents: bool = True,
+    continents: bool = False,
+    mask: ndarray[float] = get_ocean_mask(name="IMERG_land_sea_mask.nc", n_max=89),
 ):
     """
     Generates a figure showing maps for all components of a computed load signal.
@@ -87,17 +98,28 @@ def generate_load_signal_components_figure(
             )
             contour = natural_projection(
                 ax=current_ax,
-                harmonics=(
-                    trend_harmonic_components[row][:, :2, :].real
-                    if "degree one only" in row
-                    else trend_harmonic_components[row].real
-                ),
+                harmonics=select_degrees(harmonics=trend_harmonic_components, row=row),
                 saturation_threshold=SATURATION_THRESHOLDS[row],
                 n_max=trend_harmonic_components[row].shape[1] - 1,
             )
             ax += [current_ax]
             # Adds layout.
-            current_ax.set_title(column)
+            current_ax.set_title(
+                column
+                + ": "
+                + str(
+                    mean_on_mask(
+                        mask=mask,
+                        grid=(
+                            MakeGridDH(
+                                select_degrees(harmonics=trend_harmonic_components, row=row),
+                                sampling=2,
+                                lmax=trend_harmonic_components[row].shape[1] - 1,
+                            )
+                        ),
+                    )
+                )
+            )
             # Eventually memorizes the contour for scale.
             if column == "anelastic":
                 colorbar_contour = contour
@@ -111,22 +133,38 @@ def generate_load_signal_components_figure(
             current_ax: GeoAxes = fig.add_subplot(
                 row_number, 3, 3 * i_row + 3, projection=Robinson(central_longitude=180)
             )
-            if i_row == 0:
-                current_ax.set_title("difference")
-                difference_term = (
-                    trend_harmonic_components_per_column["anelastic"][row].real
-                    - trend_harmonic_components_per_column["elastic"][row].real
+            difference_term = {
+                row: trend_harmonic_components_per_column["anelastic"][row]
+                - trend_harmonic_components_per_column["elastic"][row]
+            }
+            current_ax.set_title(
+                "difference: "
+                + str(
+                    mean_on_mask(
+                        mask=mask,
+                        grid=(
+                            MakeGridDH(
+                                select_degrees(harmonics=difference_term, row=row),
+                                sampling=2,
+                                lmax=difference_term[row].shape[1] - 1,
+                            )
+                        ),
+                    )
                 )
+            )
             contour = natural_projection(
                 ax=current_ax,
-                harmonics=difference_term[:, :2, :] if "degree one only" in row else difference_term,
+                harmonics=select_degrees(harmonics=difference_term, row=row),
                 saturation_threshold=SATURATION_THRESHOLDS[row],
-                n_max=difference_term.shape[1] - 1,
+                n_max=difference_term[row].shape[1] - 1,
             )
             ax += [current_ax]
 
         # Ends figure configuration.
         cbar = fig.colorbar(colorbar_contour, ax=ax, orientation="horizontal", shrink=0.5, extend="both")
-        cbar.set_label(label=row + " - mm/yr")
+        cbar.set_label(label=row + " (mm/yr)")
 
     show()
+
+
+# TODO: subfunction for "degree one only" and expand grid in utils

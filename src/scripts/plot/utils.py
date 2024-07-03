@@ -18,22 +18,28 @@ SYMBOLS_PER_BOUNDARY_CONDITION = {
 SYMBOLS_PER_DIRECTION = {Direction.radial: "h", Direction.tangential: "l", Direction.potential: "k"}
 
 
+def get_grid(harmonics: ndarray[float], n_max: int, decimals: int = 4) -> ndarray[float]:
+    """
+    Projects spherical harmonics on a (latitude x longitude) grid.
+    """
+    return round(
+        a=MakeGridDH(harmonics, sampling=2, lmax=n_max),
+        decimals=decimals,
+    )
+
+
 def natural_projection(
     ax: GeoAxes,
     harmonics: ndarray[float],
     saturation_threshold: float,
     n_max: int,
-    decimals: int = 4,
 ) -> Any:
     """
     Displays a projection of a given harmonic quantity on the given matplotlib Axes.
     """
 
     # Gets quantity in spatial domain.
-    spatial_result: ndarray[float] = round(
-        a=MakeGridDH(harmonics, sampling=2, lmax=n_max),
-        decimals=decimals,
-    )
+    spatial_result = get_grid(harmonics=harmonics, n_max=n_max)
 
     # Projects.
     contour = ax.pcolormesh(

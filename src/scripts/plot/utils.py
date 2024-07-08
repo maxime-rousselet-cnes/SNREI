@@ -29,17 +29,14 @@ def get_grid(harmonics: ndarray[float], n_max: int, decimals: int = 4) -> ndarra
 
 
 def natural_projection(
-    ax: GeoAxes,
-    harmonics: ndarray[float],
-    saturation_threshold: float,
-    n_max: int,
+    ax: GeoAxes, harmonics: ndarray[float], saturation_threshold: float, n_max: int, mask: ndarray[float]
 ) -> Any:
     """
     Displays a projection of a given harmonic quantity on the given matplotlib Axes.
     """
 
     # Gets quantity in spatial domain.
-    spatial_result = get_grid(harmonics=harmonics, n_max=n_max)
+    spatial_result = get_grid(harmonics=harmonics, n_max=n_max) * mask
 
     # Projects.
     contour = ax.pcolormesh(

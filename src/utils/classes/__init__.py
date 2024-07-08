@@ -3,6 +3,7 @@ from .constants import (
     DENSITY_RATIO,
     ELASTIC_RUN_HYPER_PARAMETERS,
     GRACE_DATA_UNIT_FACTOR,
+    RECTANGLES,
     SECONDS_PER_YEAR,
 )
 from .description_layer import DescriptionLayer
@@ -47,6 +48,7 @@ from .separators import LAYERS_SEPARATOR, VALUES_SEPARATOR
     DENSITY_RATIO,
     ELASTIC_RUN_HYPER_PARAMETERS,
     GRACE_DATA_UNIT_FACTOR,
+    RECTANGLES,
     SECONDS_PER_YEAR,
     DescriptionLayer,
     AnelasticityDescription,

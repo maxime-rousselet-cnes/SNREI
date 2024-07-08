@@ -1,7 +1,7 @@
 from numpy import arange, concatenate, errstate, multiply, nan_to_num, ndarray, ones, zeros
 from scipy.fft import ifft
 
-from ...functions import signal_trend
+from ...functions import mean_on_mask, signal_trend
 from ..classes import BoundaryCondition, Direction, LoadSignalHyperParameters, LoveNumbersHyperParameters, Result
 from ..Love_numbers import interpolate_anelastic_Love_numbers, interpolate_elastic_Love_numbers
 from .utils import get_trend_dates
@@ -31,7 +31,7 @@ def elastic_Love_numbers_computing(
 
 def anelastic_frequencial_harmonic_load_signal_computing(
     anelasticity_description_id: str,
-    n_max: int,
+    load_signal_hyper_parameters: LoadSignalHyperParameters,
     Love_numbers_hyper_parameters: LoveNumbersHyperParameters,
     signal_frequencies: ndarray[float],  # (yr^-1).
     frequencial_elastic_normalized_load_signal: ndarray[complex],
@@ -45,7 +45,7 @@ def anelastic_frequencial_harmonic_load_signal_computing(
     anelastic_hermitian_Love_numbers: Result = interpolate_anelastic_Love_numbers(
         anelasticity_description_id=anelasticity_description_id,
         target_frequencies=signal_frequencies,  # (yr^-1) -> (Hz).
-        target_degrees=arange(n_max) + 1,  # Does not include n = 0.
+        target_degrees=arange(load_signal_hyper_parameters.n_max) + 1,  # Does not include n = 0.
         Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
         directions=[Direction.radial, Direction.potential],
         boundary_conditions=[BoundaryCondition.load],
@@ -53,7 +53,8 @@ def anelastic_frequencial_harmonic_load_signal_computing(
 
     # Computes anelastic induced signal in frequencial-harmonic domain.
     with errstate(invalid="ignore", divide="ignore"):
-        return (  # (1 + k_el) / (1 + k_anel) * {C, S}.
+        # (1 + k_el) / (1 + k_anel) * {C, S}.
+        return (
             multiply(
                 concatenate(
                     (  # Adds a line of one values for degree zero.
@@ -76,6 +77,7 @@ def compute_harmonic_signal_trends(
     signal_dates: ndarray,
     load_signal_hyper_parameters: LoadSignalHyperParameters,
     frequencial_harmonic_signal: ndarray[complex],
+    recent_trend: bool = True,
 ) -> ndarray[float]:
     """
     Computes harmonic trends (C/S, degrees, orders) from frequencial harmonic data (C/S, degrees, orders, frequencies).
@@ -83,8 +85,7 @@ def compute_harmonic_signal_trends(
 
     # Initializes.
     trend_indices, trend_dates = get_trend_dates(
-        signal_dates=signal_dates,
-        load_signal_hyper_parameters=load_signal_hyper_parameters,
+        signal_dates=signal_dates, load_signal_hyper_parameters=load_signal_hyper_parameters, recent_trend=recent_trend
     )
     signal_trends = zeros(shape=frequencial_harmonic_signal.shape[:-1])
 
@@ -99,27 +100,3 @@ def compute_harmonic_signal_trends(
                 )[0]
 
     return signal_trends
-
-
-def compute_signal_trend(
-    signal_dates: ndarray,
-    load_signal_hyper_parameters: LoadSignalHyperParameters,
-    input_signal: ndarray[complex],
-) -> ndarray[float]:
-    """
-    Computes trend from frequencial data.
-    """
-
-    # Initializes.
-    trend_indices, trend_dates = get_trend_dates(
-        signal_dates=signal_dates,
-        load_signal_hyper_parameters=load_signal_hyper_parameters,
-    )
-
-    # Computes trend for all harmonics.
-    signal: ndarray = ifft(input_signal)[trend_indices]
-
-    return signal_trend(
-        trend_dates=trend_dates,
-        signal=signal.real,
-    )[0]

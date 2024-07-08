@@ -23,6 +23,7 @@ from .classes import (
     harmonic_load_signal_trends_path,
     harmonic_radial_displacement_trends_path,
     harmonic_residual_trends_path,
+    load_load_signal_hyper_parameters,
     load_Love_numbers_hyper_parameters,
     parameters_path,
     results_path,
@@ -44,6 +45,7 @@ from .database import (
     save_complex_array_to_binary,
 )
 from .degree_one import degree_one_inversion
+from .filtering import leakage_correction
 from .load_signal import (
     anelastic_frequencial_harmonic_load_signal_computing,
     build_frequencial_harmonic_elastic_load_signal,
@@ -84,6 +86,7 @@ from .variations import (
     elastic_load_signal_trends_path,
     elastic_load_signals_path,
     frequencies_path,
+    load_load_signal_hyper_parameters,
     load_Love_numbers_hyper_parameters,
     parameters_path,
     results_path,
@@ -100,6 +103,7 @@ from .variations import (
     save_base_model,
     save_complex_array_to_binary,
     degree_one_inversion,
+    leakage_correction,
     anelastic_frequencial_harmonic_load_signal_computing,
     build_frequencial_harmonic_elastic_load_signal,
     compute_harmonic_signal_trends,

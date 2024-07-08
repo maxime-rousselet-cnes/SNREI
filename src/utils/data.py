@@ -5,22 +5,21 @@ from typing import Optional
 
 import netCDF4
 from cv2 import erode
-from numpy import argsort, array, expand_dims, flip, ndarray, ones, round, unique, zeros
+from numpy import argsort, array, flip, meshgrid, ndarray, ones, round, unique, zeros
 from pandas import read_csv
 from pyshtools.expand import MakeGridDH, SHExpandDH
 
 from .classes import (
     GRACE_DATA_UNIT_FACTOR,
+    RECTANGLES,
     GMSL_data_path,
     GRACE_data_path,
     Love_numbers_path,
     LoveNumbersHyperParameters,
     Result,
-    frequencies_path,
     masks_data_path,
     tables_path,
 )
-from .database import save_base_model
 
 COLUMNS = ["lower", "mean", "upper"]
 
@@ -70,7 +69,7 @@ def extract_temporal_load_signal(
     return signal_dates, barystatic[name] - (barystatic[name][0] if zero_at_origin else 0)
 
 
-def erase_area(
+def erase_lake(
     map: ndarray[float],
     lat: ndarray[float],
     lon: ndarray[float],
@@ -84,10 +83,23 @@ def erase_area(
     Used to erase big lakes from sea/land masks.
     """
     return map * (
-        1
-        - expand_dims(a=flip(m=(lat > min_latitude) * (lat < max_latitude), axis=0), axis=1)
-        * expand_dims(a=(lon > (min_longitude % 360)) * (lon < (max_longitude % 360)), axis=0)
+        1 - (lat > min_latitude) * (lat < max_latitude) * (lon > (min_longitude % 360)) * (lon < (max_longitude % 360))
     )
+
+
+def erase_island(
+    map: ndarray[float],
+    lat: ndarray[float],
+    lon: ndarray[float],
+    center_latitude: float,
+    center_longitude: float,
+    degree_radius: float,
+):
+    """
+    Erases a circular area on a (latitude, longitude) map: sets one values.
+    Used to erase islands from sea/land masks.
+    """
+    return map * (((lat - center_latitude) ** 2 + ((lon - center_longitude) % 360) ** 2) >= degree_radius**2)
 
 
 def extract_mask_nc(
@@ -102,43 +114,27 @@ def extract_mask_nc(
     # Gets raw data.
     ds = netCDF4.Dataset(path.joinpath(name))
     map: ndarray[float] = flip(m=ds.variables["landseamask"], axis=0).data
-    lat = array(object=[latitude for latitude in ds.variables["lat"]])
-    lon = array(object=[longitude for longitude in ds.variables["lon"]])
+    lat, lon = meshgrid(
+        flip(m=[latitude for latitude in ds.variables["lat"]]),
+        array(object=[longitude for longitude in ds.variables["lon"]]),
+        indexing="ij",
+    )
+
     map /= max(map.flatten())  # Normalizes (land = 0, ocean = 1).
 
-    # Rejects big lakes from ocean label.
-    # Lake Superior.
-    map = erase_area(
-        map=map,
-        lat=lat,
-        lon=lon,
-        min_latitude=41.375963,
-        max_latitude=50.582521,
-        min_longitude=-93.748270,
-        max_longitude=-75.225322,
-    )
-    # Lake Victoria.
-    map = erase_area(
-        map=map,
-        lat=lat,
-        lon=lon,
-        min_latitude=-2.809322,
-        max_latitude=0.836983,
-        min_longitude=31.207700,
-        max_longitude=34.530942,
-    )
-    # Caspian Sea.
-    map = erase_area(
-        map=map,
-        lat=lat,
-        lon=lon,
-        min_latitude=35.569650,
-        max_latitude=47.844035,
-        min_longitude=44.303403,
-        max_longitude=60.937192,
-    )
+    # Rejects big lakes and icy islands from ocean label.
+    for _, rectangle in RECTANGLES.items():
+        map = erase_lake(
+            map=map,
+            lat=lat,
+            lon=lon,
+            min_latitude=rectangle.min_latitude,
+            max_latitude=rectangle.max_latitude,
+            min_longitude=rectangle.min_longitude,
+            max_longitude=rectangle.max_longitude,
+        )
 
-    # Dilates continents (100km).
+    # Erodes continents (100km).
     map = erode(map, ones(shape=(3, 3)), iterations=pixels_to_coast)
 
     return map

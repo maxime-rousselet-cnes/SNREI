@@ -39,6 +39,7 @@ from ...utils import (
     harmonic_load_signal_trends_path,
     harmonic_radial_displacement_trends_path,
     harmonic_residual_trends_path,
+    leakage_correction,
     load_base_model,
     load_complex_array_from_binary,
     load_Love_numbers_hyper_parameters,
@@ -59,8 +60,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
     load_signal_parameters: dict[str, list[str | bool]],
     options: list[RunHyperParameters],
     print_status: bool = True,
-    save_components: bool = True,
-    base_format_export: bool = False,
+    save_inversion_component_trends: bool = True,
+    save_main_trends: bool = True,
+    save_base_format_export: bool = False,
 ) -> None:
     """
     Computes the load signal trends estimated with anelastic Earth hypothesis for several rheological models and load history
@@ -111,6 +113,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             dates,
             frequencies,
             frequencial_harmonic_elastic_load_signal,
+            rescaling_factor,
         ) = build_frequencial_harmonic_elastic_load_signal(load_signal_hyper_parameters=load_signal_hyper_parameters)
         load_signal_hyper_parameters.n_max = redefine_n_max(
             n_max=load_signal_hyper_parameters.n_max,
@@ -253,29 +256,30 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         n_max=load_signal_hyper_parameters.n_max,
                         Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
                     )
-                    frequencial_harmonic_load_signal = elastic_frequencial_harmonic_load_signal
+                    unnormalized_frequencial_harmonic_load_signal = elastic_frequencial_harmonic_load_signal
                     Love_numbers = elastic_Love_numbers
                 else:
                     # Computes anelastic load signal.
                     (
-                        frequencial_harmonic_load_signal,
+                        unnormalized_frequencial_harmonic_load_signal,
                         Love_numbers,
                     ) = anelastic_frequencial_harmonic_load_signal_computing(
                         anelasticity_description_id=anelasticity_description.id,
-                        n_max=load_signal_hyper_parameters.n_max,
+                        load_signal_hyper_parameters=load_signal_hyper_parameters,
                         Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
                         signal_frequencies=frequencies,
                         frequencial_elastic_normalized_load_signal=elastic_frequencial_harmonic_load_signal,
                         elastic_Love_numbers=elastic_Love_numbers,
                     )
 
-                if print_status or save_components:
+                if print_status or save_inversion_component_trends:
                     harmonic_load_signal_trends_before_degree_one_replacement = compute_harmonic_signal_trends(
                         signal_dates=dates,
                         load_signal_hyper_parameters=load_signal_hyper_parameters,
-                        frequencial_harmonic_signal=frequencial_harmonic_load_signal,
+                        frequencial_harmonic_signal=unnormalized_frequencial_harmonic_load_signal,
                     )
 
+                # Eventually prints ocean mean before degree one inversion.
                 if print_status:
 
                     print("description id:", anelasticity_description.id)
@@ -288,33 +292,71 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         ),
                     )
 
-                if save_components:
+                # Eventually saves trends.
+                if save_inversion_component_trends:
                     save_complex_array_to_binary(
                         input_array=harmonic_load_signal_trends_before_degree_one_replacement,
                         name=harmonic_load_signal_id,
                         path=harmonic_load_signal_trends_before_degree_one_replacement_path,
                     )
 
-                    if base_format_export:
+                    # Eventually also saves a base (.JSON) format.
+                    if save_base_format_export:
+                        grid: ndarray[float] = MakeGridDH(
+                            harmonic_load_signal_trends_before_degree_one_replacement.real, sampling=2
+                        )
                         save_base_model(
-                            obj=MakeGridDH(
-                                harmonic_load_signal_trends_before_degree_one_replacement.real, sampling=2
-                            ).tolist(),
+                            obj=grid.tolist(),
                             name=harmonic_load_signal_id + "_before_degree_one_replacement",
                             path=base_format_load_signal_trends_path,
                         )
 
                 # Derives degree one correction.
                 (
-                    frequencial_harmonic_load_signal[:, 1, :2, :],
+                    unnormalized_frequencial_harmonic_load_signal[:, 1, :2, :],
                     frequencial_scale_factor,
                     frequencial_harmonic_geoid,
                     frequencial_harmonic_radial_displacement,
                 ) = degree_one_inversion(
-                    anelastic_frequencial_harmonic_load_signal=frequencial_harmonic_load_signal,
+                    anelastic_frequencial_harmonic_load_signal=unnormalized_frequencial_harmonic_load_signal,
                     anelastic_hermitian_Love_numbers=Love_numbers,
                     ocean_mask=ocean_mask,
                 )
+
+                # Leakage correction.
+                unnormalized_frequencial_harmonic_load_signal = leakage_correction(
+                    frequencial_harmonic_load_signal=unnormalized_frequencial_harmonic_load_signal,
+                    ocean_mask=ocean_mask,
+                    Love_numbers=Love_numbers,
+                    iterations=load_signal_hyper_parameters.leakage_correction_iterations,
+                )
+
+                # Normalizes so that the data previous to 2003 matches source datas.
+                """
+                previous_trend = mean_on_mask(
+                    mask=ocean_mask,
+                    harmonics=compute_harmonic_signal_trends(
+                        signal_dates=dates,
+                        load_signal_hyper_parameters=load_signal_hyper_parameters,
+                        frequencial_harmonic_signal=elastic_frequencial_harmonic_load_signal,
+                        recent_trend=False,
+                    ),
+                )
+                unnormalized_previous_trend = mean_on_mask(
+                    mask=ocean_mask,
+                    harmonics=compute_harmonic_signal_trends(
+                        signal_dates=dates,
+                        load_signal_hyper_parameters=load_signal_hyper_parameters,
+                        frequencial_harmonic_signal=unnormalized_frequencial_harmonic_load_signal,
+                        recent_trend=False,
+                    ),
+                )
+                print(previous_trend, unnormalized_previous_trend)
+                frequencial_harmonic_load_signal = (
+                    unnormalized_frequencial_harmonic_load_signal * previous_trend / unnormalized_previous_trend
+                )
+                """
+                frequencial_harmonic_load_signal = unnormalized_frequencial_harmonic_load_signal
 
                 # Computes trends.
                 harmonic_load_signal_trends = compute_harmonic_signal_trends(
@@ -342,6 +384,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     mask=ocean_mask,
                     harmonics=harmonic_load_signal_trends,
                 )
+
+                # Eventually prints ocean mean after degree one replacement.
                 if print_status:
                     print(
                         "load mean after degree one replacement:",
@@ -375,8 +419,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     | load_signal_hyper_parameters.__dict__,
                 )
 
-                if save_components:
-
+                # Eventually saves trends.
+                if save_main_trends:
                     # Load signal.
                     save_complex_array_to_binary(
                         input_array=harmonic_load_signal_trends,
@@ -384,9 +428,14 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         path=harmonic_load_signal_trends_path,
                     )
 
-                    if base_format_export:
+                # Eventually saves all components.
+                if save_inversion_component_trends:
+
+                    # Eventually also saves a base (.JSON) format.
+                    if save_base_format_export:
+                        grid: ndarray[float] = MakeGridDH(harmonic_load_signal_trends.real, sampling=2)
                         save_base_model(
-                            obj=MakeGridDH(harmonic_load_signal_trends.real, sampling=2).tolist(),
+                            obj=grid.tolist(),
                             name=harmonic_load_signal_id + "_after_degree_one_replacement",
                             path=base_format_load_signal_trends_path,
                         )
@@ -414,6 +463,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         ]  # + D
                         - (harmonic_geoid_trends - harmonic_radial_displacement_trends)  # - (G - R)
                     )
+
+                    # Saves residuals.
                     save_complex_array_to_binary(
                         input_array=frequencial_harmonic_residuals,
                         name=harmonic_load_signal_id,

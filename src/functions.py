@@ -17,7 +17,6 @@ from numpy import (
     prod,
     round,
     setdiff1d,
-    sign,
     unique,
     vstack,
     zeros,

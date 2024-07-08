@@ -49,11 +49,7 @@ class Model:
         Loads the model file while managing infinite values.
         """
         # Loads file.
-        filepath = models_path[model_part].joinpath(
-            name + ("" if ".json" in name else ".json")
-        )
-        while filepath.is_symlink():
-            filepath = filepath.resolve()
+        filepath = models_path[model_part].joinpath(name + ("" if ".json" in name else ".json"))
         with open(filepath, "r") as file:
             loaded_content = load(fp=file)
         # Gets attributes.
@@ -157,10 +153,7 @@ class Model:
                     [
                         (
                             crust_value
-                            if "CRUST_2" in layer_name
-                            and not real_crust
-                            and i == 0
-                            and crust_value != "None"
+                            if "CRUST_2" in layer_name and not real_crust and i == 0 and crust_value != "None"
                             else coefficient
                         )
                         * x**i

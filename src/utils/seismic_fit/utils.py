@@ -40,7 +40,9 @@ def co_seismic_signal(t: ndarray[float], parameters: Parameters, i_earthquake: i
     """
     Describe a co-seismic signal on EWH time-serie.
     """
-    return get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="co_seismic_amplitude") * array(
+    return get_parameter(
+        parameters=parameters, index=i_earthquake, parameter_base_name="co_seismic_amplitude"
+    ) * array(
         object=t >= get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="earthquake_t_0"),
         dtype=float,
     )
@@ -56,19 +58,37 @@ def post_seismic_signal(t: ndarray[float], parameters: Parameters, i_earthquake:
             dtype=float,
         ) * nan_to_num(
             x=(
-                get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="post_seismic_exp_amplitude")
+                get_parameter(
+                    parameters=parameters, index=i_earthquake, parameter_base_name="post_seismic_exp_amplitude"
+                )
                 * exp(
-                    -(t - get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="earthquake_t_0"))
+                    -(
+                        t
+                        - get_parameter(
+                            parameters=parameters, index=i_earthquake, parameter_base_name="earthquake_t_0"
+                        )
+                    )
                     / get_parameter(
-                        parameters=parameters, index=i_earthquake, parameter_base_name="post_seismic_exp_relaxation_time"
+                        parameters=parameters,
+                        index=i_earthquake,
+                        parameter_base_name="post_seismic_exp_relaxation_time",
                     )
                 )
-                + get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="post_seismic_log_amplitude")
+                + get_parameter(
+                    parameters=parameters, index=i_earthquake, parameter_base_name="post_seismic_log_amplitude"
+                )
                 * log(
                     1
-                    + (t - get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="earthquake_t_0"))
+                    + (
+                        t
+                        - get_parameter(
+                            parameters=parameters, index=i_earthquake, parameter_base_name="earthquake_t_0"
+                        )
+                    )
                     / get_parameter(
-                        parameters=parameters, index=i_earthquake, parameter_base_name="post_seismic_log_relaxation_time"
+                        parameters=parameters,
+                        index=i_earthquake,
+                        parameter_base_name="post_seismic_log_relaxation_time",
                     )
                 )
             ),
@@ -135,7 +155,7 @@ def full_earthquake_signal(t: ndarray[float], parameters: Parameters) -> ndarray
 
 
 def fit_expression(
-    times: ndarray[float], time_serie: ndarray, expression: Callable[[Any], Any], parameters: Parameters
+    times: ndarray[float], time_serie: ndarray, expression: Callable[[Any], Any], parameters: Parameters, method: str
 ) -> dict[str, float]:
     """
     Fits a function of time to data.
@@ -144,7 +164,8 @@ def fit_expression(
         fcn=lambda params, x, y: (expression(x, params) - y) ** 2,
         params=parameters,
         args=(times, time_serie),
-        method="differential_evolution",
+        method=method,
+        max_nfev=1e6,
     )
     params: Parameters = result.params
     return params.valuesdict()
@@ -155,6 +176,7 @@ def fit_earthquakes(
     times: ndarray,
     lat: ndarray,
     lon: ndarray,
+    method: str,
     corners: dict[str, dict[str, tuple[float, float]]] = EARTHQUAKE_CORNERS,
 ) -> dict[str, dict[str, list[list[dict[str, float]]]]]:
     """
@@ -175,7 +197,11 @@ def fit_earthquakes(
 
     # Fits data accordingly to earthquake signature expressions.
     fitted_parameters_per_area = {}
-    for area, (time_dependent_map, selected_latitudes_indices, selected_longitudes_indices) in restricted_areas_data.items():
+    for area, (
+        time_dependent_map,
+        selected_latitudes_indices,
+        selected_longitudes_indices,
+    ) in restricted_areas_data.items():
 
         # Creates a parameterization class instance to optimize.
         parameters = Parameters()
@@ -208,6 +234,7 @@ def fit_earthquakes(
                         time_serie=time_serie,
                         expression=full_earthquake_signal,
                         parameters=parameters,
+                        method=method,
                     )
                     for time_serie in line_time_series
                 ]
@@ -225,6 +252,7 @@ def remove_earthquakes(
     times: ndarray,
     lat: ndarray,
     lon: ndarray,
+    method: str,
     corners: dict[str, dict[str, tuple[float, float]]] = EARTHQUAKE_CORNERS,
 ) -> tuple[dict[str, dict[str, list[list[dict[str, float]]]]], ndarray]:
     """
@@ -233,7 +261,7 @@ def remove_earthquakes(
 
     # Fits the signal parameters on the wanted earthqakes areas.
     fitted_parameters_per_area = fit_earthquakes(
-        time_dependent_maps=time_dependent_maps, times=times, lat=lat, lon=lon, corners=corners
+        time_dependent_maps=time_dependent_maps, times=times, lat=lat, lon=lon, corners=corners, method=method
     )
 
     # Remove modelized signal from real data.
@@ -242,7 +270,9 @@ def remove_earthquakes(
         for latitude, fitted_parameters_line in zip(
             where(area_fitted_parameters["latitudes"])[0], area_fitted_parameters["fitted_parameters"]
         ):
-            for longitude, fitted_parameters in zip(where(area_fitted_parameters["longitudes"])[0], fitted_parameters_line):
+            for longitude, fitted_parameters in zip(
+                where(area_fitted_parameters["longitudes"])[0], fitted_parameters_line
+            ):
                 corrected_time_dependent_maps[:, latitude, longitude] -= multiple_earthquake_signal(
                     t=times, parameters=fitted_parameters
                 )

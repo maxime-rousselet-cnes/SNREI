@@ -47,21 +47,16 @@ def select_degrees(harmonics: dict[str, ndarray[complex]], row: str) -> ndarray[
             sign, degree, order = symbols[0], int(symbols[1]), int(symbols[2])
             result_mask[0 if sign == "C" else 1, degree, order] = 1.0
         result = result_mask * result
-        return result
+    return result
 
 
 def generate_load_signal_components_figure(
     elastic_load_signal_id: str = "0",
     anelastic_load_signal_id: str = "2",
     rows: list[str] = [
-        "S_2_1",
-        "C_2_1",
-        "C_1_0 C_1_1 S_1_1",
-        "load signal before degree one replacement",
-        "load signal after degree one replacement",
-        "geoid height",
-        "radial displacement",
-        "residuals",
+        "C_2_0",
+        "C_2_2",
+        "S_2_2",
     ],
     difference: bool = False,
     continents: bool = False,
@@ -140,9 +135,10 @@ def generate_load_signal_components_figure(
                         if ("C" in row) or ("S" in row)
                         else SATURATION_THRESHOLDS[row]
                     )
-                ),
+                )
+                / (5.0 if "difference" in column else 1.0),
                 n_max=n_max,
-                mask=mask if not continents else 1,
+                mask=mask if not continents else 1.0,
             )
             ax += [current_ax]
             # Adds layout.
@@ -164,8 +160,10 @@ def generate_load_signal_components_figure(
                 )
             # Eventually memorizes the contour for scale.
             if column == "anelastic":
-                colorbar_contour = contour
-                cbar = fig.colorbar(colorbar_contour, ax=ax, orientation="horizontal", shrink=0.5, extend="both")
+                cbar = fig.colorbar(contour, ax=ax, orientation="horizontal", shrink=0.5, extend="both")
                 cbar.set_label(label=row + " (mm/yr)")
+            elif column == "difference":
+                cbar = fig.colorbar(contour, ax=current_ax, orientation="horizontal", shrink=0.5, extend="both")
+                cbar.set_label(label="(mm/yr)")
 
     show()

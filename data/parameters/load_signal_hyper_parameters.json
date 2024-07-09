@@ -14,6 +14,7 @@
     "opposite_load_on_continents": false,
     "n_max": 89,
     "load_spatial_behaviour_file": "GRACE(-FO)_MSSA_2003_2022.xyz",
+    "renormalize_recent_trend": true,
     "leakage_correction_iterations": 1,
     "skiprows": 3,
     "ocean_mask": "IMERG_land_sea_mask.nc",

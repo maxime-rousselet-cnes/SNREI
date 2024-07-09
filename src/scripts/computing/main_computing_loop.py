@@ -113,7 +113,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             dates,
             frequencies,
             frequencial_harmonic_elastic_load_signal,
-            rescaling_factor,
+            elastic_load_signal_past_trend,
         ) = build_frequencial_harmonic_elastic_load_signal(load_signal_hyper_parameters=load_signal_hyper_parameters)
         load_signal_hyper_parameters.n_max = redefine_n_max(
             n_max=load_signal_hyper_parameters.n_max,
@@ -332,17 +332,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 )
 
                 # Normalizes so that the data previous to 2003 matches source datas.
-                """
-                previous_trend = mean_on_mask(
-                    mask=ocean_mask,
-                    harmonics=compute_harmonic_signal_trends(
-                        signal_dates=dates,
-                        load_signal_hyper_parameters=load_signal_hyper_parameters,
-                        frequencial_harmonic_signal=elastic_frequencial_harmonic_load_signal,
-                        recent_trend=False,
-                    ),
-                )
-                unnormalized_previous_trend = mean_on_mask(
+                past_trend = mean_on_mask(
                     mask=ocean_mask,
                     harmonics=compute_harmonic_signal_trends(
                         signal_dates=dates,
@@ -351,12 +341,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         recent_trend=False,
                     ),
                 )
-                print(previous_trend, unnormalized_previous_trend)
                 frequencial_harmonic_load_signal = (
-                    unnormalized_frequencial_harmonic_load_signal * previous_trend / unnormalized_previous_trend
+                    unnormalized_frequencial_harmonic_load_signal * elastic_load_signal_past_trend / past_trend
                 )
-                """
-                frequencial_harmonic_load_signal = unnormalized_frequencial_harmonic_load_signal
 
                 # Computes trends.
                 harmonic_load_signal_trends = compute_harmonic_signal_trends(

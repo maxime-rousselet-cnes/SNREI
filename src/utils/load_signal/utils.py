@@ -4,41 +4,39 @@ from scipy.fft import fft, fftfreq, ifft
 
 from ...functions import map_normalizing, mean_on_mask, signal_trend, surface_ponderation
 from ..classes import GRACE_trends_data_path, LoadSignalHyperParameters
-from ..data import (
-    extract_GRACE_data,
-    extract_mask_csv,
-    extract_mask_nc,
-    extract_temporal_load_signal,
-    get_ocean_mask,
-    map_sampling,
-)
+from ..data import extract_GRACE_data, extract_temporal_load_signal, get_ocean_mask, map_sampling
 
 
 def get_trend_dates(
     signal_dates: ndarray[float] | list[float],
     load_signal_hyper_parameters: LoadSignalHyperParameters,
     recent_trend: bool = True,
+    shift: bool = True,
 ) -> tuple[ndarray[float], ndarray[int]]:
     """
     Returns trend indices and trend dates. Works for 1900-2003 trend or 2003 - 2023 depending on the boolean value.
     """
 
-    shift_dates = (
-        array(object=signal_dates, dtype=float)
-        + load_signal_hyper_parameters.spline_time_years
-        + load_signal_hyper_parameters.last_year_for_trend
+    shifted_dates = (
+        signal_dates
+        if not shift
+        else (
+            array(object=signal_dates, dtype=float)
+            + load_signal_hyper_parameters.spline_time_years
+            + load_signal_hyper_parameters.last_year_for_trend
+        )
     )
     if recent_trend:
         trend_indices = where(
-            (shift_dates <= load_signal_hyper_parameters.last_year_for_trend - 1)
-            * (shift_dates >= load_signal_hyper_parameters.first_year_for_trend)
+            (shifted_dates <= load_signal_hyper_parameters.last_year_for_trend - 1)
+            * (shifted_dates >= load_signal_hyper_parameters.first_year_for_trend)
         )[0]
     else:
         trend_indices = where(
-            (shift_dates < load_signal_hyper_parameters.first_year_for_trend)
-            * (shift_dates >= load_signal_hyper_parameters.load_history_start_date)
+            (shifted_dates < load_signal_hyper_parameters.first_year_for_trend)
+            * (shifted_dates >= load_signal_hyper_parameters.load_history_start_date)
         )[0]
-    return trend_indices, shift_dates[trend_indices]
+    return trend_indices, shifted_dates[trend_indices]
 
 
 def compute_signal_trend(
@@ -149,40 +147,6 @@ def build_elastic_load_signal_history(
     )
 
 
-def build_frequencial_elastic_load_signal(
-    load_signal_hyper_parameters: LoadSignalHyperParameters,
-) -> tuple[ndarray[float], ndarray[float], ndarray[complex], float]:
-    """
-    Builds the load in the frequential domain.
-    Returns:
-        - dates (yr)
-        - frequencies (yr^-1)
-        - frequential elastic load signal (mm)
-        - elastic load signal trend (mm/yr)
-    """
-    # Builds the signal's frequencial component.
-    dates, load_signal = extract_temporal_load_signal(
-        name=load_signal_hyper_parameters.case,
-        filename=load_signal_hyper_parameters.load_history,
-    )
-    signal_dates, temporal_elastic_load_signal, time_step, elastic_load_signal_trend = (
-        build_elastic_load_signal_history(
-            initial_signal_dates=dates,
-            load_signal=load_signal,
-            load_signal_hyper_parameters=load_signal_hyper_parameters,
-        )
-    )  # (yr).
-    elastic_load_signal_frequencial_component = fft(x=temporal_elastic_load_signal)
-    frequencies = fftfreq(n=len(elastic_load_signal_frequencial_component), d=time_step)
-
-    return (
-        signal_dates,
-        frequencies,
-        elastic_load_signal_frequencial_component,
-        elastic_load_signal_trend,
-    )
-
-
 def build_frequencial_harmonic_elastic_load_signal(
     load_signal_hyper_parameters: LoadSignalHyperParameters,
 ) -> tuple[
@@ -202,14 +166,6 @@ def build_frequencial_harmonic_elastic_load_signal(
 
     # For Frederikse/GRACE trends data.
     if load_signal_hyper_parameters.load_signal == "load_history":
-
-        # Gets frequencial component.
-        (
-            signal_dates,
-            frequencies,
-            elastic_load_signal_frequencial_component,
-            elastic_load_signal_trend,
-        ) = build_frequencial_elastic_load_signal(load_signal_hyper_parameters=load_signal_hyper_parameters)
 
         # Gets harmonic component.
         if load_signal_hyper_parameters.load_spatial_behaviour_data == "GRACE":
@@ -239,21 +195,66 @@ def build_frequencial_harmonic_elastic_load_signal(
                 / sum(surface_ponderation(mask=(1.0 - ocean_mask)).flatten())
             )
 
+        # Harmonic component.
         spatial_component = map_sampling(map=map, n_max=load_signal_hyper_parameters.n_max, harmonic_domain=True)[0]
-
-        # Projects.
-        return (
-            signal_dates,
-            frequencies,
-            tensordot(a=spatial_component, b=elastic_load_signal_frequencial_component, axes=0)
-            / elastic_load_signal_trend,
-            compute_signal_trend(
-                signal_dates=signal_dates,
-                load_signal_hyper_parameters=load_signal_hyper_parameters,
-                input_signal=elastic_load_signal_frequencial_component,
-                recent_trend=False,
+        ocean_mean_recent_trend = mean_on_mask(
+            mask=get_ocean_mask(
+                name=load_signal_hyper_parameters.ocean_mask,
+                n_max=load_signal_hyper_parameters.n_max,
             ),
+            harmonics=spatial_component,
         )
+
+        # Builds the signal's frequencial component.
+        dates, load_signal = extract_temporal_load_signal(
+            name=load_signal_hyper_parameters.case,
+            filename=load_signal_hyper_parameters.load_history,
+        )
+        past_trend_indices, past_trend_dates = get_trend_dates(
+            signal_dates=dates,
+            load_signal_hyper_parameters=load_signal_hyper_parameters,
+            recent_trend=False,
+            shift=False,
+        )
+        elastic_load_signal_past_trend = signal_trend(
+            trend_dates=past_trend_dates, signal=load_signal[past_trend_indices]
+        )[0]
+        # Eventually renormalize recent dates data to match GRACE data source trend.
+        if load_signal_hyper_parameters.renormalize_recent_trend:
+            recent_trend_indices, recent_trend_dates = get_trend_dates(
+                signal_dates=dates,
+                load_signal_hyper_parameters=load_signal_hyper_parameters,
+                recent_trend=True,
+                shift=False,
+            )
+            load_signal[recent_trend_indices] = load_signal[recent_trend_indices][0] + (
+                ocean_mean_recent_trend
+                / signal_trend(trend_dates=recent_trend_dates, signal=load_signal[recent_trend_indices])[0]
+            ) * (load_signal[recent_trend_indices] - load_signal[recent_trend_indices][0])
+        signal_dates, temporal_elastic_load_signal, time_step, elastic_load_signal_trend = (
+            build_elastic_load_signal_history(
+                initial_signal_dates=dates,
+                load_signal=load_signal,
+                load_signal_hyper_parameters=load_signal_hyper_parameters,
+            )
+        )  # (yr).
+
+        # Gets frequencial component.
+        elastic_load_signal_frequencial_component = fft(x=temporal_elastic_load_signal)
+        frequencies = fftfreq(n=len(elastic_load_signal_frequencial_component), d=time_step)
+
+        # TODO.
+        from matplotlib.pyplot import plot
+
+        plot(signal_dates, temporal_elastic_load_signal, label="0")
+
+        # Generates result depending on space and time.
+        frequencial_harmonic_elastic_load = (
+            tensordot(a=spatial_component, b=elastic_load_signal_frequencial_component, axes=0)
+            / elastic_load_signal_trend
+        )
+        # Projects.
+        return (signal_dates, frequencies, frequencial_harmonic_elastic_load, elastic_load_signal_past_trend)
 
     else:
         # TODO: Get GRACE's data history ?

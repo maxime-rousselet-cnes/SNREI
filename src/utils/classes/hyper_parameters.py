@@ -172,6 +172,7 @@ class LoadSignalHyperParameters(HyperParameters):
     opposite_load_on_continents: bool
     n_max: int
     load_spatial_behaviour_file: Optional[str]  # (.csv) file path relative to data.
+    renormalize_recent_trend: bool  # Wether to rescale recent period trends on GRACE ocean mean trend.
     leakage_correction_iterations: int
     skiprows: int  # For spatial behaviour file loading.
     ocean_mask: Optional[str]

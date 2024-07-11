@@ -1,10 +1,12 @@
+from typing import Optional
+
 from numpy import arange, array, ceil, concatenate, flip, linspace, log2, ndarray, round, tensordot, where, zeros
 from scipy import interpolate
 from scipy.fft import fft, fftfreq, ifft
 
 from ...functions import map_normalizing, mean_on_mask, signal_trend, surface_ponderation
 from ..classes import GRACE_trends_data_path, LoadSignalHyperParameters
-from ..data import extract_GRACE_data, extract_temporal_load_signal, get_ocean_mask, map_sampling
+from ..data import extract_GRACE_data, extract_temporal_load_signal, get_ocean_mask, map_sampling, redefine_n_max
 
 
 def get_trend_dates(
@@ -26,16 +28,24 @@ def get_trend_dates(
             + load_signal_hyper_parameters.last_year_for_trend
         )
     )
-    if recent_trend:
-        trend_indices = where(
-            (shifted_dates <= load_signal_hyper_parameters.last_year_for_trend - 1)
-            * (shifted_dates >= load_signal_hyper_parameters.first_year_for_trend)
-        )[0]
-    else:
-        trend_indices = where(
-            (shifted_dates < load_signal_hyper_parameters.first_year_for_trend)
-            * (shifted_dates >= load_signal_hyper_parameters.load_history_start_date)
-        )[0]
+    trend_indices = where(
+        (
+            shifted_dates
+            < (
+                load_signal_hyper_parameters.last_year_for_trend
+                if recent_trend
+                else load_signal_hyper_parameters.first_year_for_trend
+            )
+        )
+        * (
+            shifted_dates
+            >= (
+                load_signal_hyper_parameters.first_year_for_trend
+                if recent_trend
+                else load_signal_hyper_parameters.load_history_start_date
+            )
+        )
+    )[0]
     return trend_indices, shifted_dates[trend_indices]
 
 
@@ -65,26 +75,54 @@ def compute_signal_trend(
 
 def build_elastic_load_signal_history(
     initial_signal_dates: ndarray[float],
-    load_signal: ndarray[float],
+    initial_load_signal: ndarray[float],
     load_signal_hyper_parameters: LoadSignalHyperParameters,
-) -> tuple[ndarray[float], ndarray[float], float, float]:
+    elastic_past_trend: Optional[float] = None,  # (mm/yr).
+) -> tuple[ndarray[float], ndarray[float], ndarray[complex], float]:
     """
-    Builds a load signal history function suitable for Fourier analysis. It has zero mean value, antisymetry and no Gibbs
-    effect.
-    Returns dates, signal, time step and trend.
+    Builds a unitless load signal history function suitable for Fourier analysis. It has zero mean value, antisymetry and no
+    Gibbs effect.
     """
 
+    # Sets wanted past trend without modifying recent trend.
+    past_trend_indices, past_trend_dates = get_trend_dates(
+        signal_dates=initial_signal_dates,
+        load_signal_hyper_parameters=load_signal_hyper_parameters,
+        recent_trend=False,
+        shift=False,
+    )
+    recent_trend_indices, recent_trend_dates = get_trend_dates(
+        signal_dates=initial_signal_dates,
+        load_signal_hyper_parameters=load_signal_hyper_parameters,
+        recent_trend=True,
+        shift=False,
+    )
+    past_trend = signal_trend(
+        trend_dates=past_trend_dates,
+        signal=initial_load_signal[past_trend_indices],
+    )[0]
+    past_trend_ratio = (elastic_past_trend if not (elastic_past_trend is None) else past_trend) / past_trend
+    load_signal = concatenate(
+        (
+            initial_load_signal[past_trend_indices] * past_trend_ratio,  # Rescaled past time serie.
+            initial_load_signal[recent_trend_indices]  # Unnmodified recent time serie.
+            + initial_load_signal[past_trend_indices][-1]
+            * (past_trend_ratio - 1),  # Additive constant for continuity.
+        )
+    )
+
     # Linearly extends the signal for last years.
-    trend_indices = initial_signal_dates >= load_signal_hyper_parameters.first_year_for_trend
-    elastic_load_signal_trend, elastic_load_signal_additive_constant = signal_trend(
-        trend_dates=initial_signal_dates[trend_indices],
-        signal=load_signal[trend_indices],
+    elastic_load_signal_recent_trend, elastic_load_signal_additive_constant = signal_trend(
+        trend_dates=recent_trend_dates,
+        signal=load_signal[recent_trend_indices],
     )
     extend_part_dates = arange(
         initial_signal_dates[-1] + 1,
         load_signal_hyper_parameters.last_year_for_trend + 1,
     )
-    extend_part_load_signal = elastic_load_signal_trend * extend_part_dates + elastic_load_signal_additive_constant
+    extend_part_load_signal = (
+        elastic_load_signal_recent_trend * extend_part_dates + elastic_load_signal_additive_constant
+    )
 
     # Eventually includes a LIA effect.
     if load_signal_hyper_parameters.LIA:
@@ -136,126 +174,81 @@ def build_elastic_load_signal_history(
     n_signal = int(2 ** (n_log_min_no_Gibbs + load_signal_hyper_parameters.anti_Gibbs_effect_factor))
     signal_dates = linspace(-half_signal_period, stop=half_signal_period, num=n_signal)
 
+    # Gets frequencial component.
+    time_step = 2.0 * half_signal_period / n_signal
+    frequencies = fftfreq(n=n_signal, d=time_step)
+
     return (
         signal_dates,
-        interpolate.splev(
-            x=signal_dates,
-            tck=interpolate.splrep(x=extended_dates, y=extended_time_serie, k=3),
-        ),  # Signal.
-        2.0 * half_signal_period / n_signal,  # Time step.
-        elastic_load_signal_trend,  # Trend.
+        frequencies,
+        fft(
+            x=interpolate.splev(
+                x=signal_dates,
+                tck=interpolate.splrep(x=extended_dates, y=extended_time_serie, k=3),
+            )
+        )
+        / elastic_load_signal_recent_trend,  # Unitless signal.
+        past_trend,
     )
 
 
-def build_frequencial_harmonic_elastic_load_signal(
+def build_elastic_load_signal_components(
     load_signal_hyper_parameters: LoadSignalHyperParameters,
 ) -> tuple[
-    ndarray[float],
-    ndarray[float],
-    ndarray[complex],
-    float,
+    int,
+    ndarray[float],  # Temporal component's dates.
+    ndarray[float],  # Spatial component in harmonic domain.
+    ndarray[float],  # Unnormalized temporal component.
+    ndarray[float],  # Ocean mask.
 ]:
     """
-    Builds the load in the frequential-harmonic domain.
-    Returns:
-        - dates (yr).
-        - frequencies (yr^-1).
-        - frequential elastic load signal (4-D array: C/S, n, m, frequency) (mm).
-        - elastic load signal trend for global GMSL data period on twentieth centuary (mm/yr).
+    Builds the elastic load signal components.
+    The spatial component comes from GRACE solution recent trends.
+    The temporal componet comes from Frederikse barystatic sea level from 1900.
     """
 
-    # For Frederikse/GRACE trends data.
-    if load_signal_hyper_parameters.load_signal == "load_history":
+    # Builds the signal's temporal component.
+    dates, temporal_component = extract_temporal_load_signal(
+        name=load_signal_hyper_parameters.case,
+        filename=load_signal_hyper_parameters.load_history,
+    )
 
-        # Gets harmonic component.
-        if load_signal_hyper_parameters.load_spatial_behaviour_data == "GRACE":
-            map = extract_GRACE_data(
+    # Gets harmonic component.
+    if load_signal_hyper_parameters.load_spatial_behaviour_data == "GRACE":
+        map = extract_GRACE_data(
+            name=load_signal_hyper_parameters.load_spatial_behaviour_file,
+            path=GRACE_trends_data_path,
+            skiprows=load_signal_hyper_parameters.skiprows,
+        )[0]
+    else:  # Considered as ocean/land repartition only.
+        map = map_normalizing(
+            map=get_ocean_mask(
                 name=load_signal_hyper_parameters.load_spatial_behaviour_file,
-                path=GRACE_trends_data_path,
-                skiprows=load_signal_hyper_parameters.skiprows,
-            )[0]
-        else:  # Considered as ocean/land repartition only.
-            map = map_normalizing(
-                map=get_ocean_mask(
-                    name=load_signal_hyper_parameters.load_spatial_behaviour_file,
-                    n_max=load_signal_hyper_parameters.n_max,
-                    pixels_to_coast=load_signal_hyper_parameters.pixels_to_coast,
-                )
-            )
-        # Loads the continents with opposite value, such that global mean is null.
-        if load_signal_hyper_parameters.opposite_load_on_continents:
-            ocean_mask = get_ocean_mask(
-                name=load_signal_hyper_parameters.ocean_mask,
                 n_max=load_signal_hyper_parameters.n_max,
                 pixels_to_coast=load_signal_hyper_parameters.pixels_to_coast,
             )
-            map = map * ocean_mask - (1.0 - ocean_mask) * (
-                mean_on_mask(grid=map, mask=ocean_mask)
-                * sum(surface_ponderation(mask=ocean_mask).flatten())
-                / sum(surface_ponderation(mask=(1.0 - ocean_mask)).flatten())
-            )
-
-        # Harmonic component.
-        spatial_component = map_sampling(map=map, n_max=load_signal_hyper_parameters.n_max, harmonic_domain=True)[0]
-        ocean_mean_recent_trend = mean_on_mask(
-            mask=get_ocean_mask(
-                name=load_signal_hyper_parameters.ocean_mask,
-                n_max=load_signal_hyper_parameters.n_max,
-            ),
-            harmonics=spatial_component,
         )
 
-        # Builds the signal's frequencial component.
-        dates, load_signal = extract_temporal_load_signal(
-            name=load_signal_hyper_parameters.case,
-            filename=load_signal_hyper_parameters.load_history,
+    n_max = redefine_n_max(
+        n_max=load_signal_hyper_parameters.n_max,
+        map=map,
+    )
+
+    # Loads ocean mask.
+    ocean_mask = get_ocean_mask(
+        name=load_signal_hyper_parameters.ocean_mask,
+        n_max=n_max,
+        pixels_to_coast=load_signal_hyper_parameters.pixels_to_coast,
+    )
+
+    # Loads the continents with opposite value, such that global mean is null.
+    if load_signal_hyper_parameters.opposite_load_on_continents:
+        map = map * ocean_mask - (1.0 - ocean_mask) * (
+            mean_on_mask(grid=map, mask=ocean_mask)
+            * sum(surface_ponderation(mask=ocean_mask).flatten())
+            / sum(surface_ponderation(mask=(1.0 - ocean_mask)).flatten())
         )
-        past_trend_indices, past_trend_dates = get_trend_dates(
-            signal_dates=dates,
-            load_signal_hyper_parameters=load_signal_hyper_parameters,
-            recent_trend=False,
-            shift=False,
-        )
-        elastic_load_signal_past_trend = signal_trend(
-            trend_dates=past_trend_dates, signal=load_signal[past_trend_indices]
-        )[0]
-        # Eventually renormalize recent dates data to match GRACE data source trend.
-        if load_signal_hyper_parameters.renormalize_recent_trend:
-            recent_trend_indices, recent_trend_dates = get_trend_dates(
-                signal_dates=dates,
-                load_signal_hyper_parameters=load_signal_hyper_parameters,
-                recent_trend=True,
-                shift=False,
-            )
-            load_signal[recent_trend_indices] = load_signal[recent_trend_indices][0] + (
-                ocean_mean_recent_trend
-                / signal_trend(trend_dates=recent_trend_dates, signal=load_signal[recent_trend_indices])[0]
-            ) * (load_signal[recent_trend_indices] - load_signal[recent_trend_indices][0])
-        signal_dates, temporal_elastic_load_signal, time_step, elastic_load_signal_trend = (
-            build_elastic_load_signal_history(
-                initial_signal_dates=dates,
-                load_signal=load_signal,
-                load_signal_hyper_parameters=load_signal_hyper_parameters,
-            )
-        )  # (yr).
 
-        # Gets frequencial component.
-        elastic_load_signal_frequencial_component = fft(x=temporal_elastic_load_signal)
-        frequencies = fftfreq(n=len(elastic_load_signal_frequencial_component), d=time_step)
-
-        # TODO.
-        from matplotlib.pyplot import plot
-
-        plot(signal_dates, temporal_elastic_load_signal, label="0")
-
-        # Generates result depending on space and time.
-        frequencial_harmonic_elastic_load = (
-            tensordot(a=spatial_component, b=elastic_load_signal_frequencial_component, axes=0)
-            / elastic_load_signal_trend
-        )
-        # Projects.
-        return (signal_dates, frequencies, frequencial_harmonic_elastic_load, elastic_load_signal_past_trend)
-
-    else:
-        # TODO: Get GRACE's data history ?
-        pass
+    # Harmonic component.
+    harmonic_component, n_max = map_sampling(map=map, n_max=n_max, harmonic_domain=True)
+    return n_max, dates, harmonic_component, temporal_component, ocean_mask

@@ -1,4 +1,4 @@
-from numpy import Inf, array, errstate, expand_dims, log, meshgrid, nan_to_num, ndarray, sign
+from numpy import Inf, arange, array, errstate, expand_dims, log, meshgrid, nan_to_num, ndarray, sign
 from scipy import interpolate
 
 from ..classes import ELASTIC_RUN_HYPER_PARAMETERS, BoundaryCondition, Direction, LoveNumbersHyperParameters, Result
@@ -7,17 +7,14 @@ from ..data import load_Love_numbers_result
 
 def interpolate_elastic_Love_numbers(
     anelasticity_description_id: str,
-    target_degrees: ndarray[float],
+    n_max: int,
     Love_numbers_hyper_parameters: LoveNumbersHyperParameters,
     directions: list[Direction] = [
         Direction.radial,
-        Direction.tangential,
         Direction.potential,
     ],
     boundary_conditions: list[BoundaryCondition] = [
         BoundaryCondition.load,
-        BoundaryCondition.shear,
-        BoundaryCondition.potential,
     ],
 ) -> Result:
     """
@@ -31,6 +28,7 @@ def interpolate_elastic_Love_numbers(
         Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
         anelasticity_description_id=anelasticity_description_id,
     )
+    target_degrees = arange(n_max) + 1  # Does not include n = 0.
     source_degrees = Love_numbers.axes["degrees"].real
 
     return Result(
@@ -58,18 +56,15 @@ def interpolate_elastic_Love_numbers(
 
 def interpolate_anelastic_Love_numbers(
     anelasticity_description_id: str,
-    target_frequencies: ndarray[float],  # (Hz).
-    target_degrees: ndarray[float],
+    n_max: int,
+    target_frequencies: ndarray[float],  # (yr^-1).
     Love_numbers_hyper_parameters: LoveNumbersHyperParameters,
     directions: list[Direction] = [
         Direction.radial,
-        Direction.tangential,
         Direction.potential,
     ],
     boundary_conditions: list[BoundaryCondition] = [
         BoundaryCondition.load,
-        BoundaryCondition.shear,
-        BoundaryCondition.potential,
     ],
 ) -> Result:
     """
@@ -84,6 +79,7 @@ def interpolate_anelastic_Love_numbers(
     )
     source_frequencies = Love_numbers.axes["frequencies"].real
     source_degrees = Love_numbers.axes["degrees"].real
+    target_degrees = arange(n_max) + 1  # Does not include n = 0.
 
     # Interpolates Love numbers on signal positive frequencies.
     abs_target_frequencies = abs(target_frequencies)

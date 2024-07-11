@@ -21,14 +21,14 @@ from ...utils import (
 from .utils import get_grid, natural_projection
 
 ROW_PATHS: dict[str, Path] = {
-    "harmonic": harmonic_load_signal_trends_path,
+    "harmonic": harmonic_residual_trends_path,  # harmonic_load_signal_trends_path,
     "geoid height": harmonic_geoid_trends_path,
     "radial displacement": harmonic_radial_displacement_trends_path,
     "residuals": harmonic_residual_trends_path,
 }
 SATURATION_THRESHOLDS: dict[str, float] = {
     "load signal": 50.0,
-    "harmonic": 5.0,
+    "harmonic": 2.0,
     "geoid height": 2.0,
     "radial displacement": 2.0,
     "residuals": 10.0,
@@ -53,11 +53,7 @@ def select_degrees(harmonics: dict[str, ndarray[complex]], row: str) -> ndarray[
 def generate_load_signal_components_figure(
     elastic_load_signal_id: str = "0",
     anelastic_load_signal_id: str = "2",
-    rows: list[str] = [
-        "C_2_0",
-        "C_2_2",
-        "S_2_2",
-    ],
+    rows: list[str] = ["C_2_1"],
     difference: bool = False,
     continents: bool = False,
 ):
@@ -68,9 +64,9 @@ def generate_load_signal_components_figure(
         - anelastic signal.
         - (OPTIONAL) difference between the anelastic and the elastic signal.
     Row options:
-        - load signal before degree one replacement.
-        - load signal after degree one replacement (L).
-        - C_2_1
+        - load signal
+        - C_i_j
+        - C_i_j C_k_l ...
         - geoid height (G).
         - radial displacement (R).
         - residuals L + D - (G - R) where D is the scale factor.

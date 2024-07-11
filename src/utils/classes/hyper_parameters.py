@@ -181,6 +181,7 @@ class LoadSignalHyperParameters(HyperParameters):
     # Trend computing parameters.
     first_year_for_trend: int
     last_year_for_trend: int
+    past_trend_error: float  # Maximal admitted error for past trend matching to data.
 
 
 def load_load_signal_hyper_parameters(

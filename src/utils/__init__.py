@@ -16,7 +16,6 @@ from .classes import (
     dates_path,
     descriptions_base_path,
     elastic_load_signal_trends_path,
-    elastic_load_signals_path,
     frequencies_path,
     harmonic_geoid_trends_path,
     harmonic_load_signal_trends_before_degree_one_replacement_path,
@@ -48,12 +47,17 @@ from .degree_one import degree_one_inversion
 from .filtering import leakage_correction
 from .load_signal import (
     anelastic_frequencial_harmonic_load_signal_computing,
-    build_frequencial_harmonic_elastic_load_signal,
+    build_elastic_load_signal_components,
+    build_elastic_load_signal_history,
     compute_harmonic_signal_trends,
     compute_signal_trend,
-    elastic_Love_numbers_computing,
 )
-from .Love_numbers import Love_numbers_computing, generate_log_frequency_initial_values
+from .Love_numbers import (
+    Love_numbers_computing,
+    generate_log_frequency_initial_values,
+    interpolate_anelastic_Love_numbers,
+    interpolate_elastic_Love_numbers,
+)
 from .seismic_fit import remove_earthquakes
 from .variations import (
     create_all_load_signal_hyper_parameters_variations,
@@ -84,7 +88,6 @@ from .variations import (
     dates_path,
     descriptions_base_path,
     elastic_load_signal_trends_path,
-    elastic_load_signals_path,
     frequencies_path,
     load_load_signal_hyper_parameters,
     load_Love_numbers_hyper_parameters,
@@ -105,12 +108,14 @@ from .variations import (
     degree_one_inversion,
     leakage_correction,
     anelastic_frequencial_harmonic_load_signal_computing,
-    build_frequencial_harmonic_elastic_load_signal,
+    build_elastic_load_signal_components,
+    build_elastic_load_signal_history,
     compute_harmonic_signal_trends,
     compute_signal_trend,
-    elastic_Love_numbers_computing,
     Love_numbers_computing,
     generate_log_frequency_initial_values,
+    interpolate_anelastic_Love_numbers,
+    interpolate_elastic_Love_numbers,
     remove_earthquakes,
     create_all_load_signal_hyper_parameters_variations,
     create_all_model_variations,

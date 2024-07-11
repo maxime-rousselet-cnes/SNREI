@@ -15,8 +15,8 @@ PARAMETER_BOUNDS = {
 # Defines areas where to remove earthquakes signals
 EARTHQUAKE_CORNERS = {
     "Chili": {"upper_left": (-33.546211, 360 - 81.554043), "lower_right": (-36.712215, 360 - 72.682230)},
-    "Sumatra": {"upper_left": (6.945213, 92.928182), "lower_right": (4.161619, 95.144977)},
-    "Tohoku": {"upper_left": (37.455418, 138.301228), "lower_right": (35.142693, 144.100055)},
+    "Sumatra": {"upper_left": (4.945213, 92.928182), "lower_right": (2.161619, 95.144977)},
+    "Tohoku": {"upper_left": (37.455418, 141.301228), "lower_right": (35.142693, 144.100055)},
 }
 
 SEISMIC_PARAMETERS_NUMBER = len(

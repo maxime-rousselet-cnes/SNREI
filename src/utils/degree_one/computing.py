@@ -22,8 +22,12 @@ def frequencial_harmonic_component(
         (
             DENSITY_RATIO
             * concatenate(
-                (  # Adds a line of one values for degree zero.
-                    ones(shape=(1, n_frequencies)),
+                (  # Adds a line of zero values for degree zero.
+                    (
+                        ones(shape=(1, n_frequencies))
+                        if direction == Direction.potential
+                        else zeros(shape=(1, n_frequencies))
+                    ),
                     multiply(
                         Love_numbers.values[direction][boundary_condition].T,
                         3 / (2 * Love_numbers.axes["degrees"] + 1),

@@ -160,7 +160,7 @@ def redefine_n_max(n_max: int, map: Optional[ndarray] = None, harmonics: Optiona
     Gets maximal number of degees, limited by map length.
     """
     if map is None:
-        return min(n_max, len(harmonics[0, :, 0]) - 1)
+        return min(n_max, len(harmonics[0]) - 1)
     else:
         return min(n_max, len(map) // 2 - 1)
 
@@ -201,7 +201,9 @@ def get_ocean_mask(name: str, n_max: int, pixels_to_coast: int = 10) -> ndarray[
         )
 
 
-def extract_GRACE_data(name: str, path: Path = GRACE_data_path, skiprows: int = 11) -> ndarray:
+def extract_GRACE_data(
+    name: str, path: Path = GRACE_data_path, skiprows: int = 11
+) -> tuple[ndarray, ndarray, ndarray]:
     """
     Opens and formats GRACE (.xyz) datafile.
     """

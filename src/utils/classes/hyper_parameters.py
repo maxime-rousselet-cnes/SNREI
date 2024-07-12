@@ -147,6 +147,21 @@ def load_Love_numbers_hyper_parameters(
     return Love_numbers_hyper_parameters
 
 
+class SaveParameters(HyperParameters):
+    """
+    Describes whether to save all the resulting load signals or not.
+    """
+
+    # Anelastic load signal computed after frequencial filtering by Love number fractions.
+    step_1: bool
+    # Anelastic load signal computed after degree one inversion.
+    step_2: bool
+    # Anelastic load signal computed after leakage corretion.
+    step_3: bool
+    # Three remaining components of degree one inversion equation: geoid height, radial displacement and residuals.
+    inversion_components: bool
+
+
 class LoadSignalHyperParameters(HyperParameters):
     """
     Describes the parameters needed for to compute some anelastic induced signal using elastic induced signal and Love
@@ -183,6 +198,9 @@ class LoadSignalHyperParameters(HyperParameters):
     last_year_for_trend: int
     past_trend_error: float  # Maximal admitted error for past trend matching to data.
 
+    # Load signal save parameters.
+    save_parameters: dict[str, SaveParameters | str]
+
 
 def load_load_signal_hyper_parameters(
     name: str = "load_signal_hyper_parameters",
@@ -195,4 +213,17 @@ def load_load_signal_hyper_parameters(
         path=parameters_path,
         base_model_type=LoadSignalHyperParameters,
     )
+    save_parameters: dict[str, SaveParameters] = {
+        "harmonics": load_base_model(
+            name=load_signal_hyper_parameters.save_parameters["harmonics"],
+            path=parameters_path,
+            base_model_type=SaveParameters,
+        ),
+        "base_formats": load_base_model(
+            name=load_signal_hyper_parameters.save_parameters["base_formats"],
+            path=parameters_path,
+            base_model_type=SaveParameters,
+        ),
+    }
+    load_signal_hyper_parameters.save_parameters = save_parameters
     return load_signal_hyper_parameters

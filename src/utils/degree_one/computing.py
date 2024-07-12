@@ -40,7 +40,7 @@ def frequencial_harmonic_component(
 
 def degree_one_inversion(
     anelastic_frequencial_harmonic_load_signal: ndarray[complex],
-    anelastic_hermitian_Love_numbers: Result,
+    Love_numbers: Result,
     ocean_mask: ndarray[float],
 ) -> tuple[ndarray[complex], ndarray[complex], ndarray[complex], ndarray[complex]]:
     """
@@ -67,13 +67,13 @@ def degree_one_inversion(
     # Computes components for degrees >= 2.
     frequencial_harmonic_geoid = frequencial_harmonic_component(
         anelastic_frequencial_harmonic_load_signal=anelastic_frequencial_harmonic_load_signal,
-        Love_numbers=anelastic_hermitian_Love_numbers,
+        Love_numbers=Love_numbers,
         direction=Direction.potential,
         boundary_condition=BoundaryCondition.load,
     )
     frequencial_harmonic_radial_displacement = frequencial_harmonic_component(
         anelastic_frequencial_harmonic_load_signal=anelastic_frequencial_harmonic_load_signal,
-        Love_numbers=anelastic_hermitian_Love_numbers,
+        Love_numbers=Love_numbers,
         direction=Direction.radial,
         boundary_condition=BoundaryCondition.load,
     )
@@ -102,12 +102,8 @@ def degree_one_inversion(
     )
 
     # Preprocesses degree one polynomials and constants. Index 0 for degree 1.
-    degree_one_potential_Love_numbers = anelastic_hermitian_Love_numbers.values[Direction.potential][
-        BoundaryCondition.load
-    ][0]
-    degree_one_radial_Love_numbers = anelastic_hermitian_Love_numbers.values[Direction.radial][BoundaryCondition.load][
-        0
-    ]
+    degree_one_potential_Love_numbers = Love_numbers.values[Direction.potential][BoundaryCondition.load][0]
+    degree_one_radial_Love_numbers = Love_numbers.values[Direction.radial][BoundaryCondition.load][0]
     degree_one_Love_numbers_term = 1 - DENSITY_RATIO * (
         degree_one_potential_Love_numbers - degree_one_radial_Love_numbers
     )
@@ -121,7 +117,7 @@ def degree_one_inversion(
     constant_column = [[1.0] * sum(ocean_mask_indices)]
 
     # Handles elstic case.
-    if len(anelastic_hermitian_Love_numbers.axes["frequencies"]) == 1:
+    if len(Love_numbers.axes["frequencies"]) == 1:
         degree_one_Love_numbers_term = [degree_one_Love_numbers_term] * n_frequencies
         degree_one_radial_Love_numbers = [degree_one_radial_Love_numbers] * n_frequencies
         degree_one_potential_Love_numbers = [degree_one_potential_Love_numbers] * n_frequencies

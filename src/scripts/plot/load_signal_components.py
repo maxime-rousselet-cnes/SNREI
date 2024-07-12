@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 from cartopy.crs import Robinson
 from cartopy.feature import NaturalEarthFeature
@@ -9,40 +10,25 @@ from numpy import ndarray, zeros
 from ...functions import mean_on_mask
 from ...utils import (
     get_ocean_mask,
-    harmonic_geoid_trends_path,
-    harmonic_load_signal_trends_before_degree_one_replacement_path,
     harmonic_load_signal_trends_path,
-    harmonic_radial_displacement_trends_path,
-    harmonic_residual_trends_path,
     load_complex_array_from_binary,
     load_load_signal_hyper_parameters,
     redefine_n_max,
 )
 from .utils import get_grid, natural_projection
 
-ROW_PATHS: dict[str, Path] = {
-    "harmonic": harmonic_residual_trends_path,  # harmonic_load_signal_trends_path,
-    "geoid height": harmonic_geoid_trends_path,
-    "radial displacement": harmonic_radial_displacement_trends_path,
-    "residuals": harmonic_residual_trends_path,
-}
-SATURATION_THRESHOLDS: dict[str, float] = {
-    "load signal": 50.0,
-    "harmonic": 2.0,
-    "geoid height": 2.0,
-    "radial displacement": 2.0,
-    "residuals": 10.0,
-}
 
-
-def select_degrees(harmonics: dict[str, ndarray[complex]], row: str) -> ndarray[float]:
+def select_degrees(
+    harmonics: dict[str, ndarray[complex]], row_name: str, row_components: Optional[str]
+) -> ndarray[float]:
     """
     Subfunction to avoid copy-paste.
     """
-    result = harmonics[row].real
-    if ("C" in row) or ("S" in row):
+    result = harmonics[row_name, row_components].real
+    if not row_components is None:
+        row_components: str
         result_mask = zeros(shape=result.shape)
-        for harmonic_name in row.split(" "):
+        for harmonic_name in row_components.split(" "):
             symbols = harmonic_name.split("_")
             sign, degree, order = symbols[0], int(symbols[1]), int(symbols[2])
             result_mask[0 if sign == "C" else 1, degree, order] = 1.0
@@ -51,9 +37,11 @@ def select_degrees(harmonics: dict[str, ndarray[complex]], row: str) -> ndarray[
 
 
 def generate_load_signal_components_figure(
+    rows: list[tuple[str, str, float]] = [
+        ("residual", "C_1_0 C_1_1 S_1_1", 2.0)
+    ],  # Plot row names, components and their corresponding saturation thresholds
     elastic_load_signal_id: str = "0",
-    anelastic_load_signal_id: str = "2",
-    rows: list[str] = ["C_2_1"],
+    anelastic_load_signal_id: str = "1",
     difference: bool = False,
     continents: bool = False,
 ):
@@ -63,42 +51,30 @@ def generate_load_signal_components_figure(
         - elastic signal.
         - anelastic signal.
         - (OPTIONAL) difference between the anelastic and the elastic signal.
-    Row options:
-        - load signal
-        - C_i_j
-        - C_i_j C_k_l ...
-        - geoid height (G).
-        - radial displacement (R).
-        - residuals L + D - (G - R) where D is the scale factor.
-
+    One may select specific harmonic components of a signal. The corresponding way to write row name is:
+        "residual: C_0_1 C_1_1 S_1_1"
     """
 
     # Gets results.
-    trend_harmonic_components_per_column: dict[str, dict[str, ndarray]] = {
+    trend_harmonic_components_per_column: dict[tuple[str, str], dict[str, ndarray]] = {
         column: {
-            row: load_complex_array_from_binary(
-                name=load_signal_id,
-                path=(
-                    harmonic_load_signal_trends_before_degree_one_replacement_path
-                    if "before" in row
-                    else (
-                        ROW_PATHS["harmonic"] if ("after" in row) or ("C" in row) or ("S" in row) else ROW_PATHS[row]
-                    )
-                ),
+            (row_name, row_components): load_complex_array_from_binary(
+                name=load_signal_id, path=harmonic_load_signal_trends_path.joinpath(row_name)
             )
-            for row in rows
+            for row_name, row_components, _ in rows
         }
         for column, load_signal_id in zip(["elastic", "anelastic"], [elastic_load_signal_id, anelastic_load_signal_id])
     }
     if difference:
         trend_harmonic_components_per_column["difference"] = {
-            row: trend_harmonic_components_per_column["anelastic"][row]
-            - trend_harmonic_components_per_column["elastic"][row]
-            for row in rows
+            (row_name, row_components): trend_harmonic_components_per_column["anelastic"][row_name, row_components]
+            - trend_harmonic_components_per_column["elastic"][row_name, row_components]
+            for row_name, row_components in rows
         }
     load_signal_hyper_parameters = load_load_signal_hyper_parameters()
     n_max = redefine_n_max(
-        n_max=load_signal_hyper_parameters.n_max, harmonics=trend_harmonic_components_per_column["elastic"][rows[0]]
+        n_max=load_signal_hyper_parameters.n_max,
+        harmonics=trend_harmonic_components_per_column["elastic"][rows[0][:2]],
     )
     mask = get_ocean_mask(name=load_signal_hyper_parameters.ocean_mask, n_max=n_max)
 
@@ -107,7 +83,7 @@ def generate_load_signal_components_figure(
     row_number = len(rows)
 
     # Loops on all plots to generate.
-    for i_row, row in enumerate(rows):
+    for i_row, (row_name, row_components, row_saturation_threshold) in enumerate(rows):
 
         ax: list[GeoAxes] = []
 
@@ -122,17 +98,10 @@ def generate_load_signal_components_figure(
             )
             contour = natural_projection(
                 ax=current_ax,
-                harmonics=select_degrees(harmonics=trend_harmonic_components, row=row),
-                saturation_threshold=(
-                    SATURATION_THRESHOLDS["load signal"]
-                    if "load signal" in row
-                    else (
-                        SATURATION_THRESHOLDS["harmonic"]
-                        if ("C" in row) or ("S" in row)
-                        else SATURATION_THRESHOLDS[row]
-                    )
-                )
-                / (5.0 if "difference" in column else 1.0),
+                harmonics=select_degrees(
+                    harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components
+                ),
+                saturation_threshold=row_saturation_threshold / (5.0 if "difference" in column else 1.0),
                 n_max=n_max,
                 mask=mask if not continents else 1.0,
             )
@@ -145,7 +114,10 @@ def generate_load_signal_components_figure(
                     mean_on_mask(
                         mask=mask,
                         grid=get_grid(
-                            harmonics=select_degrees(harmonics=trend_harmonic_components, row=row), n_max=n_max
+                            harmonics=select_degrees(
+                                harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components
+                            ),
+                            n_max=n_max,
                         ),
                     ),
                 )
@@ -157,7 +129,7 @@ def generate_load_signal_components_figure(
             # Eventually memorizes the contour for scale.
             if column == "anelastic":
                 cbar = fig.colorbar(contour, ax=ax, orientation="horizontal", shrink=0.5, extend="both")
-                cbar.set_label(label=row + " (mm/yr)")
+                cbar.set_label(label=row_name + ": " + row_components + " (mm/yr)")
             elif column == "difference":
                 cbar = fig.colorbar(contour, ax=current_ax, orientation="horizontal", shrink=0.5, extend="both")
                 cbar.set_label(label="(mm/yr)")

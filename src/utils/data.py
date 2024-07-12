@@ -20,6 +20,7 @@ from .classes import (
     masks_data_path,
     tables_path,
 )
+from .database import save_base_model, save_complex_array_to_binary
 
 COLUMNS = ["lower", "mean", "upper"]
 
@@ -355,3 +356,34 @@ def load_Love_numbers_result(
     Love_numbers.load(name=str(list(file_ids)[0]), path=Love_numbers_path)
 
     return Love_numbers
+
+
+def save_harmonics(
+    trends_array: ndarray[float],
+    id: str,
+    path: Path,
+) -> None:
+    """
+    Saves load signal harmonic trends.
+    """
+    save_complex_array_to_binary(
+        input_array=trends_array,
+        name=id,
+        path=path,
+    )
+
+
+def save_base_format(
+    trends_array: ndarray[float],
+    id: str,
+    path: Path,
+) -> None:
+    """
+    Saves load signal trends in base json format.
+    """
+    grid: ndarray[float] = MakeGridDH(trends_array.real, sampling=2)
+    save_base_model(
+        obj=grid.tolist(),
+        name=id,
+        path=path,
+    )

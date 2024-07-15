@@ -1,23 +1,21 @@
-from setuptools import setup
+from setuptools import find_packages, setup
 
 setup(
-    name="snrei",
-    version="0.1",
+    name="SNREI",
+    version="7",
     description="A Python package for Spherically symmetric non-rotating and isotropic Earth",
     author="Maxime Rousselet - CNES",
     author_email="maxime.rousselet@cnes.fr",
-    packages=["snrei"],
+    packages=find_packages(),
     install_requires=[
         "numpy",
         "matplotlib",
         "netCDF4",
         "scipy",
-        "shutil",
-        "itertools",
-        "json",
+        "more-itertools==8.10.0",
         "pathlib",
         "pydantic",
-        "multiprocessing",
+        "multiprocess",
         "cmocean",
     ],
 )

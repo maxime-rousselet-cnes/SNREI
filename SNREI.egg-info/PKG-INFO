@@ -1,0 +1,15 @@
+Metadata-Version: 2.1
+Name: SNREI
+Version: 7
+Summary: A Python package for Spherically symmetric non-rotating and isotropic Earth
+Author: Maxime Rousselet - CNES
+Author-email: maxime.rousselet@cnes.fr
+Requires-Dist: numpy
+Requires-Dist: matplotlib
+Requires-Dist: netCDF4
+Requires-Dist: scipy
+Requires-Dist: more-itertools==8.10.0
+Requires-Dist: pathlib
+Requires-Dist: pydantic
+Requires-Dist: multiprocess
+Requires-Dist: cmocean

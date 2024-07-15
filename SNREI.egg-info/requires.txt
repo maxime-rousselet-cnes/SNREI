@@ -1,0 +1,9 @@
+numpy
+matplotlib
+netCDF4
+scipy
+more-itertools==8.10.0
+pathlib
+pydantic
+multiprocess
+cmocean

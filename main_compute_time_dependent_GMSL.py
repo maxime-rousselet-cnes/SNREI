@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from src import (
+from snrei import (
     RunHyperParameters,
     compute_anelastic_harmonic_load_per_description_per_options,
 )

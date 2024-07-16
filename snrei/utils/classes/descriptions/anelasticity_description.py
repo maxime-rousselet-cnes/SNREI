@@ -1,21 +1,20 @@
 from typing import Optional
 
-from numpy import Inf, array, min, ndarray, round
+from numpy import array, inf, min, ndarray, round
 from scipy import interpolate
 
 from ...database import load_base_model
 from ...rheological_formulas import find_tau_M, mu_k_computing
-from ..constants import ASYMPTOTIC_MU_RATIO_DECIMALS, LAYER_DECIMALS, SECONDS_PER_YEAR
+from ..constants import (ASYMPTOTIC_MU_RATIO_DECIMALS, LAYER_DECIMALS,
+                         SECONDS_PER_YEAR)
 from ..description_layer import DescriptionLayer
 from ..hyper_parameters import AnelasticityDescriptionParameters
 from ..model import ModelPart
 from ..paths import parameters_path
-from ..separators import (
-    DESCRIPTION_PART_NAME_FROM_PARAMETERS_SEPARATOR,
-    DESCRIPTION_PART_NAMES_SEPARATOR,
-    LAYER_NAMES_SEPARATOR,
-)
-from .description import Description, Spline
+from ..separators import (DESCRIPTION_PART_NAME_FROM_PARAMETERS_SEPARATOR,
+                          DESCRIPTION_PART_NAMES_SEPARATOR,
+                          LAYER_NAMES_SEPARATOR)
+from .description import Description
 from .elasticity_description import ElasticityDescription
 
 
@@ -84,8 +83,8 @@ class AnelasticityDescription(Description):
         # Replace infinite values by strings.
         for i_layer, variable_values in enumerate(self.variable_values_per_layer):
             for variable_name, values in variable_values.items():
-                if Inf in values:
-                    self.variable_values_per_layer[i_layer][variable_name] = array(object=["Inf"] * len(values))
+                if inf in values:
+                    self.variable_values_per_layer[i_layer][variable_name] = array(object=["inf"] * len(values))
 
         # Saves to (.JSON) file.
         super().save(overwrite_description=overwrite_description)
@@ -93,8 +92,8 @@ class AnelasticityDescription(Description):
         # Replace back strings by infinite values.
         for i_layer, variable_values in enumerate(self.variable_values_per_layer):
             for variable_name, values in variable_values.items():
-                if "Inf" in values:
-                    self.variable_values_per_layer[i_layer][variable_name] = array(object=[Inf] * len(values))
+                if "inf" in values:
+                    self.variable_values_per_layer[i_layer][variable_name] = array(object=[inf] * len(values))
 
     def __init__(
         self,
@@ -283,13 +282,12 @@ class AnelasticityDescription(Description):
             ("omega_m", self.frequency_unit, layers_per_part[ModelPart.short_term_anelasticity].splines),
             ("tau_M", self.period_unit / SECONDS_PER_YEAR, layers_per_part[ModelPart.short_term_anelasticity].splines),
         ]:
-            description_layer.splines[variable_name] = Spline(
-                (
+            description_layer.splines[variable_name] =                 (
                     splines[variable_name][0],
                     splines[variable_name][1] / unit,  # Gets unitless variable.
                     splines[variable_name][2],
                 )
-            )
+            
 
         return description_layer
 
@@ -338,7 +336,7 @@ class AnelasticityDescription(Description):
                 }
             )
 
-            # Eventually finds tau_M profile that constrains mu(omega -> Inf) = asymptotic_ratio * mu_0:
+            # Eventually finds tau_M profile that constrains mu(omega -> inf) = asymptotic_ratio * mu_0:
             if round(a=1.0 - variable_values["asymptotic_mu_ratio"], decimals=ASYMPTOTIC_MU_RATIO_DECIMALS).any():
                 for i_x, (omega_m, alpha, asymptotic_mu_ratio, Q_mu) in enumerate(
                     zip(

@@ -2,7 +2,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional
 
-from numpy import Inf, array, expand_dims, ndarray, ones
+from numpy import inf, array, expand_dims, ndarray, ones
 
 from ..database import load_base_model, save_base_model
 from .hyper_parameters import HyperParameters
@@ -79,14 +79,8 @@ class Result:
                     if len(result_shape) == 1
                     else result_array[:, :, i_direction + 3 * i_boundary_condition]
                 )
-                * (
-                    radial_factor
-                    if direction == Direction.radial
-                    else non_radial_factor
-                )
-                for i_boundary_condition, boundary_condition in enumerate(
-                    BoundaryCondition
-                )
+                * (radial_factor if direction == Direction.radial else non_radial_factor)
+                for i_boundary_condition, boundary_condition in enumerate(BoundaryCondition)
             }
             for i_direction, direction in enumerate(Direction)
         }
@@ -113,7 +107,7 @@ class Result:
                 "axes": {
                     axe_name: (
                         (
-                            {"real": ["Inf"] if axe_values[0] == Inf else axe_values}
+                            {"real": ["inf"] if axe_values[0] == inf else axe_values}
                             if not isinstance(axe_values.flatten()[0], complex)
                             else {"real": axe_values.real, "imag": axe_values.imag}
                         )
@@ -136,22 +130,13 @@ class Result:
         )
 
         self.hyper_parameters = HyperParameters(**loaded_content["hyper_parameters"])
-        result_values: dict[str, dict[str, dict[str, list[float]]]] = loaded_content[
-            "values"
-        ]
+        result_values: dict[str, dict[str, dict[str, list[float]]]] = loaded_content["values"]
         result_axes: dict[str, dict[str, list[float]]] = loaded_content["axes"]
         self.values = Values(
             {
                 Direction(int(direction)): {
-                    (BoundaryCondition(int(boundary_condition))): array(
-                        object=sub_values["real"]
-                    )
-                    + (
-                        0.0
-                        if not ("imag" in sub_values.keys())
-                        else array(object=sub_values["imag"])
-                    )
-                    * 1.0j
+                    (BoundaryCondition(int(boundary_condition))): array(object=sub_values["real"])
+                    + (0.0 if not ("imag" in sub_values.keys()) else array(object=sub_values["imag"])) * 1.0j
                     for boundary_condition, sub_values in values.items()
                 }
                 for direction, values in result_values.items()
@@ -159,14 +144,7 @@ class Result:
         )
 
         self.axes = {
-            axe_name: array(
-                object=[Inf] if "Inf" in axe_values["real"] else axe_values["real"]
-            )
-            + (
-                0.0
-                if not ("imag" in axe_values.keys())
-                else array(object=axe_values["imag"])
-            )
-            * 1.0j
+            axe_name: array(object=[inf] if "inf" in axe_values["real"] else axe_values["real"])
+            + (0.0 if not ("imag" in axe_values.keys()) else array(object=axe_values["imag"])) * 1.0j
             for axe_name, axe_values in result_axes.items()
         }

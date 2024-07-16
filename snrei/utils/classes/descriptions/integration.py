@@ -1,39 +1,29 @@
 from typing import Any, Callable
 
-from numpy import Inf, array, errstate, ndarray, pi, shape, where, zeros
+from numpy import array, errstate, inf, ndarray, pi, shape, where, zeros
 from scipy import integrate, interpolate
 from scipy.integrate import OdeSolution
 
-from ...rheological_formulas import (
-    b_computing,
-    build_cutting_omegas,
-    delta_mu_computing,
-    f_attenuation_computing,
-    m_prime_computing,
-    mu_computing,
-)
-from ...y_system import (
-    fluid_system,
-    fluid_to_solid,
-    load_surface_solution,
-    potential_surface_solution,
-    shear_surface_solution,
-    solid_homogeneous_system,
-    solid_system,
-    solid_to_fluid,
-)
+from ...rheological_formulas import (b_computing, build_cutting_omegas,
+                                     delta_mu_computing,
+                                     f_attenuation_computing,
+                                     m_prime_computing, mu_computing)
+from ...y_system import (fluid_system, fluid_to_solid, load_surface_solution,
+                         potential_surface_solution, shear_surface_solution,
+                         solid_homogeneous_system, solid_system,
+                         solid_to_fluid)
 from ..constants import INITIAL_Y_VECTOR
 from ..description_layer import DescriptionLayer
 from ..hyper_parameters import YSystemHyperParameters
 from .anelasticity_description import AnelasticityDescription
-from .description import Description, Spline
+from .description import Description
 
 
 class Integration(Description):
     """
     "Applies" an anelasticity description to some frequency value.
     Describes the integration constants and all complex description layers at a given frequency.
-    Handles elastic case for frequency = Inf.
+    Handles elastic case for frequency = inf.
     Description layers variables include mu and lambda real and imaginary parts.
     """
 
@@ -68,9 +58,9 @@ class Integration(Description):
         )
 
         # Updates proper attributes.
-        self.frequency = Inf if log_frequency == Inf else 10.0**log_frequency
-        self.omega = Inf if self.frequency == Inf else 2 * pi * self.frequency
-        self.omega_j = Inf if self.omega == Inf else self.omega * 1.0j
+        self.frequency = inf if log_frequency == inf else 10.0**log_frequency
+        self.omega = inf if self.frequency == inf else 2 * pi * self.frequency
+        self.omega_j = inf if self.omega == inf else self.omega * 1.0j
 
         # Updates attributes from the anelasticity description.
         self.piG = anelasticity_description.piG
@@ -109,8 +99,8 @@ class Integration(Description):
                 {  # Just copies lambda_0 and mu_0.
                     "mu_real": description_layer.splines["mu_0"],
                     "lambda_real": description_layer.splines["lambda_0"],
-                    "mu_imag": Spline((0.0, 0.0, 0)),
-                    "lambda_imag": Spline((0.0, 0.0, 0)),
+                    "mu_imag": (0.0, 0.0, 0),
+                    "lambda_imag": (0.0, 0.0, 0),
                 }
             )
 

@@ -6,7 +6,7 @@ from cartopy import crs, feature
 from matplotlib import colors
 from matplotlib.gridspec import GridSpec
 from numpy import (
-    Inf,
+    inf,
     array,
     concatenate,
     linspace,
@@ -32,7 +32,11 @@ from ...utils import (
     map_sampling,
 )
 
-SYMBOLS_PER_BOUNDARY_CONDITION = {BoundaryCondition.load: "'", BoundaryCondition.shear: "*", BoundaryCondition.potential: ""}
+SYMBOLS_PER_BOUNDARY_CONDITION = {
+    BoundaryCondition.load: "'",
+    BoundaryCondition.shear: "*",
+    BoundaryCondition.potential: "",
+}
 SYMBOLS_PER_DIRECTION = {Direction.radial: "h", Direction.tangential: "l", Direction.potential: "k"}
 SMALT_BLUE = (0.0, 79.0 / 255.0, 145.0 / 255.0)
 VALENCIA_RED = (217.0 / 255.0, 80.0 / 255.0, 70.0 / 255.0)
@@ -135,7 +139,9 @@ def plot_harmonics_on_natural_projection(
             figsize=figsize,
         )
         ax = fig.add_subplot(1, 1, 1, projection=crs.Robinson(central_longitude=180))
-        plt.title(title + (" saturated" if not (min_saturation_value is None and max_saturation_value is None) else ""))
+        plt.title(
+            title + (" saturated" if not (min_saturation_value is None and max_saturation_value is None) else "")
+        )
         ax.set_global()
         spatial_result: ndarray[float] = round(
             a=MakeGridDH(harmonics, sampling=2) * ocean_mask,
@@ -152,15 +158,18 @@ def plot_harmonics_on_natural_projection(
             linspace(start=0, stop=360, num=len(spatial_result[0])),
             linspace(start=90, stop=-90, num=len(spatial_result)),
             maximum(
-                -Inf if min_saturation_value is None else min_saturation_value,
-                minimum(Inf if max_saturation_value is None else max_saturation_value, spatial_result),
+                -inf if min_saturation_value is None else min_saturation_value,
+                minimum(inf if max_saturation_value is None else max_saturation_value, spatial_result),
             ),
             transform=crs.PlateCarree(),
             cmap=colors.LinearSegmentedColormap.from_list(
-                name="two_solopes_colorbar_grey_zero", colors=concatenate((colorbar_values, ones(shape=(512, 1))), axis=1)
+                name="two_solopes_colorbar_grey_zero",
+                colors=concatenate((colorbar_values, ones(shape=(512, 1))), axis=1),
             ),  # "RdBu_r",
             norm=(
-                colors.SymLogNorm(linthresh=0.1, linscale=1, vmin=min_saturation_value, vmax=max_saturation_value, base=10)
+                colors.SymLogNorm(
+                    linthresh=0.1, linscale=1, vmin=min_saturation_value, vmax=max_saturation_value, base=10
+                )
                 if logscale
                 else colors.TwoSlopeNorm(vcenter=0)
             ),
@@ -172,7 +181,9 @@ def plot_harmonics_on_natural_projection(
         cbar.set_label(label=label)
         plt.savefig(
             figure_subpath.joinpath(
-                name + ("_saturated" if not (min_saturation_value is None and max_saturation_value is None) else "") + ".png"
+                name
+                + ("_saturated" if not (min_saturation_value is None and max_saturation_value is None) else "")
+                + ".png"
             )
         )
         plt.close()
@@ -234,8 +245,8 @@ def plot_load_signal(
         linspace(start=0, stop=360, num=len(spatial_result[0])),
         linspace(start=90, stop=-90, num=len(spatial_result)),
         maximum(
-            -Inf if min_saturation is None else min_saturation,
-            minimum(Inf if max_saturation is None else max_saturation, spatial_result),
+            -inf if min_saturation is None else min_saturation,
+            minimum(inf if max_saturation is None else max_saturation, spatial_result),
         ),
         transform=crs.PlateCarree(),
         cmap=colors.LinearSegmentedColormap.from_list(

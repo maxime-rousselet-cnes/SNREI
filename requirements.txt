@@ -1,9 +1,14 @@
+
+pyGFOToolbox 
 numpy
 matplotlib
 netCDF4
+opencv-python
 scipy
 more-itertools==8.10.0
 pathlib
 pydantic
 multiprocess
 cmocean
+pyshtools
+lmfit

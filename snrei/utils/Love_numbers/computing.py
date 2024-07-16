@@ -1,6 +1,6 @@
 from multiprocessing import Pool
 
-from numpy import Inf, array, concatenate, linspace, log10, ndarray, round, unique
+from numpy import inf, array, concatenate, linspace, log10, ndarray, round, unique
 
 from ...functions import interpolate_all, precise_curvature
 from ..classes import AnelasticityDescription, Integration, RunHyperParameters, YSystemHyperParameters
@@ -52,7 +52,7 @@ def Love_numbers_computing(
                 if (
                     run_hyper_parameters.use_long_term_anelasticity or run_hyper_parameters.use_short_term_anelasticity
                 )
-                else array([Inf])
+                else array([inf])
             ),
             max_tol=max_tol,
             decimals=decimals,

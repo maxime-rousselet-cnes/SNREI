@@ -2,6 +2,7 @@ from copy import deepcopy
 from itertools import product
 
 from numpy import array, ndarray, tensordot
+from pyGFOToolbox import GRACE_collection_SH
 from tqdm import tqdm
 
 from ...functions import mean_on_mask
@@ -323,10 +324,11 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
 
                     # Leakage correction.
                     frequencial_harmonic_load_signal_step_3 = leakage_correction(
+                        signal_frequencies=signal_frequencies,
                         frequencial_harmonic_load_signal=frequencial_harmonic_load_signal_step_2,
                         ocean_mask=ocean_mask,
-                        Love_numbers=Love_numbers,
                         iterations=load_signal_hyper_parameters.leakage_correction_iterations,
+                        ddk_filter_level=load_signal_hyper_parameters.ddk_filter_level,
                     )
 
                     # Normalizes so that the data previous to 2003 matches source datas.

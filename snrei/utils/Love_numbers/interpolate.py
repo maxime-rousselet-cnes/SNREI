@@ -1,4 +1,4 @@
-from numpy import Inf, arange, array, errstate, expand_dims, log, meshgrid, nan_to_num, ndarray, sign
+from numpy import inf, arange, array, errstate, expand_dims, log, meshgrid, nan_to_num, ndarray, sign
 from scipy import interpolate
 
 from ..classes import ELASTIC_RUN_HYPER_PARAMETERS, BoundaryCondition, Direction, LoveNumbersHyperParameters, Result
@@ -50,7 +50,7 @@ def interpolate_elastic_Love_numbers(
             }
             for direction in directions
         },
-        axes={"degrees": target_degrees, "frequencies": array(object=[Inf])},
+        axes={"degrees": target_degrees, "frequencies": array(object=[inf])},
     )
 
 

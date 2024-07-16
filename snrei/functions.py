@@ -1,7 +1,7 @@
 from typing import Callable, Optional
 
 from numpy import (
-    Inf,
+    inf,
     abs,
     argsort,
     array,
@@ -118,7 +118,7 @@ def interpolate_all(
     return array(
         object=(
             function_values
-            if len(x_shared_values) == 1 and x_shared_values[0] == Inf  # Manages elastic case.
+            if len(x_shared_values) == 1 and x_shared_values[0] == inf  # Manages elastic case.
             else [
                 interpolate_array(
                     x_values=x_tab,

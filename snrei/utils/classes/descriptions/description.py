@@ -1,13 +1,14 @@
 from pathlib import Path
 from typing import Optional
 
-from numpy import Inf, array, ndarray
+from numpy import array, inf, ndarray
 
 from ...database import load_base_model, save_base_model
 from ..constants import DEFAULT_MODELS, DEFAULT_SPLINE_NUMBER, EARTH_RADIUS
-from ..description_layer import DescriptionLayer, Spline
+from ..description_layer import DescriptionLayer
 from ..model import Model
-from ..paths import ModelPart, anelasticity_descriptions_path, descriptions_path
+from ..paths import (ModelPart, anelasticity_descriptions_path,
+                     descriptions_path)
 
 
 class Description:
@@ -39,18 +40,14 @@ class Description:
     ) -> None:
 
         # Initializes IDs.
-        self.model_filename = (
-            DEFAULT_MODELS[model_part] if model_filename is None else model_filename
-        )
+        self.model_filename = DEFAULT_MODELS[model_part] if model_filename is None else model_filename
         self.model_part = model_part
         self.id = id if not (id is None) else self.model_filename
 
         # Updates fields.
         self.radius_unit = EARTH_RADIUS if radius_unit is None else radius_unit
         self.real_crust = False if real_crust is None else real_crust
-        self.spline_number = (
-            DEFAULT_SPLINE_NUMBER if spline_number is None else spline_number
-        )
+        self.spline_number = DEFAULT_SPLINE_NUMBER if spline_number is None else spline_number
 
         # Initializes description layers as empty.
         self.description_layers = []
@@ -103,25 +100,17 @@ class Description:
 
             for variable_name, spline in splines.items():
 
-                # Handles infinite values, as strings in files but as Inf float for computing.
-                if not isinstance(spline[0], list) and spline[0] == "Inf":
+                # Handles infinite values, as strings in files but as inf float for computing.
+                if not isinstance(spline[0], list) and spline[0] == "inf":
                     self.description_layers[i_layer].splines[variable_name] = (
-                        Inf,
-                        Inf,
+                        inf,
+                        inf,
                         0,
                     )
                 else:
-                    spline: Spline = (
-                        array(
-                            object=self.description_layers[i_layer].splines[
-                                variable_name
-                            ][0]
-                        ),
-                        array(
-                            object=self.description_layers[i_layer].splines[
-                                variable_name
-                            ][1]
-                        ),
+                    spline= (
+                        array(object=self.description_layers[i_layer].splines[variable_name][0]),
+                        array(object=self.description_layers[i_layer].splines[variable_name][1]),
                         self.description_layers[i_layer].splines[variable_name][2],
                     )
                     # Formats every polynomial spline as a scipy polynomial spline.
@@ -135,20 +124,16 @@ class Description:
 
         if not (path.joinpath("id" + ".json").is_file() and not overwrite_description):
             self_dict = self.__dict__
-            self_dict["model_part"] = (
-                None if self.model_part is None else self.model_part.value
-            )
+            self_dict["model_part"] = None if self.model_part is None else self.model_part.value
             layer: DescriptionLayer
 
             # Converts Infinite values to strings.
             for i_layer, layer in enumerate(self_dict["description_layers"]):
                 splines: dict[str, tuple] = layer.splines
                 for variable_name, spline in splines.items():
-                    if not isinstance(spline[0], ndarray) and spline[0] == Inf:
-                        description_layer: DescriptionLayer = self_dict[
-                            "description_layers"
-                        ][i_layer]
-                        description_layer.splines[variable_name] = ("Inf", "Inf", 0)
+                    if not isinstance(spline[0], ndarray) and spline[0] == inf:
+                        description_layer: DescriptionLayer = self_dict["description_layers"][i_layer]
+                        description_layer.splines[variable_name] = ("inf", "inf", 0)
                         self_dict["description_layers"][i_layer] = description_layer
 
             # Saves as basic type.
@@ -162,10 +147,10 @@ class Description:
             for i_layer, layer in enumerate(self.description_layers):
                 splines: dict[str, tuple] = layer.splines
                 for variable_name, spline in splines.items():
-                    if not isinstance(spline[0], ndarray) and spline[0] == "Inf":
+                    if not isinstance(spline[0], ndarray) and spline[0] == "inf":
                         self.description_layers[i_layer].splines[variable_name] = (
-                            Inf,
-                            Inf,
+                            inf,
+                            inf,
                             0,
                         )
 
@@ -173,8 +158,5 @@ class Description:
         """
         Returns directory path to save the description.
         """
-        return (
-            anelasticity_descriptions_path
-            if self.model_part is None
-            else descriptions_path[self.model_part]
-        )
+        return anelasticity_descriptions_path if self.model_part is None else descriptions_path[self.model_part]
+        return anelasticity_descriptions_path if self.model_part is None else descriptions_path[self.model_part]

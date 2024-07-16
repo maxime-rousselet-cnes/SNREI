@@ -1,6 +1,6 @@
 from math import factorial
 
-from numpy import Inf, array, dot, lib, ndarray, sqrt
+from numpy import inf, array, dot, lib, ndarray, sqrt
 
 from ..classes import DescriptionLayer
 
@@ -22,18 +22,12 @@ def solid_system(
     """
 
     # Interpolate parameters at current radius.
-    lndi = (
-        layer.evaluate(x=x, variable="lambda_real")
-        + layer.evaluate(x=x, variable="lambda_imag") * 1.0j
-    )
-    mndi = (
-        layer.evaluate(x=x, variable="mu_real")
-        + layer.evaluate(x=x, variable="mu_imag") * 1.0j
-    )
+    lndi = layer.evaluate(x=x, variable="lambda_real") + layer.evaluate(x=x, variable="lambda_imag") * 1.0j
+    mndi = layer.evaluate(x=x, variable="mu_real") + layer.evaluate(x=x, variable="mu_imag") * 1.0j
     rndi = layer.evaluate(x=x, variable="rho_0")
     gndi = layer.evaluate(x=x, variable="g_0")
 
-    dyn_term = -rndi * omega**2.0 if dynamic_term and omega != Inf else 0.0
+    dyn_term = -rndi * omega**2.0 if dynamic_term and omega != inf else 0.0
     if inhomogeneity_gradients:
         lndi_prime = (
             layer.evaluate(x=x, variable="lambda_real", derivative_order=1)
@@ -155,16 +149,8 @@ def solid_to_fluid(
 
     k_13 = Y1[3] / Y3[3]
     k_23 = Y2[3] / Y3[3]
-    k_num = (
-        gndi * (Y1[0] + Y3[0] * k_13)
-        - (Y1[4] + Y3[4] * k_13)
-        + (1.0 / rndi) * (Y1[1] + Y3[1] * k_13)
-    )
-    k_den = (
-        gndi * (Y2[0] + Y3[0] * k_23)
-        - (Y2[4] + Y3[4] * k_23)
-        + (1.0 / rndi) * (Y2[1] + Y3[1] * k_23)
-    )
+    k_num = gndi * (Y1[0] + Y3[0] * k_13) - (Y1[4] + Y3[4] * k_13) + (1.0 / rndi) * (Y1[1] + Y3[1] * k_13)
+    k_den = gndi * (Y2[0] + Y3[0] * k_23) - (Y2[4] + Y3[4] * k_23) + (1.0 / rndi) * (Y2[1] + Y3[1] * k_23)
     kk = k_num / k_den
 
     sol2 = Y1[1] + kk * Y2[1] + (k_13 + kk * k_23) * Y3[1]
@@ -200,14 +186,8 @@ def solid_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: flo
     Computes analytical solution to homogeneous sphere system of radius x, with n_layer-th layer elastic rheology.
     """
     # Interpolate Parameters at Current Radius
-    lndi = (
-        layer.evaluate(x=x, variable="lambda_real")
-        + layer.evaluate(x=x, variable="lambda_imag") * 1.0j
-    )
-    mndi = (
-        layer.evaluate(x=x, variable="mu_real")
-        + layer.evaluate(x=x, variable="mu_imag") * 1.0j
-    )
+    lndi = layer.evaluate(x=x, variable="lambda_real") + layer.evaluate(x=x, variable="lambda_imag") * 1.0j
+    mndi = layer.evaluate(x=x, variable="mu_real") + layer.evaluate(x=x, variable="mu_imag") * 1.0j
     rndi = layer.evaluate(x=x, variable="rho_0")
     vsndi = layer.evaluate(x=x, variable="Vs")
     vpndi = layer.evaluate(x=x, variable="Vp")
@@ -235,16 +215,8 @@ def solid_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: flo
         )
     )
     # From Takeuchi & Saito (1972), Eq. 99: Factored for Numerical Stability
-    f1 = (
-        (1.0 / gamma)
-        * (vsndi * lib.scimath.sqrt(ksq1) + wnd)
-        * (vsndi * lib.scimath.sqrt(ksq1) - wnd)
-    )
-    f2 = (
-        (1.0 / gamma)
-        * (vsndi * lib.scimath.sqrt(ksq2) + wnd)
-        * (vsndi * lib.scimath.sqrt(ksq2) - wnd)
-    )
+    f1 = (1.0 / gamma) * (vsndi * lib.scimath.sqrt(ksq1) + wnd) * (vsndi * lib.scimath.sqrt(ksq1) - wnd)
+    f2 = (1.0 / gamma) * (vsndi * lib.scimath.sqrt(ksq2) + wnd) * (vsndi * lib.scimath.sqrt(ksq2) - wnd)
     # Imaginary Part is Effectively Zero -- Get Rid of It
     f1 = f1.real
     f2 = f2.real
@@ -265,23 +237,9 @@ def solid_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: flo
         1.0
         - x1sqr / (2.0 * (2.0 * n + 3.0))
         + (x1sqr**2) / (4.0 * (2.0 * n + 3.0) * (2.0 * n + 5.0) * 2.0)
-        - (x1sqr**3)
-        / (
-            factorial(3)
-            * (2.0**3)
-            * (2.0 * n + 7.0)
-            * (2.0 * n + 5.0)
-            * (2.0 * n + 3.0)
-        )
+        - (x1sqr**3) / (factorial(3) * (2.0**3) * (2.0 * n + 7.0) * (2.0 * n + 5.0) * (2.0 * n + 3.0))
         + (x1sqr**4)
-        / (
-            factorial(4)
-            * (2.0**4)
-            * (2.0 * n + 9.0)
-            * (2.0 * n + 7.0)
-            * (2.0 * n + 5.0)
-            * (2.0 * n + 3.0)
-        )
+        / (factorial(4) * (2.0**4) * (2.0 * n + 9.0) * (2.0 * n + 7.0) * (2.0 * n + 5.0) * (2.0 * n + 3.0))
         - (x1sqr**5)
         / (
             factorial(5)
@@ -321,23 +279,9 @@ def solid_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: flo
         1.0
         - x2sqr / (2.0 * (2.0 * n + 3.0))
         + (x2sqr**2) / (4.0 * (2.0 * n + 3.0) * (2.0 * n + 5.0) * 2.0)
-        - (x2sqr**3)
-        / (
-            factorial(3)
-            * (2.0**3)
-            * (2.0 * n + 7.0)
-            * (2.0 * n + 5.0)
-            * (2.0 * n + 3.0)
-        )
+        - (x2sqr**3) / (factorial(3) * (2.0**3) * (2.0 * n + 7.0) * (2.0 * n + 5.0) * (2.0 * n + 3.0))
         + (x2sqr**4)
-        / (
-            factorial(4)
-            * (2.0**4)
-            * (2.0 * n + 9.0)
-            * (2.0 * n + 7.0)
-            * (2.0 * n + 5.0)
-            * (2.0 * n + 3.0)
-        )
+        / (factorial(4) * (2.0**4) * (2.0 * n + 9.0) * (2.0 * n + 7.0) * (2.0 * n + 5.0) * (2.0 * n + 3.0))
         - (x2sqr**5)
         / (
             factorial(5)
@@ -379,13 +323,7 @@ def solid_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: flo
         - x1sqr / (2.0 * (2.0 * (n + 1.0) + 3.0))
         + (x1sqr**2) / (4.0 * (2.0 * (n + 1.0) + 3.0) * (2.0 * (n + 1.0) + 5.0) * 2.0)
         - (x1sqr**3)
-        / (
-            factorial(3)
-            * (2.0**3)
-            * (2.0 * (n + 1.0) + 7.0)
-            * (2.0 * (n + 1.0) + 5.0)
-            * (2.0 * (n + 1.0) + 3.0)
-        )
+        / (factorial(3) * (2.0**3) * (2.0 * (n + 1.0) + 7.0) * (2.0 * (n + 1.0) + 5.0) * (2.0 * (n + 1.0) + 3.0))
         + (x1sqr**4)
         / (
             factorial(4)
@@ -434,13 +372,7 @@ def solid_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: flo
         - x2sqr / (2.0 * (2.0 * (n + 1.0) + 3.0))
         + (x2sqr**2) / (4.0 * (2.0 * (n + 1.0) + 3.0) * (2.0 * (n + 1.0) + 5.0) * 2.0)
         - (x2sqr**3)
-        / (
-            factorial(3)
-            * (2.0**3)
-            * (2.0 * (n + 1.0) + 7.0)
-            * (2.0 * (n + 1.0) + 5.0)
-            * (2.0 * (n + 1.0) + 3.0)
-        )
+        / (factorial(3) * (2.0**3) * (2.0 * (n + 1.0) + 7.0) * (2.0 * (n + 1.0) + 5.0) * (2.0 * (n + 1.0) + 3.0))
         + (x2sqr**4)
         / (
             factorial(4)
@@ -487,50 +419,30 @@ def solid_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: flo
 
     # FIRST SOLUTION
     Y11 = -(x ** (n + 1.0) / (2.0 * n + 3.0)) * (0.5 * n * h1 * psi1_n + f1 * phi1_np1)
-    Y21 = -(lndi + 2.0 * mndi) * (x**n) * f1 * phi1_n + (
-        mndi * (x**n) / (2.0 * n + 3.0)
-    ) * (-(n * (n - 1.0)) * h1 * psi1_n + 2.0 * (2.0 * f1 + n1) * phi1_np1)
-    Y31 = -(x ** (n + 1.0) / (2.0 * n + 3.0)) * (0.5 * h1 * psi1_n - phi1_np1)
-    Y41 = (
-        mndi
-        * (x**n)
-        * (
-            phi1_n
-            - (1.0 / (2.0 * n + 3.0))
-            * ((n - 1.0) * h1 * psi1_n + 2.0 * (f1 + 1.0) * phi1_np1)
-        )
+    Y21 = -(lndi + 2.0 * mndi) * (x**n) * f1 * phi1_n + (mndi * (x**n) / (2.0 * n + 3.0)) * (
+        -(n * (n - 1.0)) * h1 * psi1_n + 2.0 * (2.0 * f1 + n1) * phi1_np1
     )
+    Y31 = -(x ** (n + 1.0) / (2.0 * n + 3.0)) * (0.5 * h1 * psi1_n - phi1_np1)
+    Y41 = mndi * (x**n) * (phi1_n - (1.0 / (2.0 * n + 3.0)) * ((n - 1.0) * h1 * psi1_n + 2.0 * (f1 + 1.0) * phi1_np1))
     Y51 = (x ** (n + 2.0)) * (
-        ((vpndi**2) * f1 - (n + 1.0) * (vsndi**2)) / (x**2)
-        - ((3.0 * gamma * f1) / (2.0 * (2.0 * n + 3.0))) * psi1_n
+        ((vpndi**2) * f1 - (n + 1.0) * (vsndi**2)) / (x**2) - ((3.0 * gamma * f1) / (2.0 * (2.0 * n + 3.0))) * psi1_n
     )
     Y61 = (2.0 * n + 1.0) * (x ** (n + 1.0)) * (
-        ((vpndi**2) * f1 - (n + 1.0) * (vsndi**2)) / (x**2)
-        - ((3.0 * gamma * f1) / (2.0 * (2.0 * n + 3.0))) * psi1_n
+        ((vpndi**2) * f1 - (n + 1.0) * (vsndi**2)) / (x**2) - ((3.0 * gamma * f1) / (2.0 * (2.0 * n + 3.0))) * psi1_n
     ) + ((3.0 * n * gamma * h1 * (x ** (n + 1.0))) / (2.0 * (2.0 * n + 3.0))) * psi1_n
 
     # SECOND SOLUTION
     Y12 = -(x ** (n + 1.0) / (2.0 * n + 3.0)) * (0.5 * n * h2 * psi2_n + f2 * phi2_np1)
-    Y22 = -(lndi + 2.0 * mndi) * (x**n) * f2 * phi2_n + (
-        mndi * (x**n) / (2.0 * n + 3.0)
-    ) * (-(n * (n - 1.0)) * h2 * psi2_n + 2.0 * (2.0 * f2 + n1) * phi2_np1)
-    Y32 = -(x ** (n + 1.0) / (2.0 * n + 3.0)) * (0.5 * h2 * psi2_n - phi2_np1)
-    Y42 = (
-        mndi
-        * (x**n)
-        * (
-            phi2_n
-            - (1.0 / (2.0 * n + 3.0))
-            * ((n - 1.0) * h2 * psi2_n + 2.0 * (f2 + 1.0) * phi2_np1)
-        )
+    Y22 = -(lndi + 2.0 * mndi) * (x**n) * f2 * phi2_n + (mndi * (x**n) / (2.0 * n + 3.0)) * (
+        -(n * (n - 1.0)) * h2 * psi2_n + 2.0 * (2.0 * f2 + n1) * phi2_np1
     )
+    Y32 = -(x ** (n + 1.0) / (2.0 * n + 3.0)) * (0.5 * h2 * psi2_n - phi2_np1)
+    Y42 = mndi * (x**n) * (phi2_n - (1.0 / (2.0 * n + 3.0)) * ((n - 1.0) * h2 * psi2_n + 2.0 * (f2 + 1.0) * phi2_np1))
     Y52 = (x ** (n + 2.0)) * (
-        ((vpndi**2) * f2 - (n + 1.0) * (vsndi**2)) / (x**2)
-        - ((3.0 * gamma * f2) / (2.0 * (2.0 * n + 3.0))) * psi2_n
+        ((vpndi**2) * f2 - (n + 1.0) * (vsndi**2)) / (x**2) - ((3.0 * gamma * f2) / (2.0 * (2.0 * n + 3.0))) * psi2_n
     )
     Y62 = (2.0 * n + 1.0) * (x ** (n + 1.0)) * (
-        ((vpndi**2) * f2 - (n + 1.0) * (vsndi**2)) / (x**2)
-        - ((3.0 * gamma * f2) / (2.0 * (2.0 * n + 3.0))) * psi2_n
+        ((vpndi**2) * f2 - (n + 1.0) * (vsndi**2)) / (x**2) - ((3.0 * gamma * f2) / (2.0 * (2.0 * n + 3.0))) * psi2_n
     ) + ((3.0 * n * gamma * h2 * (x ** (n + 1.0))) / (2.0 * (2.0 * n + 3.0))) * psi2_n
 
     # THIRD SOLUTION
@@ -539,9 +451,7 @@ def solid_homogeneous_system(x: float, n: int, layer: DescriptionLayer, piG: flo
     Y33 = x ** (n - 1.0)
     Y43 = 2.0 * mndi * (n - 1.0) * (x ** (n - 2.0))
     Y53 = (n * gamma - (wnd**2)) * (x**n)
-    Y63 = (2.0 * n + 1.0) * (
-        (n * gamma - (wnd**2)) * (x ** (n - 1.0))
-    ) - 3.0 * n * gamma * (x ** (n - 1.0))
+    Y63 = (2.0 * n + 1.0) * ((n * gamma - (wnd**2)) * (x ** (n - 1.0))) - 3.0 * n * gamma * (x ** (n - 1.0))
 
     # CONVERT TAKEUCHI & SAITO Y CONVENTION BACK TO SMYLIE CONVENTION
     Y61 = Y61 - ((n + 1.0) / x) * Y51

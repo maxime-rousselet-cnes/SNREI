@@ -18,12 +18,7 @@ from ...utils import (
     load_Love_numbers_hyper_parameters,
     results_path,
 )
-from .utils import (
-    SYMBOLS_PER_BOUNDARY_CONDITION,
-    SYMBOLS_PER_DIRECTION,
-    option_color,
-    options_label,
-)
+from .utils import SYMBOLS_PER_BOUNDARY_CONDITION, SYMBOLS_PER_DIRECTION, option_color, options_label
 
 
 def plot_Love_numbers_for_options_for_descriptions_per_type(
@@ -83,10 +78,12 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
             anelastic_results[
                 anelasticity_description_id, option.use_long_term_anelasticity, option.use_short_term_anelasticity
             ].load(name="anelastic_Love_numbers", path=result_subpath)
-            T_values[anelasticity_description_id, option.use_long_term_anelasticity, option.use_short_term_anelasticity] = (
-                frequencies_to_periods(frequencies=load_base_model(name="frequencies", path=result_subpath))
-            )
-        elastic_results[anelasticity_description_id].load(name="elastic_Love_numbers", path=result_subpath.parent.parent)
+            T_values[
+                anelasticity_description_id, option.use_long_term_anelasticity, option.use_short_term_anelasticity
+            ] = frequencies_to_periods(frequencies=load_base_model(name="frequencies", path=result_subpath))
+        elastic_results[anelasticity_description_id].load(
+            name="elastic_Love_numbers", path=result_subpath.parent.parent
+        )
     degrees: list[int] = load_base_model(name="degrees", path=result_subpath.parent.parent)
     degrees_indices = get_degrees_indices(degrees=degrees, degrees_to_plot=degrees_to_plot)
 
@@ -96,13 +93,17 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
             symbol = SYMBOLS_PER_DIRECTION[direction] + "_n" + SYMBOLS_PER_BOUNDARY_CONDITION[boundary_condition]
             for zoom_in in BOOLEANS:
                 # A grid of plots per Love number type and with/without zoom in.
-                _, plots = plt.subplots(2, len(anelasticity_description_ids), figsize=figsize, sharex="col", sharey="row")
+                _, plots = plt.subplots(
+                    2, len(anelasticity_description_ids), figsize=figsize, sharex="col", sharey="row"
+                )
                 for part in ["real", "imaginary"]:
                     for i_plot, (anelasticity_description_id, plot) in enumerate(
                         zip(anelasticity_description_ids, plots[0 if part == "real" else 1])
                     ):
                         plot.set_xscale("log")
-                        elastic_values = elastic_results[anelasticity_description_id].values[direction][boundary_condition]
+                        elastic_values = elastic_results[anelasticity_description_id].values[direction][
+                            boundary_condition
+                        ]
                         for i_degree, degree in zip(degrees_indices, degrees_to_plot):
                             linestyle = degrees_linestyles[degrees_to_plot.index(degree)]
                             for option in options:
@@ -152,7 +153,11 @@ def plot_Love_numbers_for_options_for_descriptions_per_type(
                             plot.set_ylabel(part + " part")
                         if part == "imaginary":
                             plot.set_xlabel("T (yr)")
-                        if legend and part == "imaginary" and anelasticity_description_id == anelasticity_description_ids[0]:
+                        if (
+                            legend
+                            and part == "imaginary"
+                            and anelasticity_description_id == anelasticity_description_ids[0]
+                        ):
                             plot.legend()
                 plt.suptitle("$" + symbol + "/" + symbol + "^E$", fontsize=title_fontsize)
                 # Saves.

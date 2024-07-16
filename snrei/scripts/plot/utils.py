@@ -5,7 +5,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 from cartopy.mpl.gridliner import LATITUDE_FORMATTER
 from cmocean import cm
 from matplotlib.colors import TwoSlopeNorm
-from numpy import Inf, linspace, maximum, minimum, ndarray, round
+from numpy import inf, linspace, maximum, minimum, ndarray, round
 from pyshtools.expand import MakeGridDH
 
 from ...utils import BoundaryCondition, Direction
@@ -43,8 +43,8 @@ def natural_projection(
         linspace(start=0, stop=360, num=len(spatial_result[0])),
         linspace(start=90, stop=-90, num=len(spatial_result)),
         maximum(
-            -Inf if saturation_threshold is None else -saturation_threshold,
-            minimum(Inf if saturation_threshold is None else saturation_threshold, spatial_result),
+            -inf if saturation_threshold is None else -saturation_threshold,
+            minimum(inf if saturation_threshold is None else saturation_threshold, spatial_result),
         ),
         transform=PlateCarree(),
         cmap=cm.balance,

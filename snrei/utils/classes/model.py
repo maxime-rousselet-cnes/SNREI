@@ -2,11 +2,11 @@ from json import load
 from pathlib import Path
 from typing import Optional
 
-from numpy import Inf, linspace, ndarray, sum
+from numpy import inf, linspace, ndarray, sum
 from scipy import interpolate
 
 from ..database import save_base_model
-from .description_layer import DescriptionLayer, Spline
+from .description_layer import DescriptionLayer
 from .paths import ModelPart, models_path
 
 
@@ -61,8 +61,8 @@ class Model:
         # Manages infinite
         for parameter, polynomials_per_layer in self.polynomials.items():
             for i_layer, polynomial in enumerate(polynomials_per_layer):
-                if Inf in polynomial:
-                    self.polynomials[parameter][i_layer] = ["Inf"]
+                if inf in polynomial:
+                    self.polynomials[parameter][i_layer] = ["inf"]
 
     def save(self, name: str, path: Path):
         """
@@ -139,13 +139,13 @@ class Model:
         layer_name: Optional[str],
         real_crust: bool,
         crust_value: Optional[float],
-    ) -> Spline:
+    ) -> tuple[ndarray | float, ndarray | float, int]:
         """
         Creates a polynomial spline structure to approximate a given physical quantity.
         Infinite values and modified crust values are handled.
         """
-        if "Inf" in polynomial:
-            return Inf, Inf, 0
+        if "inf" in polynomial:
+            return inf, inf, 0
         else:
             return interpolate.splrep(
                 x=x,

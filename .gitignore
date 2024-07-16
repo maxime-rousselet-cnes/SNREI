@@ -4,3 +4,5 @@ data/figures
 __pycache__
 data/models/*/*/**
 .venv
+build
+.vscode

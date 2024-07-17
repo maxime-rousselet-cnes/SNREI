@@ -1,6 +1,6 @@
 from typing import Optional
 
-from numpy import arange, array, ceil, concatenate, flip, linspace, log2, ndarray, round, tensordot, where, zeros
+from numpy import arange, array, ceil, concatenate, flip, linspace, log2, minimum, ndarray, round, where, zeros
 from scipy import interpolate
 from scipy.fft import fft, fftfreq, ifft
 
@@ -248,6 +248,9 @@ def build_elastic_load_signal_components(
             * sum(surface_ponderation(mask=ocean_mask).flatten())
             / sum(surface_ponderation(mask=(1.0 - ocean_mask)).flatten())
         )
+
+    # TODO.
+    ocean_mask = minimum(ocean_mask + (abs(map) > 8), 1.0)
 
     # Harmonic component.
     harmonic_component, n_max = map_sampling(map=map, n_max=n_max, harmonic_domain=True)

@@ -1,8 +1,10 @@
+import gc
 from copy import deepcopy
 from itertools import product
 
-from numpy import array, ndarray, tensordot
-from pyGFOToolbox import GRACE_collection_SH
+from numpy import array, ndarray, tensordot, zeros
+from pyGFOToolbox.processing.filter import apply_DDK_filter
+from pyshtools.expand import MakeGridDH
 from tqdm import tqdm
 
 from ...functions import mean_on_mask
@@ -47,6 +49,7 @@ from ...utils import (
     save_complex_array_to_binary,
     save_harmonics,
 )
+from ...utils.filtering.utils import SH_from_collection_SH, collection_SH_from_SH
 
 
 def compute_load_signal_trends_for_anelastic_Earth_models(
@@ -155,16 +158,20 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
         )
 
     # II - Loops on rheological models to produce Love numbers.
+    models_iterable = list(
+        product(
+            rheological_model_variations[ModelPart.elasticity],
+            rheological_model_variations[ModelPart.long_term_anelasticity],
+            rheological_model_variations[ModelPart.short_term_anelasticity],
+        )
+    )
     for (
         elasticity_model_name,
         long_term_anelasticity_model_name,
         short_term_anelasticity_model_name,
     ) in tqdm(
-        product(
-            rheological_model_variations[ModelPart.elasticity],
-            rheological_model_variations[ModelPart.long_term_anelasticity],
-            rheological_model_variations[ModelPart.short_term_anelasticity],
-        ),
+        models_iterable,
+        total=len(models_iterable),
         desc="Looping on models",
         position=0,
     ):
@@ -279,6 +286,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 # Loops on elastic past trend while anelastic past trend is too far from data source past trend.
                 while abs(past_trend - target_past_trend) > load_signal_hyper_parameters.past_trend_error:
 
+                    gc.collect()
+
                     # Updates.
                     elastic_past_trend = elastic_past_trend * target_past_trend / past_trend
 
@@ -322,14 +331,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         ocean_mask=ocean_mask,
                     )
 
-                    # Leakage correction.
-                    frequencial_harmonic_load_signal_step_3 = leakage_correction(
-                        signal_frequencies=signal_frequencies,
-                        frequencial_harmonic_load_signal=frequencial_harmonic_load_signal_step_2,
-                        ocean_mask=ocean_mask,
-                        iterations=load_signal_hyper_parameters.leakage_correction_iterations,
-                        ddk_filter_level=load_signal_hyper_parameters.ddk_filter_level,
-                    )
+                    # TODO.
 
                     # Normalizes so that the data previous to 2003 matches source datas.
                     past_trend = mean_on_mask(
@@ -337,10 +339,12 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         harmonics=compute_harmonic_signal_trends(
                             signal_dates=signal_dates,
                             load_signal_hyper_parameters=load_signal_hyper_parameters,
-                            frequencial_harmonic_signal=frequencial_harmonic_load_signal_step_3,
+                            frequencial_harmonic_signal=frequencial_harmonic_load_signal_step_2,  # TODO.
                             recent_trend=False,
                         ),
                     )
+
+                gc.collect()
 
                 # Computes trends.
 
@@ -369,11 +373,54 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 )
 
                 # After leakage correction.
+
+                # Leakage correction. TODO.
+                harmonic_load_signal_step_3_trends = leakage_correction(
+                    frequencial_harmonic_load_signal=array([harmonic_load_signal_step_2_trends]).transpose(
+                        (1, 2, 3, 0)
+                    ),
+                    ocean_mask=ocean_mask,
+                    iterations=load_signal_hyper_parameters.leakage_correction_iterations,
+                    ddk_filter_level=load_signal_hyper_parameters.ddk_filter_level,
+                )[:, :, :, 0]
+                # TODO.
+                """
                 harmonic_load_signal_step_3_trends = compute_harmonic_signal_trends(
                     signal_dates=signal_dates,
                     load_signal_hyper_parameters=load_signal_hyper_parameters,
                     frequencial_harmonic_signal=frequencial_harmonic_load_signal_step_3,
                 )
+                """
+                harmonics_with_degree_one = zeros(shape=harmonic_load_signal_step_3_trends.shape)
+                harmonics_with_degree_one[:, 1, :2] = harmonic_load_signal_step_2_trends[:, 1, :2]
+                grid = MakeGridDH(harmonics_with_degree_one, sampling=2, lmax=load_signal_hyper_parameters.n_max)
+                degree_one_on_oceans_trends = map_sampling(
+                    map=ocean_mask * grid, harmonic_domain=True, n_max=load_signal_hyper_parameters.n_max
+                )[0]
+                degree_one_on_continents_trends = map_sampling(
+                    map=(1.0 - ocean_mask) * grid, harmonic_domain=True, n_max=load_signal_hyper_parameters.n_max
+                )[0]
+                harmonic_load_signal_oceanic_leakage = SH_from_collection_SH(
+                    collection=apply_DDK_filter(
+                        collection_SH_from_SH(
+                            frequencial_harmonic_load_signal=array([degree_one_on_oceans_trends]).transpose(
+                                (1, 2, 3, 0)
+                            )
+                        ),
+                        ddk_filter_level=load_signal_hyper_parameters.ddk_filter_level,
+                    )
+                )[:, :, :, 0]
+                harmonic_load_signal_continental_leakage = SH_from_collection_SH(
+                    collection=apply_DDK_filter(
+                        collection_SH_from_SH(
+                            frequencial_harmonic_load_signal=array([degree_one_on_continents_trends]).transpose(
+                                (1, 2, 3, 0)
+                            )
+                        ),
+                        ddk_filter_level=load_signal_hyper_parameters.ddk_filter_level,
+                    )
+                )[:, :, :, 0]
+
                 ocean_mean_step_3 = mean_on_mask(
                     mask=ocean_mask,
                     harmonics=harmonic_load_signal_step_3_trends,
@@ -489,3 +536,14 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             id=harmonic_load_signal_id,
                             path=save_base_path.joinpath("residual"),
                         )
+
+                    save_function(
+                        trends_array=harmonic_load_signal_oceanic_leakage,
+                        id=harmonic_load_signal_id,
+                        path=save_base_path.joinpath("oceanic_leakage"),
+                    )
+                    save_function(
+                        trends_array=harmonic_load_signal_continental_leakage,
+                        id=harmonic_load_signal_id,
+                        path=save_base_path.joinpath("continental_leakage"),
+                    )

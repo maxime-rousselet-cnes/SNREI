@@ -37,12 +37,12 @@ def select_degrees(
 
 
 def generate_load_signal_components_figure(
-    rows: list[tuple[str, str, float]] = [
-        ("residual", "C_1_0 C_1_1 S_1_1", 2.0)
+    rows: list[tuple[str, Optional[str], float]] = [
+        ("step_2", None, 50.0),
     ],  # Plot row names, components and their corresponding saturation thresholds
     elastic_load_signal_id: str = "0",
-    anelastic_load_signal_id: str = "1",
-    difference: bool = False,
+    anelastic_load_signal_id: str = "2",
+    difference: bool = True,
     continents: bool = False,
 ):
     """
@@ -56,7 +56,7 @@ def generate_load_signal_components_figure(
     """
 
     # Gets results.
-    trend_harmonic_components_per_column: dict[tuple[str, str], dict[str, ndarray]] = {
+    trend_harmonic_components_per_column: dict[tuple[str, Optional[str]], dict[str, ndarray]] = {
         column: {
             (row_name, row_components): load_complex_array_from_binary(
                 name=load_signal_id, path=harmonic_load_signal_trends_path.joinpath(row_name)
@@ -69,14 +69,15 @@ def generate_load_signal_components_figure(
         trend_harmonic_components_per_column["difference"] = {
             (row_name, row_components): trend_harmonic_components_per_column["anelastic"][row_name, row_components]
             - trend_harmonic_components_per_column["elastic"][row_name, row_components]
-            for row_name, row_components in rows
+            for row_name, row_components, _ in rows
         }
     load_signal_hyper_parameters = load_load_signal_hyper_parameters()
     n_max = redefine_n_max(
         n_max=load_signal_hyper_parameters.n_max,
         harmonics=trend_harmonic_components_per_column["elastic"][rows[0][:2]],
     )
-    mask = get_ocean_mask(name=load_signal_hyper_parameters.ocean_mask, n_max=n_max)
+    # TODO.
+    mask = get_ocean_mask(name="0", n_max=n_max)
 
     # Figure's configuration.
     fig = figure(layout="compressed")
@@ -101,7 +102,7 @@ def generate_load_signal_components_figure(
                 harmonics=select_degrees(
                     harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components
                 ),
-                saturation_threshold=row_saturation_threshold / (5.0 if "difference" in column else 1.0),
+                saturation_threshold=row_saturation_threshold,
                 n_max=n_max,
                 mask=mask if not continents else 1.0,
             )
@@ -129,7 +130,7 @@ def generate_load_signal_components_figure(
             # Eventually memorizes the contour for scale.
             if column == "anelastic":
                 cbar = fig.colorbar(contour, ax=ax, orientation="horizontal", shrink=0.5, extend="both")
-                cbar.set_label(label=row_name + ": " + row_components + " (mm/yr)")
+                cbar.set_label(label=row_name + ": " + str(row_components) + " (mm/yr)")
             elif column == "difference":
                 cbar = fig.colorbar(contour, ax=current_ax, orientation="horizontal", shrink=0.5, extend="both")
                 cbar.set_label(label="(mm/yr)")

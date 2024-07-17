@@ -17,10 +17,11 @@ from .classes import (
     Love_numbers_path,
     LoveNumbersHyperParameters,
     Result,
+    computed_masks_path,
     masks_data_path,
     tables_path,
 )
-from .database import save_base_model, save_complex_array_to_binary
+from .database import load_base_model, save_base_model, save_complex_array_to_binary
 
 COLUMNS = ["lower", "mean", "upper"]
 
@@ -183,23 +184,24 @@ def map_sampling(map: ndarray[float], n_max: int, harmonic_domain: bool = False)
     )
 
 
-def get_ocean_mask(name: str, n_max: int, pixels_to_coast: int = 10) -> ndarray[float] | float:
+def get_ocean_mask(name: Optional[str], n_max: int, pixels_to_coast: int = 10) -> ndarray[float] | float:
     """
     Gets the wanted ocean mask and adjusts it.
     """
-    if name is None:
+    if name == None:
         return 1.0
-    else:
-        if name.split(".")[-1] == "csv":
-            ocean_mask = extract_mask_csv(name=name)
-        else:
-            ocean_mask = extract_mask_nc(name=name, pixels_to_coast=pixels_to_coast)
+    elif name.split(".")[-1] == "csv":
+        ocean_mask = extract_mask_csv(name=name)
+    elif name.split(".")[-1] == "nc":
+        ocean_mask = extract_mask_nc(name=name, pixels_to_coast=pixels_to_coast)
         return round(
             a=map_sampling(
                 map=ocean_mask,
                 n_max=n_max,
             )[0]
         )
+    else:
+        array(object=load_base_model(name=name, path=computed_masks_path), dtype=float)
 
 
 def extract_GRACE_data(

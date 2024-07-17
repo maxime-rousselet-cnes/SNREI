@@ -45,6 +45,7 @@ anelasticity_descriptions_path = data_path.joinpath("descriptions").joinpath("an
 dates_path = results_path.joinpath("dates")
 frequencies_path = results_path.joinpath("frequencies")
 elastic_load_signal_trends_path = results_path.joinpath("elastic_load_signal_trends")
+computed_masks_path = results_path.joinpath("masks")
 
 # Love numbers
 Love_numbers_path = results_path.joinpath("Love_numbers")

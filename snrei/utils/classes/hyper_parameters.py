@@ -189,6 +189,7 @@ class LoadSignalHyperParameters(HyperParameters):
     load_spatial_behaviour_file: Optional[str]  # (.csv) file path relative to data.
     renormalize_recent_trend: bool  # Wether to rescale recent period trends on GRACE ocean mean trend.
     leakage_correction_iterations: int
+    continental_leakage_signal_threshold: float  # (mm).
     ddk_filter_level: int
     skiprows: int  # For spatial behaviour file loading.
     ocean_mask: Optional[str]

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from numpy import arange, array, ceil, concatenate, flip, linspace, log2, minimum, ndarray, round, where, zeros
+from numpy import arange, array, ceil, concatenate, flip, linspace, log2, ndarray, round, where, zeros
 from scipy import interpolate
 from scipy.fft import fft, fftfreq, ifft
 
@@ -250,7 +250,7 @@ def build_elastic_load_signal_components(
         )
 
     # TODO.
-    ocean_mask = minimum(ocean_mask + (abs(map) > 8), 1.0)
+    ocean_mask = ocean_mask * (abs(map) < load_signal_hyper_parameters.continental_leakage_signal_threshold)
 
     # Harmonic component.
     harmonic_component, n_max = map_sampling(map=map, n_max=n_max, harmonic_domain=True)

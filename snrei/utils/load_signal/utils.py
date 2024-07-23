@@ -249,8 +249,9 @@ def build_elastic_load_signal_components(
             / sum(surface_ponderation(mask=(1.0 - ocean_mask)).flatten())
         )
 
-    # TODO.
-    ocean_mask = ocean_mask * (abs(map) < load_signal_hyper_parameters.continental_leakage_signal_threshold)
+    # Sets high signal areas (such has earthquakes) out of the considered ocean mask.
+    if load_signal_hyper_parameters.erode_high_signal_zones:
+        ocean_mask = ocean_mask * (abs(map) < load_signal_hyper_parameters.continental_leakage_signal_threshold)
 
     # Harmonic component.
     harmonic_component, n_max = map_sampling(map=map, n_max=n_max, harmonic_domain=True)

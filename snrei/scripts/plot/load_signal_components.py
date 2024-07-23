@@ -39,6 +39,9 @@ def select_degrees(
 def generate_load_signal_components_figure(
     rows: list[tuple[str, Optional[str], float]] = [
         ("step_2", None, 50.0),
+        ("step_3", None, 50.0),
+        # ("continental_leakage", None, 5.0),
+        # ("oceanic_leakage", None, 5.0),
     ],  # Plot row names, components and their corresponding saturation thresholds
     elastic_load_signal_id: str = "0",
     anelastic_load_signal_id: str = "2",

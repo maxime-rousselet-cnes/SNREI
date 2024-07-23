@@ -201,7 +201,7 @@ def get_ocean_mask(name: Optional[str], n_max: int, pixels_to_coast: int = 10) -
             )[0]
         )
     else:
-        array(object=load_base_model(name=name, path=computed_masks_path), dtype=float)
+        return array(object=load_base_model(name=name, path=computed_masks_path), dtype=float)
 
 
 def extract_GRACE_data(

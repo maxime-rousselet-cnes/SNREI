@@ -229,9 +229,9 @@ def build_elastic_load_signal_components(
             )
         )
 
-    n_max = redefine_n_max(
-        n_max=load_signal_hyper_parameters.n_max,
+    map, n_max = map_sampling(
         map=map,
+        n_max=load_signal_hyper_parameters.n_max,
     )
 
     # Loads ocean mask.

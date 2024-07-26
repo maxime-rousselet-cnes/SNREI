@@ -33,6 +33,7 @@ from .paths import (
     masks_data_path,
     models_path,
     parameters_path,
+    pole_data_path,
     results_path,
     tables_path,
 )
@@ -71,6 +72,7 @@ from .separators import LAYERS_SEPARATOR, VALUES_SEPARATOR
     masks_data_path,
     models_path,
     parameters_path,
+    pole_data_path,
     results_path,
     tables_path,
     BoundaryCondition,

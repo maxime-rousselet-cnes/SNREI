@@ -57,6 +57,7 @@ from .Love_numbers import (
     interpolate_anelastic_Love_numbers,
     interpolate_elastic_Love_numbers,
 )
+from .polar_motion import polar_motion_correction
 from .seismic_fit import remove_earthquakes
 from .variations import (
     create_all_load_signal_hyper_parameters_variations,
@@ -114,6 +115,7 @@ from .variations import (
     generate_log_frequency_initial_values,
     interpolate_anelastic_Love_numbers,
     interpolate_elastic_Love_numbers,
+    polar_motion_correction,
     remove_earthquakes,
     create_all_load_signal_hyper_parameters_variations,
     create_all_model_variations,

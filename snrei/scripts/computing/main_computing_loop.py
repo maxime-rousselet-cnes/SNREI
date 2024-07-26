@@ -1,4 +1,3 @@
-import gc
 from copy import deepcopy
 from itertools import product
 
@@ -43,6 +42,7 @@ from ...utils import (
     load_Love_numbers_hyper_parameters,
     map_sampling,
     parameters_path,
+    polar_motion_correction,
     save_base_format,
     save_base_model,
     save_complex_array_to_binary,
@@ -271,7 +271,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         n_max=load_signal_hyper_parameters.n_max,
                         Love_numbers_hyper_parameters=Love_numbers_hyper_parameters,
                     )
-                    Love_numbers = elastic_Love_numbers
+                    anelastic_Love_numbers = elastic_Love_numbers
                 else:
                     # Interpolates anelastic Love numbers on signal degrees and frequencies as hermitian signal.
                     anelastic_Love_numbers: Result = interpolate_anelastic_Love_numbers(
@@ -283,8 +283,6 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
 
                 # Loops on elastic past trend while anelastic past trend is too far from data source past trend.
                 while abs(past_trend - target_past_trend) > load_signal_hyper_parameters.past_trend_error:
-
-                    gc.collect()
 
                     # Updates.
                     elastic_past_trend = elastic_past_trend * target_past_trend / past_trend
@@ -303,6 +301,11 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         b=elastic_unitless_load_signal,
                         axes=0,
                     )
+                    C_2_1_PM, S_2_1_PM = polar_motion_correction(
+                        load_signal_hyper_parameters=load_signal_hyper_parameters, Love_numbers=anelastic_Love_numbers
+                    )
+                    frequencial_harmonic_load_signal_step_0[0, 2, 1, :] -= C_2_1_PM
+                    frequencial_harmonic_load_signal_step_0[1, 2, 1, :] -= S_2_1_PM
 
                     # Performs product between Love number fraction and elastic load signal in frequencial harmonic domain.
                     frequencial_harmonic_load_signal_step_1 = (
@@ -325,7 +328,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         frequencial_harmonic_radial_displacement,
                     ) = degree_one_inversion(
                         anelastic_frequencial_harmonic_load_signal=frequencial_harmonic_load_signal_step_1,
-                        Love_numbers=Love_numbers,
+                        Love_numbers=anelastic_Love_numbers,
                         ocean_mask=ocean_mask,
                     )
 
@@ -338,6 +341,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         ocean_mask=ocean_mask,
                         iterations=load_signal_hyper_parameters.leakage_correction_iterations,
                         ddk_filter_level=load_signal_hyper_parameters.ddk_filter_level,
+                        n_max=load_signal_hyper_parameters.n_max,
                     )
 
                     # Normalizes so that the data previous to 2003 matches source datas.
@@ -346,13 +350,10 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         harmonics=compute_harmonic_signal_trends(
                             signal_dates=signal_dates,
                             load_signal_hyper_parameters=load_signal_hyper_parameters,
-                            frequencial_harmonic_signal=frequencial_harmonic_load_signal_step_3,  # TODO.
+                            frequencial_harmonic_signal=frequencial_harmonic_load_signal_step_3,
                             recent_trend=False,
                         ),
                     )
-
-                # Garbage collection because of consequent RAM use in the loop.
-                gc.collect()
 
                 # Computes trends.
 

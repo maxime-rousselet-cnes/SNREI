@@ -170,6 +170,7 @@ class LoadSignalHyperParameters(HyperParameters):
 
     # Parameters describing the load signal.
     load_signal: str  # For now: "load_history" is managed only.
+    pole_data: str  # (.csv) file path relative to data/pole_data.
     # Load history parameters.
     load_history: str  # (.csv) file path relative to data/GMSL_data.
     case: str  # Whether "lower", "mean" or "upper".

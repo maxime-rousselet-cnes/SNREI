@@ -1,6 +1,6 @@
 from multiprocessing import Pool
 
-from numpy import inf, array, concatenate, linspace, log10, ndarray, round, unique
+from numpy import array, concatenate, inf, linspace, log10, ndarray, round, unique
 
 from ...functions import interpolate_all, precise_curvature
 from ..classes import AnelasticityDescription, Integration, RunHyperParameters, YSystemHyperParameters

@@ -5,7 +5,7 @@ from scipy import interpolate
 from scipy.fft import fft, fftfreq, ifft
 
 from ...functions import map_normalizing, mean_on_mask, signal_trend, surface_ponderation
-from ..classes import GRACE_trends_data_path, LoadSignalHyperParameters
+from ..classes import LoadSignalHyperParameters
 from ..data import extract_GRACE_data, extract_temporal_load_signal, get_ocean_mask, map_sampling, redefine_n_max
 
 
@@ -217,8 +217,6 @@ def build_elastic_load_signal_components(
     if load_signal_hyper_parameters.load_spatial_behaviour_data == "GRACE":
         map = extract_GRACE_data(
             name=load_signal_hyper_parameters.load_spatial_behaviour_file,
-            path=GRACE_trends_data_path,
-            skiprows=load_signal_hyper_parameters.skiprows,
         )[0]
     else:  # Considered as ocean/land repartition only.
         map = map_normalizing(

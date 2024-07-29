@@ -1,4 +1,4 @@
-from numpy import inf, arange, array, errstate, expand_dims, log, meshgrid, nan_to_num, ndarray, sign
+from numpy import arange, array, errstate, expand_dims, inf, log, meshgrid, nan_to_num, ndarray, sign
 from scipy import interpolate
 
 from ..classes import ELASTIC_RUN_HYPER_PARAMETERS, BoundaryCondition, Direction, LoveNumbersHyperParameters, Result
@@ -13,9 +13,7 @@ def interpolate_elastic_Love_numbers(
         Direction.radial,
         Direction.potential,
     ],
-    boundary_conditions: list[BoundaryCondition] = [
-        BoundaryCondition.load,
-    ],
+    boundary_conditions: list[BoundaryCondition] = [BoundaryCondition.load, BoundaryCondition.potential],
 ) -> Result:
     """
     Gets the wanted elastic Love numbers from the wanted description, with wanted options and interpolates them to the wanted
@@ -63,9 +61,7 @@ def interpolate_anelastic_Love_numbers(
         Direction.radial,
         Direction.potential,
     ],
-    boundary_conditions: list[BoundaryCondition] = [
-        BoundaryCondition.load,
-    ],
+    boundary_conditions: list[BoundaryCondition] = [BoundaryCondition.load, BoundaryCondition.potential],
 ) -> Result:
     """
     Gets the wanted anelastic Love numbers from the wanted description, with wanted options and interpolates them to the wanted

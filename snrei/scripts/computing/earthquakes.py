@@ -3,20 +3,13 @@ from pathlib import Path
 from numpy import array
 
 from ...functions import signal_trend
-from ...utils import (
-    GRACE_data_path,
-    GRACE_trends_data_path,
-    extract_all_GRACE_data,
-    remove_earthquakes,
-    save_map,
-    signal_trend,
-)
+from ...utils import GRACE_data_path, extract_all_GRACE_data, remove_earthquakes, save_map, signal_trend
 
 
 def process_for_earthquakes(
     path: Path = GRACE_data_path,
     solution_name: str = "MSSA",
-    save_path: Path = GRACE_trends_data_path,
+    save_path: Path = GRACE_data_path,
     result_filename: str = "TREND_MSSA_PROCESSED_FOR_EARTHQUAKES",
     result_name: str = "EWH",
 ) -> None:

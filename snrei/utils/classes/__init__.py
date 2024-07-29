@@ -20,7 +20,6 @@ from .model import Model
 from .paths import (
     GMSL_data_path,
     GRACE_data_path,
-    GRACE_trends_data_path,
     Love_numbers_path,
     ModelPart,
     base_format_load_signal_trends_path,
@@ -59,7 +58,6 @@ from .separators import LAYERS_SEPARATOR, VALUES_SEPARATOR
     Model,
     GMSL_data_path,
     GRACE_data_path,
-    GRACE_trends_data_path,
     Love_numbers_path,
     ModelPart,
     base_format_load_signal_trends_path,

@@ -9,6 +9,7 @@ from numpy import argsort, array, flip, meshgrid, ndarray, ones, round, unique, 
 from pandas import read_csv
 from pyshtools.expand import MakeGridDH, SHExpandDH
 
+from ..functions import signal_trend
 from .classes import (
     GRACE_DATA_UNIT_FACTOR,
     RECTANGLES,
@@ -204,31 +205,39 @@ def get_ocean_mask(name: Optional[str], n_max: int, pixels_to_coast: int = 10) -
         return array(object=load_base_model(name=name, path=computed_masks_path), dtype=float)
 
 
-def extract_GRACE_data(
-    name: str, path: Path = GRACE_data_path, skiprows: int = 11
-) -> tuple[ndarray, ndarray, ndarray]:
+def extract_GRACE_data(name: str, path: Path = GRACE_data_path, skiprows: int = 0) -> tuple[ndarray, ndarray, ndarray]:
     """
     Opens and formats GRACE (.xyz) datafile.
     """
-    # Gets raw data.
-    df = read_csv(filepath_or_buffer=path.joinpath(name), skiprows=skiprows, sep=";")
-    # Converts to array.
-    return (
-        GRACE_DATA_UNIT_FACTOR
-        * flip(
-            m=[[value for value in df["EWH"][df["lat"] == lat]] for lat in unique(ar=df["lat"])],
-            axis=0,
-        )[:-1, :-1],
-        flip(m=unique(df["lat"]), axis=0)[:-1],
-        unique(df["lon"])[:-1],
-    )
+    if "xyz" in name:
+        # Gets raw data.
+        df = read_csv(filepath_or_buffer=path.joinpath(name), skiprows=skiprows, sep=";")
+        # Converts to array.
+        return (
+            GRACE_DATA_UNIT_FACTOR
+            * flip(
+                m=[[value for value in df["EWH"][df["lat"] == lat]] for lat in unique(ar=df["lat"])],
+                axis=0,
+            )[:-1, :-1],
+            flip(m=unique(df["lat"]), axis=0)[:-1],
+            unique(df["lon"])[:-1],
+        )
+    else:
+        solutions, lat, lon, times = extract_all_GRACE_data(path=path, solution_name=name)
+        solution_trends = zeros(shape=solutions[0].shape)
+        for lat_index in range(len(lat)):
+            for lon_index in range(len(lon)):
+                solution_trends[lat_index, lon_index] = signal_trend(
+                    trend_dates=times, signal=solutions[:, lat_index, lon_index]
+                )[0]
+        return solution_trends, lat, lon
 
 
 def format_GRACE_name_to_date(name: str) -> float:
     """
     Transforms GRACE level 3 solution filename into date
     """
-    year_and_mounth = name.replace("GRACE_MSSA_", "").replace(".xyz", "").split("_")
+    year_and_mounth = "_".join(name.split("_")[2:]).replace(".xyz", "").split("_")
     year = float(year_and_mounth[0])
     mounth = float(year_and_mounth[1])
     return year + (mounth - 1.0) / 12
@@ -245,7 +254,9 @@ def extract_all_GRACE_data(
     filepaths = list(path.joinpath(solution_name).glob("*xyz"))
 
     # Gets dimensions with first file.
-    map, lat, lon = extract_GRACE_data(name=filepaths[0].name, path=path.joinpath(solution_name), skiprows=11)
+    map, lat, lon = extract_GRACE_data(
+        name=filepaths[0].name, path=path.joinpath(solution_name), skiprows=11 if solution_name == "MSSA" else 3
+    )
     all_GRACE_data = zeros(shape=(len(filepaths), len(lat), len(lon)))
     all_GRACE_data[0] = map
     times = len(filepaths) * [format_GRACE_name_to_date(filepaths[0].name)]
@@ -253,7 +264,7 @@ def extract_all_GRACE_data(
     # Concatenates.
     for index, filepath in enumerate(filepaths[1:]):
         all_GRACE_data[index + 1, :, :] = extract_GRACE_data(
-            name=filepath.name, path=path.joinpath(solution_name), skiprows=11
+            name=filepath.name, path=path.joinpath(solution_name), skiprows=11 if solution_name == "MSSA" else 3
         )[0]
         times[index + 1] = format_GRACE_name_to_date(filepath.name)
 

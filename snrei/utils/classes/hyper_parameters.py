@@ -193,7 +193,6 @@ class LoadSignalHyperParameters(HyperParameters):
     continental_leakage_signal_threshold: float  # (mm).
     erode_high_signal_zones: bool
     ddk_filter_level: int
-    skiprows: int  # For spatial behaviour file loading.
     ocean_mask: Optional[str]
     pixels_to_coast: int  # Erosion distance for mask.
 

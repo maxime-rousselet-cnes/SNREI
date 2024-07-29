@@ -23,7 +23,6 @@ GRACE_data_path = data_path.joinpath("GRACE")
 GMSL_data_path = data_path.joinpath("GMSL_data")
 pole_data_path = data_path.joinpath("pole_data")
 masks_data_path = data_path.joinpath("masks")
-GRACE_trends_data_path = data_path.joinpath("trends_GRACE")
 
 # Models.
 models_base_path = data_path.joinpath("models")

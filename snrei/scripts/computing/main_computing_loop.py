@@ -445,12 +445,15 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     table_name="harmonic_load_signal_trends",
                     result_caracteristics={
                         "ID": harmonic_load_signal_id,
-                        "elastic_load_signal_trends_id": elastic_load_signal_trends_id,
-                        "Love_numbers_ID": Love_numbers_id,
-                        "elastic_past_trend": past_trend,
                         "ocean_mean_step_1": ocean_mean_step_1,
                         "ocean_mean_step_2": ocean_mean_step_2,  # (L).
                         "ocean_mean_step_3": ocean_mean_step_3,
+                        "leakage_correction_iterations": load_signal_hyper_parameters.leakage_correction_iterations,
+                        "pixels_to_coast": load_signal_hyper_parameters.pixels_to_coast,
+                        "erode_high_signal_zones": load_signal_hyper_parameters.erode_high_signal_zones,
+                        "elastic_load_signal_trends_id": elastic_load_signal_trends_id,
+                        "Love_numbers_ID": Love_numbers_id,
+                        "elastic_past_trend": past_trend,
                         "scale_factor_component": scale_factor_component,  # (D).
                         "ocean_mean_geoid_component": ocean_mean_geoid_component,  # (G).
                         "ocean_mean_radial_displacement_component": ocean_mean_radial_displacement_component,  # (R).

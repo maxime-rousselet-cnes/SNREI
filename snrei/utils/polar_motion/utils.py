@@ -42,28 +42,7 @@ def polar_motion_correction(
             load_signal_hyper_parameters=load_signal_hyper_parameters,
         )
     )
-    if (
-        len(Love_numbers.values[Direction.potential][BoundaryCondition.potential][1])
-        != 1
-    ):
 
-        from matplotlib.pyplot import plot, show
-
-        plot(frequencies, pole_complex_frequencial_signal.real)
-        plot(frequencies, pole_complex_frequencial_signal.imag)
-        plot(
-            target_frequencies,
-            Love_numbers.values[Direction.potential][BoundaryCondition.potential][
-                1
-            ].real,
-        )
-        plot(
-            target_frequencies,
-            Love_numbers.values[Direction.potential][BoundaryCondition.potential][
-                1
-            ].imag,
-        )
-        show()
     PHI_CONSTANT = -EARTH_RADIUS * OMEGA**2 / (2.0 * g)
     Phi_SE_PT_complex: ndarray[complex]
     # Gets element in position 1 for degree 2.

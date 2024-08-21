@@ -86,14 +86,20 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
     )
 
     # Builds all possible load history model combinations.
-    load_signal_hyper_parameter_variations = create_all_load_signal_hyper_parameters_variations(
-        load_signal_parameters=load_signal_parameters
+    load_signal_hyper_parameter_variations = (
+        create_all_load_signal_hyper_parameters_variations(
+            load_signal_parameters=load_signal_parameters
+        )
     )
 
     # Gets hyper parameters.
-    Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_Love_numbers_hyper_parameters()
+    Love_numbers_hyper_parameters: LoveNumbersHyperParameters = (
+        load_Love_numbers_hyper_parameters()
+    )
     degrees = generate_degrees_list(
-        degree_thresholds=load_base_model(name="degree_thresholds", path=parameters_path),
+        degree_thresholds=load_base_model(
+            name="degree_thresholds", path=parameters_path
+        ),
         degree_steps=load_base_model(name="degree_steps", path=parameters_path),
     )
 
@@ -116,7 +122,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             float,  # Target past trend.
         ],
     ] = {}
-    for load_signal_hyper_parameters in tqdm(load_signal_hyper_parameter_variations, desc="Preparing load signals"):
+    for load_signal_hyper_parameters in tqdm(
+        load_signal_hyper_parameter_variations, desc="Preparing load signals"
+    ):
 
         # Builds the signal.
         (
@@ -125,19 +133,33 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             harmonic_elastic_load_signal_spatial_component,
             initial_load_signal,
             ocean_mask,
-        ) = build_elastic_load_signal_components(load_signal_hyper_parameters=load_signal_hyper_parameters)
+        ) = build_elastic_load_signal_components(
+            load_signal_hyper_parameters=load_signal_hyper_parameters
+        )
 
-        (signal_dates, signal_frequencies, _, target_past_trend) = build_elastic_load_signal_history(
-            initial_signal_dates=initial_signal_dates,
-            initial_load_signal=initial_load_signal,
-            load_signal_hyper_parameters=load_signal_hyper_parameters,
+        (signal_dates, signal_frequencies, _, target_past_trend) = (
+            build_elastic_load_signal_history(
+                initial_signal_dates=initial_signal_dates,
+                initial_load_signal=initial_load_signal,
+                load_signal_hyper_parameters=load_signal_hyper_parameters,
+            )
         )
 
         # Saves dates, frequencies, and load signal trends.
-        elastic_load_signal_trends_id = generate_new_id(path=elastic_load_signal_trends_path)
-        save_base_model(obj=signal_dates, name=elastic_load_signal_trends_id, path=dates_path)
-        save_base_model(obj=signal_frequencies, name=elastic_load_signal_trends_id, path=frequencies_path)
-        save_base_model(obj=ocean_mask, name=elastic_load_signal_trends_id, path=computed_masks_path)
+        elastic_load_signal_trends_id = generate_new_id(
+            path=elastic_load_signal_trends_path
+        )
+        save_base_model(
+            obj=signal_dates, name=elastic_load_signal_trends_id, path=dates_path
+        )
+        save_base_model(
+            obj=signal_frequencies,
+            name=elastic_load_signal_trends_id,
+            path=frequencies_path,
+        )
+        save_base_model(
+            obj=ocean_mask, name=elastic_load_signal_trends_id, path=computed_masks_path
+        )
         save_complex_array_to_binary(
             input_array=harmonic_elastic_load_signal_spatial_component,
             name=elastic_load_signal_trends_id,
@@ -189,7 +211,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
         )
 
         # If the option needs to be computed for this rheological description.
-        for run_hyper_parameters in tqdm(options_to_compute, desc="    Looping on options", position=1, leave=False):
+        for run_hyper_parameters in tqdm(
+            options_to_compute, desc="    Looping on options", position=1, leave=False
+        ):
 
             Love_numbers_hyper_parameters.run_hyper_parameters = run_hyper_parameters
 
@@ -214,7 +238,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 hyper_parameters=Love_numbers_hyper_parameters,
                 axes={
                     "degrees": array(object=degrees),
-                    "frequencies": anelasticity_description.frequency_unit * 10.0**log_frequencies * SECONDS_PER_YEAR,
+                    "frequencies": anelasticity_description.frequency_unit
+                    * 10.0**log_frequencies
+                    * SECONDS_PER_YEAR,
                 },  # (yr^-1)
             )
             Love_numbers_result.update_values_from_array(
@@ -258,9 +284,14 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             ):
 
                 # initializes.
-                harmonic_load_signal_id = generate_new_id(path=harmonic_load_signal_trends_path.joinpath("step_3"))
+                harmonic_load_signal_id = generate_new_id(
+                    path=harmonic_load_signal_trends_path.joinpath("step_3")
+                )
                 # Arbitrary intitial value.
-                past_trend = target_past_trend + 2 * load_signal_hyper_parameters.past_trend_error
+                past_trend = (
+                    target_past_trend
+                    + 2 * load_signal_hyper_parameters.past_trend_error
+                )
                 elastic_past_trend = target_past_trend
 
                 # Interpolates Love numbers.
@@ -282,17 +313,24 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     )
 
                 # Loops on elastic past trend while anelastic past trend is too far from data source past trend.
-                while abs(past_trend - target_past_trend) > load_signal_hyper_parameters.past_trend_error:
+                while (
+                    abs(past_trend - target_past_trend)
+                    > load_signal_hyper_parameters.past_trend_error
+                ):
 
                     # Updates.
-                    elastic_past_trend = elastic_past_trend * target_past_trend / past_trend
+                    elastic_past_trend = (
+                        elastic_past_trend * target_past_trend / past_trend
+                    )
 
                     # Builds an elastic load history with given past trend.
-                    (signal_dates, _, elastic_unitless_load_signal, _) = build_elastic_load_signal_history(
-                        initial_signal_dates=initial_signal_dates,
-                        initial_load_signal=initial_load_signal,
-                        load_signal_hyper_parameters=load_signal_hyper_parameters,
-                        elastic_past_trend=elastic_past_trend,
+                    (signal_dates, _, elastic_unitless_load_signal, _) = (
+                        build_elastic_load_signal_history(
+                            initial_signal_dates=initial_signal_dates,
+                            initial_load_signal=initial_load_signal,
+                            load_signal_hyper_parameters=load_signal_hyper_parameters,
+                            elastic_past_trend=elastic_past_trend,
+                        )
                     )
 
                     # Generates an elastic load signal depending on space and time.
@@ -302,7 +340,14 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         axes=0,
                     )
                     C_2_1_PM, S_2_1_PM = polar_motion_correction(
-                        load_signal_hyper_parameters=load_signal_hyper_parameters, Love_numbers=anelastic_Love_numbers
+                        load_signal_hyper_parameters=load_signal_hyper_parameters,
+                        Love_numbers=anelastic_Love_numbers,
+                        g=anelasticity_description.description_layers[-1].evaluate(
+                            x=1.0, variable="g_0"
+                        )
+                        * anelasticity_description.radius_unit
+                        / anelasticity_description.period_unit**2,
+                        target_frequencies=signal_frequencies,
                     )
                     frequencial_harmonic_load_signal_step_0[0, 2, 1, :] -= C_2_1_PM
                     frequencial_harmonic_load_signal_step_0[1, 2, 1, :] -= S_2_1_PM
@@ -320,7 +365,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     )
 
                     # Derives degree one correction.
-                    frequencial_harmonic_load_signal_step_2 = deepcopy(frequencial_harmonic_load_signal_step_1)
+                    frequencial_harmonic_load_signal_step_2 = deepcopy(
+                        frequencial_harmonic_load_signal_step_1
+                    )
                     (
                         frequencial_harmonic_load_signal_step_2[:, 1, :2, :],
                         frequencial_scale_factor,
@@ -430,10 +477,16 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 harmonic_residual_trends = (
                     harmonic_load_signal_step_2_trends  # L
                     + scale_factor_component
-                    * map_sampling(map=ocean_mask, n_max=load_signal_hyper_parameters.n_max, harmonic_domain=True)[
+                    * map_sampling(
+                        map=ocean_mask,
+                        n_max=load_signal_hyper_parameters.n_max,
+                        harmonic_domain=True,
+                    )[
                         0
                     ]  # + D
-                    - (harmonic_geoid_trends - harmonic_radial_displacement_trends)  # - (G - R)
+                    - (
+                        harmonic_geoid_trends - harmonic_radial_displacement_trends
+                    )  # - (G - R)
                 )
                 ocean_mean_residuals = mean_on_mask(
                     mask=ocean_mask,
@@ -468,7 +521,10 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         save_harmonics,
                         save_base_format,
                     ],
-                    [harmonic_load_signal_trends_path, base_format_load_signal_trends_path],
+                    [
+                        harmonic_load_signal_trends_path,
+                        base_format_load_signal_trends_path,
+                    ],
                     ["harmonics", "base_formats"],
                 ):
                     # Anelastic load signal after frequencial filtering with Love number fractions.
@@ -493,7 +549,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             path=save_base_path.joinpath("step_3"),
                         )
                     # Degree one inversion components.
-                    if load_signal_hyper_parameters.save_parameters[kind].inversion_components:
+                    if load_signal_hyper_parameters.save_parameters[
+                        kind
+                    ].inversion_components:
                         save_function(
                             trends_array=harmonic_geoid_trends,
                             id=harmonic_load_signal_id,

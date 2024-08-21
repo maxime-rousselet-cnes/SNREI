@@ -6,6 +6,9 @@ from pydantic import BaseModel
 from .hyper_parameters import RunHyperParameters
 from .paths import ModelPart
 
+# Earth mean rotation rate (rad.s⁻1).
+OMEGA = 7.2921150e-5
+
 # Universal Gravitationnal constant (m^3.kg^-1.s^-2).
 G = 6.67430e-11
 
@@ -96,7 +99,10 @@ class Rectangle(BaseModel):
 
 RECTANGLES: dict[str, Rectangle] = {
     "Lake Superior": Rectangle(
-        min_latitude=41.375963, max_latitude=50.582521, min_longitude=-93.748270, max_longitude=-75.225322
+        min_latitude=41.375963,
+        max_latitude=50.582521,
+        min_longitude=-93.748270,
+        max_longitude=-75.225322,
     ),
     "Lake Victoria": Rectangle(
         min_latitude=-2.809322,
@@ -123,7 +129,10 @@ RECTANGLES: dict[str, Rectangle] = {
         max_longitude=-32.937192,
     ),
     "Kerguelen": Rectangle(
-        min_latitude=-53.262545, max_latitude=-47.572174, min_longitude=64.599279, max_longitude=72.572817
+        min_latitude=-53.262545,
+        max_latitude=-47.572174,
+        min_longitude=64.599279,
+        max_longitude=72.572817,
     ),
     "Arkhanglesk": Rectangle(
         min_latitude=79.447297,

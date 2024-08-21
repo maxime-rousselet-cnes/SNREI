@@ -1,4 +1,9 @@
-from snrei import ModelPart, RunHyperParameters, clear_subs, compute_load_signal_trends_for_anelastic_Earth_models
+from snrei import (
+    ModelPart,
+    RunHyperParameters,
+    clear_subs,
+    compute_load_signal_trends_for_anelastic_Earth_models,
+)
 
 clear_subs()
 
@@ -16,8 +21,8 @@ compute_load_signal_trends_for_anelastic_Earth_models(
         "case": ["mean"],
         "LIA": [False],
         "opposite_load_on_continents": [False],
-        # "pixels_to_coast": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-        # "leakage_correction_iterations": [1, 0, 2],
+        "pixels_to_coast": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        "leakage_correction_iterations": [1, 0, 2],
         "erode_high_signal_zones": [False, True],
     },
     options=[

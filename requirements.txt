@@ -11,4 +11,8 @@ pydantic
 multiprocess
 cmocean
 pyshtools
+pygmt
+distributed
 lmfit
+black
+isort

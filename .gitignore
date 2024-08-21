@@ -3,7 +3,6 @@ data/results
 data/figures
 __pycache__
 data/models/*/*/**
-.venv
-build
+venv
 .vscode
 data/GRACE

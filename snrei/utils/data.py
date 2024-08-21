@@ -194,7 +194,7 @@ def get_ocean_mask(name: Optional[str], n_max: int, pixels_to_coast: int = 10) -
     elif name.split(".")[-1] == "csv":
         ocean_mask = extract_mask_csv(name=name)
     elif name.split(".")[-1] == "nc":
-        ocean_mask = extract_mask_nc(name=name, pixels_to_coast=pixels_to_coast)
+        ocean_mask = extract_mask_nc(name=name, pixels_to_coast=pixels_to_coast)[:, 1:-1]
         return round(
             a=map_sampling(
                 map=ocean_mask,

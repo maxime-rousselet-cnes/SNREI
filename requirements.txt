@@ -1,18 +1,1 @@
-
-pyGFOToolbox 
-numpy
-matplotlib
-netCDF4
-opencv-python
-scipy
-more-itertools==8.10.0
-pathlib
-pydantic
-multiprocess
-cmocean
-pyshtools
-pygmt
-distributed
-lmfit
-black
-isort
+netCDF4 opencv-python scipy more-itertools==8.10.0 pathlib pydantic multiprocess cmocean distributed lmfit black isort Cartopy folium geopandas geoviews holoviews matplotlib numpy pandas panel pathos platformdirs podaac-data-subscriber pymssa @ git+https://github.com/kieferk/pymssa.git pyshtools scikit-learn setuptools tqdm xarray pygfotoolbox

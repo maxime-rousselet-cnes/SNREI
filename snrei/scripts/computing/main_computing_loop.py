@@ -282,6 +282,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 # Loops on elastic past trend while anelastic past trend is too far from data source past trend.
                 while abs(past_trend - target_past_trend) > load_signal_hyper_parameters.past_trend_error:
 
+                    t_0 = time()
+
                     # Updates.
                     elastic_past_trend = elastic_past_trend * target_past_trend / past_trend
 
@@ -360,6 +362,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             recent_trend=False,
                         ),
                     )
+
+                    print("Iteration process:", time() - t_0)
 
                 # Computes trends.
 

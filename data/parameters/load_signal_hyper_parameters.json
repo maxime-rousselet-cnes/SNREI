@@ -25,7 +25,7 @@
     "pixels_to_coast": 10,
     "first_year_for_trend": 2003,
     "last_year_for_trend": 2024,
-    "past_trend_error": 1e-3,
+    "past_trend_error": 1e-2,
     "save_parameters": {
         "harmonics": "load_signal_harmonic_trends_save_parameters",
         "base_formats": "load_signal_base_format_trends_save_parameters"

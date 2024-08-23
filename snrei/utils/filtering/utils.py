@@ -1,3 +1,5 @@
+from multiprocessing import Pool, cpu_count
+
 from numpy import arange, array, meshgrid, ndarray, zeros
 from pandas import DataFrame
 from pyGFOToolbox import GRACE_collection_SH
@@ -74,6 +76,23 @@ def leakage_correction_iterations_function(
     )
 
 
+def parallel_leakage_correction_iteration(args):
+    """
+    A helper function for parallel processing.
+    """
+    (i_frequency, frequencial_harmonic_load_signal_initial, frequencial_right_hand_side, ocean_mask, n_max, ddk_filter_level, iterations) = args
+
+    corrected_signal = leakage_correction_iterations_function(
+        harmonic_load_signal=frequencial_harmonic_load_signal_initial[:, :, :, i_frequency],
+        right_hand_side=frequencial_right_hand_side[:, :, :, i_frequency],
+        ocean_mask=ocean_mask,
+        n_max=n_max,
+        ddk_filter_level=ddk_filter_level,
+        iterations=iterations,
+    )
+    return (i_frequency, corrected_signal)
+
+
 def leakage_correction(
     frequencial_harmonic_load_signal_initial: ndarray[complex],
     frequencial_scale_factor: ndarray[complex],
@@ -92,16 +111,20 @@ def leakage_correction(
 
     # Prepares arrays.
     frequencial_right_hand_side = frequencial_harmonic_geoid - frequencial_harmonic_radial_displacement - frequencial_scale_factor
-    corrected_from_leakage_frequencial_harmonic_load_signal = zeros(shape=frequencial_harmonic_load_signal_initial.shape)
+    corrected_from_leakage_frequencial_harmonic_load_signal = zeros(shape=frequencial_harmonic_load_signal_initial.shape, dtype=complex)
 
-    for i_frequency in range(len(frequencial_scale_factor)):
-        print(i_frequency / len(frequencial_scale_factor))
-        corrected_from_leakage_frequencial_harmonic_load_signal[:, :, :, i_frequency] = leakage_correction_iterations_function(
-            harmonic_load_signal=frequencial_harmonic_load_signal_initial[:, :, :, i_frequency],
-            right_hand_side=frequencial_right_hand_side[:, :, :, i_frequency],
-            ocean_mask=ocean_mask,
-            n_max=n_max,
-            ddk_filter_level=ddk_filter_level,
-            iterations=iterations,
-        )
+    # Prepare arguments for parallel processing
+    args = [
+        (i_frequency, frequencial_harmonic_load_signal_initial, frequencial_right_hand_side, ocean_mask, n_max, ddk_filter_level, iterations)
+        for i_frequency in range(len(frequencial_scale_factor))
+    ]
+
+    # Use multiprocessing to parallelize the loop over frequencies
+    with Pool(processes=cpu_count()) as pool:
+        results = pool.map(parallel_leakage_correction_iteration, args)
+
+    # Gather the results
+    for i_frequency, corrected_signal in results:
+        corrected_from_leakage_frequencial_harmonic_load_signal[:, :, :, i_frequency] = corrected_signal
+
     return corrected_from_leakage_frequencial_harmonic_load_signal

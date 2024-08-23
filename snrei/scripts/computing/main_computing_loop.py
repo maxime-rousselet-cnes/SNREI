@@ -1,5 +1,6 @@
 from copy import deepcopy
 from itertools import product
+from time import time
 
 from numpy import array, ndarray, tensordot
 
@@ -115,6 +116,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
     ] = {}
     for load_signal_hyper_parameters in load_signal_hyper_parameter_variations:
 
+        t_0 = time()
+
         # Builds the signal.
         (
             load_signal_hyper_parameters.n_max,
@@ -156,6 +159,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             target_past_trend,
         )
 
+        print("Building elastic load signal:", time() - t_0)
+
     # II - Loops on rheological models to produce Love numbers.
     models_iterable = list(
         product(
@@ -188,6 +193,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
         for run_hyper_parameters in options_to_compute:
 
             Love_numbers_hyper_parameters.run_hyper_parameters = run_hyper_parameters
+
+            t_0 = time()
 
             # Computes Love numbers.
             log_frequencies, Love_numbers_array = Love_numbers_computing(
@@ -233,6 +240,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 | run_hyper_parameters.__dict__,
             )
 
+            print("Computing Love numbers:", time() - t_0)
+
             # III - Loops on elastic load signals to compute anelastic load signals.
             for elastic_load_signal_trends_id, (
                 load_signal_hyper_parameters,
@@ -243,6 +252,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 initial_load_signal,
                 target_past_trend,
             ) in elastic_load_signal_datas.items():
+
+                t_0 = time()
 
                 # initializes.
                 harmonic_load_signal_id = generate_new_id(path=harmonic_load_signal_trends_path.joinpath("step_3"))
@@ -314,8 +325,6 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         )
                     )
 
-                    print("PRE degree one inversion.")
-
                     # Derives degree one correction.
                     frequencial_harmonic_load_signal_step_2 = deepcopy(frequencial_harmonic_load_signal_step_1)
                     (
@@ -328,9 +337,6 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         Love_numbers=anelastic_Love_numbers,
                         ocean_mask=ocean_mask,
                     )
-
-                    print("POST degree one inversion.")
-                    print("PRE leakage correction.")
 
                     # Leakage correction.
                     frequencial_harmonic_load_signal_step_3 = leakage_correction(
@@ -354,9 +360,6 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             recent_trend=False,
                         ),
                     )
-
-                    print(past_trend)
-                    print("POST leakage correction.")
 
                 # Computes trends.
 
@@ -519,3 +522,5 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             id=harmonic_load_signal_id,
                             path=save_base_path.joinpath("residual"),
                         )
+
+                print("Computing anelastic induced signal:", time() - t_0)

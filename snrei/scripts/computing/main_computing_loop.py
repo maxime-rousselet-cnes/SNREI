@@ -2,7 +2,6 @@ from copy import deepcopy
 from itertools import product
 
 from numpy import array, ndarray, tensordot
-from tqdm import tqdm
 
 from ...functions import mean_on_mask
 from ...utils import (
@@ -122,9 +121,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             float,  # Target past trend.
         ],
     ] = {}
-    for load_signal_hyper_parameters in tqdm(
-        load_signal_hyper_parameter_variations, desc="Preparing load signals"
-    ):
+    for load_signal_hyper_parameters in load_signal_hyper_parameter_variations:
 
         # Builds the signal.
         (
@@ -189,12 +186,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
         elasticity_model_name,
         long_term_anelasticity_model_name,
         short_term_anelasticity_model_name,
-    ) in tqdm(
-        models_iterable,
-        total=len(models_iterable),
-        desc="Looping on models",
-        position=0,
-    ):
+    ) in models_iterable:
 
         options_to_compute = find_minimal_computing_options(
             options=options,
@@ -211,9 +203,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
         )
 
         # If the option needs to be computed for this rheological description.
-        for run_hyper_parameters in tqdm(
-            options_to_compute, desc="    Looping on options", position=1, leave=False
-        ):
+        for run_hyper_parameters in options_to_compute:
 
             Love_numbers_hyper_parameters.run_hyper_parameters = run_hyper_parameters
 
@@ -276,12 +266,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 signal_frequencies,
                 initial_load_signal,
                 target_past_trend,
-            ) in tqdm(
-                elastic_load_signal_datas.items(),
-                desc="        Looping on elastic load signals",
-                position=2,
-                leave=False,
-            ):
+            ) in elastic_load_signal_datas.items():
 
                 # initializes.
                 harmonic_load_signal_id = generate_new_id(
@@ -339,18 +324,21 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         b=elastic_unitless_load_signal,
                         axes=0,
                     )
-                    C_2_1_PM, S_2_1_PM = polar_motion_correction(
-                        load_signal_hyper_parameters=load_signal_hyper_parameters,
-                        Love_numbers=anelastic_Love_numbers,
-                        g=anelasticity_description.description_layers[-1].evaluate(
-                            x=1.0, variable="g_0"
+
+                    # Performs polar tide corrections.
+                    if load_signal_hyper_parameters.polar_tide_correction:
+                        C_2_1_PM, S_2_1_PM = polar_motion_correction(
+                            load_signal_hyper_parameters=load_signal_hyper_parameters,
+                            Love_numbers=anelastic_Love_numbers,
+                            g=anelasticity_description.description_layers[-1].evaluate(
+                                x=1.0, variable="g_0"
+                            )
+                            * anelasticity_description.radius_unit
+                            / anelasticity_description.period_unit**2,
+                            target_frequencies=signal_frequencies,
                         )
-                        * anelasticity_description.radius_unit
-                        / anelasticity_description.period_unit**2,
-                        target_frequencies=signal_frequencies,
-                    )
-                    frequencial_harmonic_load_signal_step_0[0, 2, 1, :] -= C_2_1_PM
-                    frequencial_harmonic_load_signal_step_0[1, 2, 1, :] -= S_2_1_PM
+                        frequencial_harmonic_load_signal_step_0[0, 2, 1, :] -= C_2_1_PM
+                        frequencial_harmonic_load_signal_step_0[1, 2, 1, :] -= S_2_1_PM
 
                     # Performs product between Love number fraction and elastic load signal in frequencial harmonic domain.
                     frequencial_harmonic_load_signal_step_1 = (
@@ -363,6 +351,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             frequencial_elastic_load_signal=frequencial_harmonic_load_signal_step_0,
                         )
                     )
+
+                    print("PRE degree one inversion.")
 
                     # Derives degree one correction.
                     frequencial_harmonic_load_signal_step_2 = deepcopy(
@@ -378,6 +368,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         Love_numbers=anelastic_Love_numbers,
                         ocean_mask=ocean_mask,
                     )
+
+                    print("POST degree one inversion.")
+                    print("PRE leakage correction.")
 
                     # Leakage correction.
                     frequencial_harmonic_load_signal_step_3 = leakage_correction(
@@ -401,6 +394,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             recent_trend=False,
                         ),
                     )
+
+                print("POST leakage correction.")
 
                 # Computes trends.
 

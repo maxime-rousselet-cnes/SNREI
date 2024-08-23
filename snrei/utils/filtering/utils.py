@@ -1,9 +1,9 @@
 from os import cpu_count
 
-from dask import visualize
 from dask.array import map_blocks
 from dask.array.core import Array, from_array
 from dask.config import set
+from dask.diagnostics import CacheProfiler, ResourceProfiler
 from numpy import arange, array, ceil, meshgrid, ndarray, zeros
 from pandas import DataFrame
 from pyGFOToolbox import GRACE_collection_SH
@@ -89,8 +89,7 @@ def leakage_correction(
     """
 
     # Prepares Dask arrays.
-    set(scheduler="single-threaded")
-    chunk_size = int(ceil(len(frequencial_scale_factor) / cpu_count()))
+    chunk_size = int(ceil(len(frequencial_scale_factor) / (4 * cpu_count())))
     frequencial_harmonic_load_signal = from_array(
         frequencial_harmonic_load_signal_initial.transpose((3, 0, 1, 2)),
         chunks=(chunk_size, 2, n_max + 1, n_max + 1),
@@ -230,11 +229,13 @@ def leakage_correction(
             chunks=(n_frequencies_chunk, 2, n_max + 1, n_max + 1),
         )
 
-    return array(
-        map_blocks(
-            leakage_correction_iterations_function,
-            frequencial_harmonic_load_signal,
-            RHS_chuncks,
-            dtype=Array,
-        ).compute()
-    ).transpose((1, 2, 3, 0))
+    with ResourceProfiler() as prof, CacheProfiler() as cprof:
+        with set(scheduler="threads"):
+            result = map_blocks(
+                leakage_correction_iterations_function,
+                frequencial_harmonic_load_signal,
+                RHS_chuncks,
+                dtype=Array,
+            ).compute()
+    prof.visualize()
+    return array(result).transpose((1, 2, 3, 0))

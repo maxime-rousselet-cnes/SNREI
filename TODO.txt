@@ -1,4 +1,3 @@
-leakage correction for degree one only
 mu as fnt of depth/frequency plots rewrite
 attenuation functions plot rewrite
 profiles rewrite

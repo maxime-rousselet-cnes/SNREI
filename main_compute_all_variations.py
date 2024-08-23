@@ -1,21 +1,7 @@
-from dask.distributed import Client
-
-from snrei import (
-    ModelPart,
-    RunHyperParameters,
-    clear_subs,
-    compute_load_signal_trends_for_anelastic_Earth_models,
-)
+from snrei import ModelPart, RunHyperParameters, clear_subs, compute_load_signal_trends_for_anelastic_Earth_models
 
 if __name__ == "__main__":
-    _ = Client(
-        dashboard_address=":8787",
-        threads_per_worker=1,
-        n_workers=16,
-        memory_limit="1GB",
-    )
     clear_subs()
-
     compute_load_signal_trends_for_anelastic_Earth_models(
         elasticity_model_names=["PREM"],
         long_term_anelasticity_model_names=["VM7"],

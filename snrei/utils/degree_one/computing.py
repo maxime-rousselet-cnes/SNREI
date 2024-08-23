@@ -23,11 +23,7 @@ def frequencial_harmonic_component(
             DENSITY_RATIO
             * concatenate(
                 (  # Adds a line of zero values for degree zero.
-                    (
-                        ones(shape=(1, n_frequencies))
-                        if direction == Direction.potential
-                        else zeros(shape=(1, n_frequencies))
-                    ),
+                    (ones(shape=(1, n_frequencies)) if direction == Direction.potential else zeros(shape=(1, n_frequencies))),
                     multiply(
                         Love_numbers.values[direction][boundary_condition].T,
                         3 / (2 * Love_numbers.axes["degrees"] + 1),
@@ -51,7 +47,6 @@ def degree_one_inversion(
         - anelastic frequencial scale factor (D) (n_frequencies).
         - anelastic frequential-harmonic geoid height (G) (2, n_max, n_max, n_frequencies).
         - anelastic frequential-harmonic radial discplacement (R) (2, n_max, n_max, n_frequencies).
-
     """
 
     # Initializes.
@@ -78,11 +73,7 @@ def degree_one_inversion(
         boundary_condition=BoundaryCondition.load,
     )
     # Right-Hand Side terms that includes 1 + k'_n - h'_n.
-    right_hand_side_terms = (
-        frequencial_harmonic_geoid
-        - frequencial_harmonic_radial_displacement
-        - anelastic_frequencial_harmonic_load_signal
-    )
+    right_hand_side_terms = frequencial_harmonic_geoid - frequencial_harmonic_radial_displacement - anelastic_frequencial_harmonic_load_signal
 
     # Builds the matrix rows using pyshtools to ensure polynomial normalization is coherent with RHS.
     P_1_0: ndarray = MakeGridDH(
@@ -104,9 +95,7 @@ def degree_one_inversion(
     # Preprocesses degree one polynomials and constants. Index 0 for degree 1.
     degree_one_potential_Love_numbers = Love_numbers.values[Direction.potential][BoundaryCondition.load][0]
     degree_one_radial_Love_numbers = Love_numbers.values[Direction.radial][BoundaryCondition.load][0]
-    degree_one_Love_numbers_term = 1 - DENSITY_RATIO * (
-        degree_one_potential_Love_numbers - degree_one_radial_Love_numbers
-    )
+    degree_one_Love_numbers_term = 1 - DENSITY_RATIO * (degree_one_potential_Love_numbers - degree_one_radial_Love_numbers)
     degree_one_polynomials = array(
         object=[
             P_1_0.flatten()[ocean_mask_indices],

@@ -1,10 +1,4 @@
-from os import cpu_count
-
-from dask.array import map_blocks
-from dask.array.core import Array, from_array
-from dask.config import set
-from dask.diagnostics import CacheProfiler, ResourceProfiler
-from numpy import arange, array, ceil, meshgrid, ndarray, zeros
+from numpy import arange, array, meshgrid, ndarray, zeros
 from pandas import DataFrame
 from pyGFOToolbox import GRACE_collection_SH
 from pyGFOToolbox.processing.filter import apply_DDK_filter
@@ -13,63 +7,70 @@ from pyshtools.expand import MakeGridDH
 from ..data import map_sampling
 
 
-def collection_SH_from_map(
-    frequencial_spatial_load_signal: ndarray[float],
-    n_max: int,
-    n_frequencies_chunk: int,
-) -> GRACE_collection_SH:
+def collection_SH_from_map(spatial_load_signal: ndarray[float], n_max: int) -> GRACE_collection_SH:  # (2 * (n_max + 1), 4 * (n_max + 1)) - shaped.
     """"""
     collection = GRACE_collection_SH()
     collection.unit = "EWH [mm]"
     degrees = arange(n_max + 1)
-    FREQUENCIES, DEGREES, _ = meshgrid(
-        arange(n_frequencies_chunk), degrees, degrees, indexing="ij"
-    )
-    frequencial_harmonic_load_signal = array(
-        object=[
-            map_sampling(
-                map=array(spatial_load_signal), n_max=n_max, harmonic_domain=True
-            )[0]
-            for spatial_load_signal in frequencial_spatial_load_signal
-        ]
-    )
-    data = array(
-        [
-            FREQUENCIES.flatten(),
-            DEGREES.flatten(),
-            DEGREES.flatten(),
-            frequencial_harmonic_load_signal[:, 0].flatten(),
-            frequencial_harmonic_load_signal[:, 1].flatten(),
-        ]
-    ).T
+    fake_frequencies_mesh, degrees_mesh, _ = meshgrid([0], degrees, degrees, indexing="ij")
+    harmonic_load_signal = map_sampling(map=array(spatial_load_signal), n_max=n_max, harmonic_domain=True)[0]
+    c = harmonic_load_signal[0]
+    s = harmonic_load_signal[1]
+    data = array([fake_frequencies_mesh.flatten(), degrees_mesh.flatten(), degrees_mesh.flatten(), c.flatten(), s.flatten()]).T
     collection.data = DataFrame(data, columns=["date", "degree", "order", "C", "S"])
     for column in ["date", "degree", "order"]:
         collection.data[column] = collection.data[column].astype(int)
-    collection.data = collection.data.set_index(
-        ["date", "degree", "order"]
-    ).sort_index()
+    collection.data = collection.data.set_index(["date", "degree", "order"]).sort_index()
     return collection
 
 
-def map_from_collection_SH(
-    collection: GRACE_collection_SH, n_max: int, n_frequencies_chunk: int
-) -> ndarray[float]:
+def map_from_collection_SH(collection: GRACE_collection_SH, n_max: int) -> ndarray[float]:  # (2 * (n_max + 1), 4 * (n_max + 1)) - shaped.S
     """"""
-    return from_array(
-        (
-            zeros(
-                shape=(n_frequencies_chunk, 2 * (n_max + 1), 4 * (n_max + 1)),
-                dtype=complex,
-            )
-            if len(collection.data) == (n_max + 1) ** 2
-            else [
-                MakeGridDH(harmonic_load_signal, sampling=2, lmax=n_max)
-                for harmonic_load_signal in collection.data.to_numpy()
-                .T.reshape((2, n_frequencies_chunk, n_max + 1, n_max + 1))
-                .transpose((1, 0, 2, 3))
-            ]
-        ),
-        chunks=(n_frequencies_chunk, -1, -1),
+    return MakeGridDH(collection.data.to_numpy().T.reshape((2, 1, n_max + 1, n_max + 1)).transpose((1, 0, 2, 3))[0], sampling=2, lmax=n_max)
+
+
+def leakage_correction_iterations_function(
+    harmonic_load_signal: ndarray[complex],  # (2, n_max + 1, n_max + 1) - shaped.
+    right_hand_side: ndarray[complex],  # (2, n_max + 1, n_max + 1) - shaped.
+    ocean_mask: ndarray[float],  # (2 * (n_max + 1), 4 * (n_max + 1)) - shaped.
+    n_max: int,
+    ddk_filter_level: int,
+    iterations: int,
+) -> ndarray[complex]:
+
+    # Gets the input in spatial domain.
+    spatial_load_signal: ndarray[complex] = MakeGridDH(harmonic_load_signal.real, sampling=2, lmax=n_max) + 1.0j * MakeGridDH(
+        harmonic_load_signal.imag, sampling=2, lmax=n_max
+    )
+
+    # Oceanic true level.
+    Ocean_true_level: ndarray[complex] = (
+        MakeGridDH(right_hand_side.real, sampling=2, lmax=n_max) + 1.0j * MakeGridDH(right_hand_side.imag, sampling=2, lmax=n_max)
+    ) * ocean_mask
+
+    # Iterates a leakage correction procedure as many times as asked for.
+    for _ in range(iterations):
+
+        # Leakage input.
+        EWH_2_prime: ndarray[complex] = Ocean_true_level + spatial_load_signal * (1.0 - ocean_mask)
+
+        # Computes continental leakage on oceans.
+        EWH_2_second: ndarray[complex] = map_from_collection_SH(
+            collection=apply_DDK_filter(collection_SH_from_map(spatial_load_signal=EWH_2_prime.real, n_max=n_max), ddk_filter_level=ddk_filter_level),
+            n_max=n_max,
+        ) + 1.0j * map_from_collection_SH(
+            collection=apply_DDK_filter(collection_SH_from_map(spatial_load_signal=EWH_2_prime.imag, n_max=n_max), ddk_filter_level=ddk_filter_level),
+            n_max=n_max,
+        )
+
+        # Applies correction.
+        differential_term: ndarray[complex] = EWH_2_second - EWH_2_prime
+        spatial_load_signal = spatial_load_signal + differential_term * (1.0 - ocean_mask) - differential_term * ocean_mask
+
+    # Gets the result back in spherical harmonics domain.
+    return (
+        map_sampling(map=spatial_load_signal.real, n_max=n_max, harmonic_domain=True)[0]
+        + 1.0j * map_sampling(map=spatial_load_signal.imag, n_max=n_max, harmonic_domain=True)[0]
     )
 
 
@@ -86,156 +87,21 @@ def leakage_correction(
     """
     Performs a correction for continental data leak on oceans and ocean data leak on continents.
     Iterates on frequencies and asked iterations for leakage correction.
+    Returns data corrected from leakage.
     """
 
-    # Prepares Dask arrays.
-    chunk_size = int(ceil(len(frequencial_scale_factor) / (4 * cpu_count())))
-    frequencial_harmonic_load_signal = from_array(
-        frequencial_harmonic_load_signal_initial.transpose((3, 0, 1, 2)),
-        chunks=(chunk_size, 2, n_max + 1, n_max + 1),
-    )
-    right_hand_side = (
-        frequencial_harmonic_geoid
-        - frequencial_harmonic_radial_displacement
-        - frequencial_scale_factor
-    )
-    RHS_chuncks = from_array(
-        right_hand_side.transpose((3, 0, 1, 2)),
-        chunks=(chunk_size, 2, n_max + 1, n_max + 1),
-    )
+    # Prepares arrays.
+    frequencial_right_hand_side = frequencial_harmonic_geoid - frequencial_harmonic_radial_displacement - frequencial_scale_factor
+    corrected_from_leakage_frequencial_harmonic_load_signal = zeros(shape=frequencial_harmonic_load_signal_initial.shape)
 
-    # Defines parralel computing function.
-    def leakage_correction_iterations_function(
-        frequencial_harmonic_load_signal: Array,
-        RHS_chuncks: Array,
-    ) -> Array:
-
-        n_frequencies_chunk = len(RHS_chuncks)
-
-        # Gets the input in spatial domain.
-        frequencial_spatial_load_signal = from_array(
-            (
-                zeros(
-                    shape=(n_frequencies_chunk, 2 * (n_max + 1), 4 * (n_max + 1)),
-                    dtype=complex,
-                )
-                if frequencial_harmonic_load_signal.shape[1] != 2
-                else [
-                    (
-                        MakeGridDH(
-                            frequencial_harmonic_load_signal[i_frequency].real,
-                            sampling=2,
-                            lmax=n_max,
-                        )
-                        + 1.0j
-                        * MakeGridDH(
-                            frequencial_harmonic_load_signal[i_frequency].imag,
-                            sampling=2,
-                            lmax=n_max,
-                        )
-                    )
-                    for i_frequency in range(n_frequencies_chunk)
-                ]
-            ),
-            chunks=(n_frequencies_chunk, -1, -1),
+    for i_frequency in range(len(frequencial_scale_factor)):
+        print(i_frequency / len(frequencial_scale_factor))
+        corrected_from_leakage_frequencial_harmonic_load_signal[:, :, :, i_frequency] = leakage_correction_iterations_function(
+            harmonic_load_signal=frequencial_harmonic_load_signal_initial[:, :, :, i_frequency],
+            right_hand_side=frequencial_right_hand_side[:, :, :, i_frequency],
+            ocean_mask=ocean_mask,
+            n_max=n_max,
+            ddk_filter_level=ddk_filter_level,
+            iterations=iterations,
         )
-
-        # Oceanic true level.
-        Ocean_true_level = from_array(
-            (
-                zeros(
-                    shape=(n_frequencies_chunk, 2 * (n_max + 1), 4 * (n_max + 1)),
-                    dtype=complex,
-                )
-                if frequencial_harmonic_load_signal.shape[1] != 2
-                else [
-                    (
-                        MakeGridDH(
-                            RHS_chuncks[i_frequency].real,
-                            sampling=2,
-                            lmax=n_max,
-                        )
-                        + 1.0j
-                        * MakeGridDH(
-                            RHS_chuncks[i_frequency].imag,
-                            sampling=2,
-                            lmax=n_max,
-                        )
-                        * ocean_mask
-                    )
-                    for i_frequency in range(n_frequencies_chunk)
-                ]
-            ),
-            chunks=(n_frequencies_chunk, -1, -1),
-        )
-
-        # Iterates a leakage correction procedure as many times as asked for.
-        for _ in range(iterations):
-
-            # Leakage input.
-            EWH_2_prime = Ocean_true_level + frequencial_spatial_load_signal * array(
-                object=[(1.0 - ocean_mask)]
-            )
-
-            # Computes continental leakage on oceans.
-            EWH_2_second = map_from_collection_SH(
-                collection=apply_DDK_filter(
-                    collection_SH_from_map(
-                        frequencial_spatial_load_signal=EWH_2_prime.real,
-                        n_max=n_max,
-                        n_frequencies_chunk=n_frequencies_chunk,
-                    ),
-                    ddk_filter_level=ddk_filter_level,
-                ),
-                n_max=n_max,
-                n_frequencies_chunk=n_frequencies_chunk,
-            ) + 1.0j * map_from_collection_SH(
-                collection=apply_DDK_filter(
-                    collection_SH_from_map(
-                        frequencial_spatial_load_signal=EWH_2_prime.imag,
-                        n_max=n_max,
-                        n_frequencies_chunk=n_frequencies_chunk,
-                    ),
-                    ddk_filter_level=ddk_filter_level,
-                ),
-                n_max=n_max,
-                n_frequencies_chunk=n_frequencies_chunk,
-            )
-
-            # Applies correction.
-            differential_term = EWH_2_second - EWH_2_prime
-            frequencial_spatial_load_signal = (
-                frequencial_spatial_load_signal
-                + differential_term * array(object=[(1.0 - ocean_mask)])
-                - differential_term * array(object=[ocean_mask])
-            )
-
-        # Gets the result back in spherical harmonics domain.
-        return from_array(
-            [
-                map_sampling(
-                    map=array(spatial_load_signal).real,
-                    n_max=n_max,
-                    harmonic_domain=True,
-                )[0]
-                + 1.0j
-                * map_sampling(
-                    map=array(spatial_load_signal).imag,
-                    n_max=n_max,
-                    harmonic_domain=True,
-                )[0]
-                for spatial_load_signal in frequencial_spatial_load_signal
-            ],
-            chunks=(n_frequencies_chunk, 2, n_max + 1, n_max + 1),
-        )
-
-    with ResourceProfiler() as prof, CacheProfiler() as cprof:
-        with set(scheduler="threads"):
-            result = map_blocks(
-                leakage_correction_iterations_function,
-                frequencial_harmonic_load_signal,
-                RHS_chuncks,
-                dtype=Array,
-            ).compute()
-    prof.visualize()
-    return array(result).transpose((1, 2, 3, 0))
+    return corrected_from_leakage_frequencial_harmonic_load_signal

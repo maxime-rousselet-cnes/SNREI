@@ -22,6 +22,7 @@ from .classes import (
     load_Love_numbers_hyper_parameters,
     parameters_path,
     results_path,
+    tables_path,
 )
 from .data import (
     add_result_to_table,
@@ -34,13 +35,7 @@ from .data import (
     save_harmonics,
     save_map,
 )
-from .database import (
-    generate_degrees_list,
-    load_base_model,
-    load_complex_array_from_binary,
-    save_base_model,
-    save_complex_array_to_binary,
-)
+from .database import generate_degrees_list, load_base_model, load_complex_array_from_binary, save_base_model, save_complex_array_to_binary
 from .degree_one import degree_one_inversion
 from .filtering import leakage_correction
 from .load_signal import (
@@ -58,11 +53,7 @@ from .Love_numbers import (
 )
 from .polar_motion import polar_motion_correction
 from .seismic_fit import remove_earthquakes
-from .variations import (
-    create_all_load_signal_hyper_parameters_variations,
-    create_all_model_variations,
-    find_minimal_computing_options,
-)
+from .variations import create_all_load_signal_hyper_parameters_variations, create_all_model_variations, find_minimal_computing_options
 
 [
     ELASTIC_RUN_HYPER_PARAMETERS,
@@ -88,6 +79,7 @@ from .variations import (
     computed_masks_path,
     parameters_path,
     results_path,
+    tables_path,
     add_result_to_table,
     extract_all_GRACE_data,
     generate_new_id,

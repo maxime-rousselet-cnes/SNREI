@@ -3,6 +3,7 @@ from .scripts import (
     compute_load_signal_trends_for_anelastic_Earth_models,
     generate_load_signal_components_figure,
     generate_Love_numbers_plot,
+    plot_ocean_mean_vs_pixels,
 )
 from .utils import ModelPart, RunHyperParameters
 
@@ -11,6 +12,7 @@ from .utils import ModelPart, RunHyperParameters
     compute_load_signal_trends_for_anelastic_Earth_models,
     generate_load_signal_components_figure,
     generate_Love_numbers_plot,
+    plot_ocean_mean_vs_pixels,
     ModelPart,
     RunHyperParameters,
 ]

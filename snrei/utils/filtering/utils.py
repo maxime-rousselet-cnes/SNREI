@@ -1,34 +1,32 @@
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 
-from numpy import arange, array, meshgrid, ndarray, zeros
+from numpy import arange, array, expand_dims, meshgrid, ndarray, zeros
 from pandas import DataFrame
-from pyGFOToolbox import GRACE_collection_SH
-from pyGFOToolbox.processing.filter import apply_DDK_filter
+from pyGFOToolbox.processing.filter.filter_ddk import _pool_apply_DDK_filter
 from pyshtools.expand import MakeGridDH
 
+from ...functions import mean_on_mask
 from ..data import map_sampling
 
 
-def collection_SH_from_map(spatial_load_signal: ndarray[float], n_max: int) -> GRACE_collection_SH:  # (2 * (n_max + 1), 4 * (n_max + 1)) - shaped.
+def collection_SH_data_from_map(spatial_load_signal: ndarray[float], n_max: int) -> DataFrame:  # (2 * (n_max + 1), 4 * (n_max + 1)) - shaped.
     """"""
-    collection = GRACE_collection_SH()
-    collection.unit = "EWH [mm]"
     degrees = arange(n_max + 1)
-    fake_frequencies_mesh, degrees_mesh, _ = meshgrid([0], degrees, degrees, indexing="ij")
-    harmonic_load_signal = map_sampling(map=array(spatial_load_signal), n_max=n_max, harmonic_domain=True)[0]
-    c = harmonic_load_signal[0]
-    s = harmonic_load_signal[1]
-    data = array([fake_frequencies_mesh.flatten(), degrees_mesh.flatten(), degrees_mesh.flatten(), c.flatten(), s.flatten()]).T
-    collection.data = DataFrame(data, columns=["date", "degree", "order", "C", "S"])
+    fake_frequencies_mesh, degrees_mesh, orders_mesh = meshgrid([0], degrees, degrees, indexing="ij")
+    harmonic_load_signal = map_sampling(map=spatial_load_signal, n_max=n_max, harmonic_domain=True)[0]
+    c: ndarray[float] = harmonic_load_signal[0]
+    s: ndarray[float] = harmonic_load_signal[1]
+    data = array([fake_frequencies_mesh.flatten(), degrees_mesh.flatten(), orders_mesh.flatten(), c.flatten(), s.flatten()]).T
+    collection_data = DataFrame(data, columns=["date", "degree", "order", "C", "S"])
     for column in ["date", "degree", "order"]:
-        collection.data[column] = collection.data[column].astype(int)
-    collection.data = collection.data.set_index(["date", "degree", "order"]).sort_index()
-    return collection
+        collection_data[column] = collection_data[column].astype(int)
+    collection_data = collection_data.set_index(["date", "degree", "order"]).sort_index()
+    return collection_data
 
 
-def map_from_collection_SH(collection: GRACE_collection_SH, n_max: int) -> ndarray[float]:  # (2 * (n_max + 1), 4 * (n_max + 1)) - shaped.S
+def map_from_collection_SH_data(collection_data: DataFrame, n_max: int) -> ndarray[float]:  # (2 * (n_max + 1), 4 * (n_max + 1)) - shaped.
     """"""
-    return MakeGridDH(collection.data.to_numpy().T.reshape((2, 1, n_max + 1, n_max + 1)).transpose((1, 0, 2, 3))[0], sampling=2, lmax=n_max)
+    return MakeGridDH(array(object=[coeffs.reshape((n_max + 1, n_max + 1)) for coeffs in collection_data.to_numpy().T]), sampling=2, lmax=n_max)
 
 
 def leakage_correction_iterations_function(
@@ -44,10 +42,11 @@ def leakage_correction_iterations_function(
     spatial_load_signal: ndarray[complex] = MakeGridDH(harmonic_load_signal.real, sampling=2, lmax=n_max) + 1.0j * MakeGridDH(
         harmonic_load_signal.imag, sampling=2, lmax=n_max
     )
-
     # Oceanic true level.
-    Ocean_true_level: ndarray[complex] = (
-        MakeGridDH(right_hand_side.real, sampling=2, lmax=n_max) + 1.0j * MakeGridDH(right_hand_side.imag, sampling=2, lmax=n_max)
+    Ocean_true_level: ndarray[complex] = (  # TODO.
+        MakeGridDH(right_hand_side.real, sampling=2, lmax=n_max)
+        + 1.0j * MakeGridDH(right_hand_side.imag, sampling=2, lmax=n_max)
+        # mean_on_mask(mask=ocean_mask, grid=spatial_load_signal.real) + 1.0j * mean_on_mask(mask=ocean_mask, grid=spatial_load_signal.imag)
     ) * ocean_mask
 
     # Iterates a leakage correction procedure as many times as asked for.
@@ -57,40 +56,29 @@ def leakage_correction_iterations_function(
         EWH_2_prime: ndarray[complex] = Ocean_true_level + spatial_load_signal * (1.0 - ocean_mask)
 
         # Computes continental leakage on oceans.
-        EWH_2_second: ndarray[complex] = map_from_collection_SH(
-            collection=apply_DDK_filter(collection_SH_from_map(spatial_load_signal=EWH_2_prime.real, n_max=n_max), ddk_filter_level=ddk_filter_level),
+        EWH_2_second: ndarray[complex] = map_from_collection_SH_data(
+            collection_data=_pool_apply_DDK_filter(
+                grace_monthly_sh=collection_SH_data_from_map(spatial_load_signal=EWH_2_prime.real, n_max=n_max),
+                ddk_filter_level=ddk_filter_level,
+            ),
             n_max=n_max,
-        ) + 1.0j * map_from_collection_SH(
-            collection=apply_DDK_filter(collection_SH_from_map(spatial_load_signal=EWH_2_prime.imag, n_max=n_max), ddk_filter_level=ddk_filter_level),
+        ) + 1.0j * map_from_collection_SH_data(
+            collection_data=_pool_apply_DDK_filter(
+                grace_monthly_sh=collection_SH_data_from_map(spatial_load_signal=EWH_2_prime.imag, n_max=n_max),
+                ddk_filter_level=ddk_filter_level,
+            ),
             n_max=n_max,
         )
 
         # Applies correction.
         differential_term: ndarray[complex] = EWH_2_second - EWH_2_prime
-        spatial_load_signal = spatial_load_signal + differential_term * (1.0 - ocean_mask) - differential_term * ocean_mask
+        spatial_load_signal += differential_term * (1.0 - ocean_mask) - differential_term * ocean_mask
 
     # Gets the result back in spherical harmonics domain.
     return (
         map_sampling(map=spatial_load_signal.real, n_max=n_max, harmonic_domain=True)[0]
         + 1.0j * map_sampling(map=spatial_load_signal.imag, n_max=n_max, harmonic_domain=True)[0]
     )
-
-
-def parallel_leakage_correction_iteration(args):
-    """
-    A helper function for parallel processing.
-    """
-    (i_frequency, frequencial_harmonic_load_signal_initial, frequencial_right_hand_side, ocean_mask, n_max, ddk_filter_level, iterations) = args
-
-    corrected_signal = leakage_correction_iterations_function(
-        harmonic_load_signal=frequencial_harmonic_load_signal_initial[:, :, :, i_frequency],
-        right_hand_side=frequencial_right_hand_side[:, :, :, i_frequency],
-        ocean_mask=ocean_mask,
-        n_max=n_max,
-        ddk_filter_level=ddk_filter_level,
-        iterations=iterations,
-    )
-    return (i_frequency, corrected_signal)
 
 
 def leakage_correction(
@@ -113,18 +101,25 @@ def leakage_correction(
     frequencial_right_hand_side = frequencial_harmonic_geoid - frequencial_harmonic_radial_displacement - frequencial_scale_factor
     corrected_from_leakage_frequencial_harmonic_load_signal = zeros(shape=frequencial_harmonic_load_signal_initial.shape, dtype=complex)
 
-    # Prepare arguments for parallel processing
+    # Prepares arguments for parallel processing.
     args = [
-        (i_frequency, frequencial_harmonic_load_signal_initial, frequencial_right_hand_side, ocean_mask, n_max, ddk_filter_level, iterations)
+        (
+            frequencial_harmonic_load_signal_initial[:, :, :, i_frequency],
+            frequencial_right_hand_side[:, :, :, i_frequency],
+            ocean_mask,
+            n_max,
+            ddk_filter_level,
+            iterations,
+        )
         for i_frequency in range(len(frequencial_scale_factor))
     ]
 
-    # Use multiprocessing to parallelize the loop over frequencies
-    with Pool(processes=cpu_count()) as pool:
-        results = pool.map(parallel_leakage_correction_iteration, args)
+    # Uses multiprocessing to parallelize the loop over frequencies.
+    with Pool() as p:
+        results = p.starmap(leakage_correction_iterations_function, args)
 
-    # Gather the results
-    for i_frequency, corrected_signal in results:
+    # Gathers the results.
+    for i_frequency, corrected_signal in enumerate(results):
         corrected_from_leakage_frequencial_harmonic_load_signal[:, :, :, i_frequency] = corrected_signal
 
     return corrected_from_leakage_frequencial_harmonic_load_signal

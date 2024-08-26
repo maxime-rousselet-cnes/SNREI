@@ -127,8 +127,8 @@ def degree_one_inversion(
     ]
 
     # Use multiprocessing to execute solve_degree_one_inversion in parallel
-    with Pool(processes=16) as pool:  # Adjust the number of processes as needed
-        results = pool.starmap(solve_degree_one_inversion, pool_args)
+    with Pool() as p:  # Adjust the number of processes as needed
+        results = p.starmap(solve_degree_one_inversion, pool_args)
 
     # Unpack the results
     for result in results:

@@ -327,6 +327,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         )
                     )
 
+                    t_2 = time()
+
                     # Derives degree one correction.
                     frequencial_harmonic_load_signal_step_2 = deepcopy(frequencial_harmonic_load_signal_step_1)
                     (
@@ -340,6 +342,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         ocean_mask=ocean_mask,
                     )
 
+                    print("Degree one inversion:", time() - t_2)
+                    t_2 = time()
+
                     # Leakage correction.
                     frequencial_harmonic_load_signal_step_3 = leakage_correction(
                         frequencial_harmonic_load_signal_initial=frequencial_harmonic_load_signal_step_2,
@@ -352,6 +357,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         n_max=load_signal_hyper_parameters.n_max,
                     )
 
+                    print("Leakage correction:", time() - t_2)
+
                     # Normalizes so that the data previous to 2003 matches source datas.
                     past_trend = mean_on_mask(
                         mask=ocean_mask,
@@ -362,7 +369,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             recent_trend=False,
                         ),
                     )
-
+                    print(past_trend - target_past_trend)
                     print("Iteration process:", time() - t_1)
 
                 # Computes trends.

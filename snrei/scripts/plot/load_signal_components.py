@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Optional
 
 from cartopy.crs import Robinson
@@ -18,9 +17,7 @@ from ...utils import (
 from .utils import get_grid, natural_projection
 
 
-def select_degrees(
-    harmonics: dict[str, ndarray[complex]], row_name: str, row_components: Optional[str]
-) -> ndarray[float]:
+def select_degrees(harmonics: dict[str, ndarray[complex]], row_name: str, row_components: Optional[str]) -> ndarray[float]:
     """
     Subfunction to avoid copy-paste.
     """
@@ -61,9 +58,7 @@ def generate_load_signal_components_figure(
     # Gets results.
     trend_harmonic_components_per_column: dict[tuple[str, Optional[str]], dict[str, ndarray]] = {
         column: {
-            (row_name, row_components): load_complex_array_from_binary(
-                name=load_signal_id, path=harmonic_load_signal_trends_path.joinpath(row_name)
-            )
+            (row_name, row_components): load_complex_array_from_binary(name=load_signal_id, path=harmonic_load_signal_trends_path.joinpath(row_name))
             for row_name, row_components, _ in rows
         }
         for column, load_signal_id in zip(["elastic", "anelastic"], [elastic_load_signal_id, anelastic_load_signal_id])
@@ -102,9 +97,7 @@ def generate_load_signal_components_figure(
             )
             contour = natural_projection(
                 ax=current_ax,
-                harmonics=select_degrees(
-                    harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components
-                ),
+                harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components),
                 saturation_threshold=row_saturation_threshold,
                 n_max=n_max,
                 mask=mask if not continents else 1.0,
@@ -118,18 +111,14 @@ def generate_load_signal_components_figure(
                     mean_on_mask(
                         mask=mask,
                         grid=get_grid(
-                            harmonics=select_degrees(
-                                harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components
-                            ),
+                            harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components),
                             n_max=n_max,
                         ),
                     ),
                 )
             )
             if not continents:
-                current_ax.add_feature(
-                    NaturalEarthFeature("physical", "land", "50m", edgecolor="face", facecolor="grey")
-                )
+                current_ax.add_feature(NaturalEarthFeature("physical", "land", "50m", edgecolor="face", facecolor="grey"))
             # Eventually memorizes the contour for scale.
             if column == "anelastic":
                 cbar = fig.colorbar(contour, ax=ax, orientation="horizontal", shrink=0.5, extend="both")

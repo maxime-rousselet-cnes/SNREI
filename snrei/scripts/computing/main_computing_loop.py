@@ -346,15 +346,19 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     t_2 = time()
 
                     # Leakage correction.
-                    frequencial_harmonic_load_signal_step_3 = leakage_correction(
-                        frequencial_harmonic_load_signal_initial=frequencial_harmonic_load_signal_step_2,
-                        frequencial_scale_factor=frequencial_scale_factor,
-                        frequencial_harmonic_geoid=frequencial_harmonic_geoid,
-                        frequencial_harmonic_radial_displacement=frequencial_harmonic_radial_displacement,
-                        ocean_mask=ocean_mask,
-                        iterations=load_signal_hyper_parameters.leakage_correction_iterations,
-                        ddk_filter_level=load_signal_hyper_parameters.ddk_filter_level,
-                        n_max=load_signal_hyper_parameters.n_max,
+                    frequencial_harmonic_load_signal_step_3 = (
+                        frequencial_harmonic_load_signal_step_2
+                        if load_signal_hyper_parameters.leakage_correction_iterations == 0
+                        else leakage_correction(
+                            frequencial_harmonic_load_signal_initial=frequencial_harmonic_load_signal_step_2,
+                            frequencial_scale_factor=frequencial_scale_factor,
+                            frequencial_harmonic_geoid=frequencial_harmonic_geoid,
+                            frequencial_harmonic_radial_displacement=frequencial_harmonic_radial_displacement,
+                            ocean_mask=ocean_mask,
+                            iterations=load_signal_hyper_parameters.leakage_correction_iterations,
+                            ddk_filter_level=load_signal_hyper_parameters.ddk_filter_level,
+                            n_max=load_signal_hyper_parameters.n_max,
+                        )
                     )
 
                     print("Leakage correction:", time() - t_2)

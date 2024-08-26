@@ -2,8 +2,10 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from numpy import pi
 
 from ...utils import tables_path
+from ...utils.classes import EARTH_RADIUS
 
 
 def plot_ocean_mean_vs_pixels(file_name: str = "harmonic_load_signal_trends", folder_path: Path = tables_path) -> None:
@@ -46,11 +48,11 @@ def plot_ocean_mean_vs_pixels(file_name: str = "harmonic_load_signal_trends", fo
             # Plot a line for each `leakage_correction_iterations`
             for iteration in subset["leakage_correction_iterations"].unique():
                 data = subset[subset["leakage_correction_iterations"] == iteration]
-                ax.plot(data["pixels_to_coast"], data["ocean_mean_step_3"], label=f"Iteration {iteration}")
+                ax.plot(EARTH_RADIUS * pi / 180 * data["pixels_to_coast"], data["ocean_mean_step_3"], label=f"Iteration {iteration}")
 
             # Set titles and labels
             ax.set_title(f"Erode: {erode_value}, Love: {love_value}")
-            ax.set_xlabel("Pixels to Coast")
+            ax.set_xlabel("Distance to Coast (km)")
             ax.set_ylabel("Ocean Mean Step 3")
 
     # Add legends and adjust layout

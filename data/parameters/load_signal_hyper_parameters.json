@@ -14,7 +14,7 @@
     "load_spatial_behaviour_data": "GRACE",
     "opposite_load_on_continents": false,
     "n_max": 89,
-    "load_spatial_behaviour_file": "CSR",
+    "load_spatial_behaviour_file": "GRACE_MSSA_2003_2022.xyz",
     "polar_tide_correction": true,
     "renormalize_recent_trend": true,
     "leakage_correction_iterations": 1,

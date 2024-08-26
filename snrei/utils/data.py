@@ -44,16 +44,11 @@ def extract_temporal_load_signal(
     # Formats. Barystatic = Sum - Steric.
     barystatic: dict[str, ndarray[float]] = {
         column: array(
-            object=[
-                float(item.split(",")[0] + "." + item.split(",")[1])
-                for item in df["Sum of contributors [" + column + "]"].values
-            ],
+            object=[float(item.split(",")[0] + "." + item.split(",")[1]) for item in df["Sum of contributors [" + column + "]"].values],
             dtype=float,
         )
         - array(
-            object=[
-                float(item.split(",")[0] + "." + item.split(",")[1]) for item in df["Steric [" + column + "]"].values
-            ],
+            object=[float(item.split(",")[0] + "." + item.split(",")[1]) for item in df["Steric [" + column + "]"].values],
             dtype=float,
         )
         for column in COLUMNS
@@ -85,9 +80,7 @@ def erase_lake(
     Erases a rectangle area on a (latitude, longitude) map: sets zero values.
     Used to erase big lakes from sea/land masks.
     """
-    return map * (
-        1 - (lat > min_latitude) * (lat < max_latitude) * (lon > (min_longitude % 360)) * (lon < (max_longitude % 360))
-    )
+    return map * (1 - (lat > min_latitude) * (lat < max_latitude) * (lon > (min_longitude % 360)) * (lon < (max_longitude % 360)))
 
 
 def erase_island(
@@ -205,13 +198,17 @@ def get_ocean_mask(name: Optional[str], n_max: int, pixels_to_coast: int = 10) -
         return array(object=load_base_model(name=name, path=computed_masks_path), dtype=float)
 
 
-def extract_GRACE_data(name: str, path: Path = GRACE_data_path, skiprows: int = 0) -> tuple[ndarray, ndarray, ndarray]:
+def extract_GRACE_data(name: str, path: Path = GRACE_data_path) -> tuple[ndarray, ndarray, ndarray]:
     """
     Opens and formats GRACE (.xyz) datafile.
     """
-    if "xyz" in name:
+    if "xyz" in name or "csv" in name:
         # Gets raw data.
-        df = read_csv(filepath_or_buffer=path.joinpath(name), skiprows=skiprows, sep=";")
+        df = read_csv(
+            filepath_or_buffer=path.joinpath(name),
+            skiprows=0 if name == "GRACE_MSSA_2003_2022.xyz" else (11 if "MSSA" in name and (not "leakage" in name or "csv" in name) else 3),
+            sep=";",
+        )
         # Converts to array.
         return (
             GRACE_DATA_UNIT_FACTOR
@@ -227,9 +224,7 @@ def extract_GRACE_data(name: str, path: Path = GRACE_data_path, skiprows: int = 
         solution_trends = zeros(shape=solutions[0].shape)
         for lat_index in range(len(lat)):
             for lon_index in range(len(lon)):
-                solution_trends[lat_index, lon_index] = signal_trend(
-                    trend_dates=times, signal=solutions[:, lat_index, lon_index]
-                )[0]
+                solution_trends[lat_index, lon_index] = signal_trend(trend_dates=times, signal=solutions[:, lat_index, lon_index])[0]
         return solution_trends, lat, lon
 
 
@@ -243,9 +238,7 @@ def format_GRACE_name_to_date(name: str) -> float:
     return year + (mounth - 1.0) / 12
 
 
-def extract_all_GRACE_data(
-    path: Path = GRACE_data_path, solution_name: str = "MSSA"
-) -> tuple[ndarray, ndarray, ndarray, ndarray]:
+def extract_all_GRACE_data(path: Path = GRACE_data_path, solution_name: str = "MSSA") -> tuple[ndarray, ndarray, ndarray, ndarray]:
     """
     Opens and formats all GRACE mounthly solutions.
     """
@@ -254,18 +247,14 @@ def extract_all_GRACE_data(
     filepaths = list(path.joinpath(solution_name).glob("*xyz"))
 
     # Gets dimensions with first file.
-    map, lat, lon = extract_GRACE_data(
-        name=filepaths[0].name, path=path.joinpath(solution_name), skiprows=11 if solution_name == "MSSA" else 3
-    )
+    map, lat, lon = extract_GRACE_data(name=filepaths[0].name, path=path.joinpath(solution_name))
     all_GRACE_data = zeros(shape=(len(filepaths), len(lat), len(lon)))
     all_GRACE_data[0] = map
     times = len(filepaths) * [format_GRACE_name_to_date(filepaths[0].name)]
 
     # Concatenates.
     for index, filepath in enumerate(filepaths[1:]):
-        all_GRACE_data[index + 1, :, :] = extract_GRACE_data(
-            name=filepath.name, path=path.joinpath(solution_name), skiprows=11 if solution_name == "MSSA" else 3
-        )[0]
+        all_GRACE_data[index + 1, :, :] = extract_GRACE_data(name=filepath.name, path=path.joinpath(solution_name))[0]
         times[index + 1] = format_GRACE_name_to_date(filepath.name)
 
     # Sorts by time.
@@ -357,11 +346,7 @@ def load_Love_numbers_result(
             "decimals": Love_numbers_hyper_parameters.decimals,
         }
         | Love_numbers_hyper_parameters.run_hyper_parameters.__dict__
-        | {
-            key: value
-            for key, value in Love_numbers_hyper_parameters.y_system_hyper_parameters.__dict__.items()
-            if type(value) is bool
-        },
+        | {key: value for key, value in Love_numbers_hyper_parameters.y_system_hyper_parameters.__dict__.items() if type(value) is bool},
     )
 
     # Loads result.

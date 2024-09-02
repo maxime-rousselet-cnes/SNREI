@@ -1,5 +1,6 @@
 from typing import Optional
 
+from geopandas import GeoDataFrame
 from numpy import arange, array, ceil, concatenate, flip, linspace, log2, ndarray, round, where, zeros
 from scipy import interpolate
 from scipy.fft import fft, fftfreq, ifft
@@ -29,21 +30,10 @@ def get_trend_dates(
         )
     )
     trend_indices = where(
-        (
-            shifted_dates
-            < (
-                load_signal_hyper_parameters.last_year_for_trend
-                if recent_trend
-                else load_signal_hyper_parameters.first_year_for_trend
-            )
-        )
+        (shifted_dates < (load_signal_hyper_parameters.last_year_for_trend if recent_trend else load_signal_hyper_parameters.first_year_for_trend))
         * (
             shifted_dates
-            >= (
-                load_signal_hyper_parameters.first_year_for_trend
-                if recent_trend
-                else load_signal_hyper_parameters.load_history_start_date
-            )
+            >= (load_signal_hyper_parameters.first_year_for_trend if recent_trend else load_signal_hyper_parameters.load_history_start_date)
         )
     )[0]
     return trend_indices, shifted_dates[trend_indices]
@@ -106,8 +96,7 @@ def build_elastic_load_signal_history(
         (
             initial_load_signal[past_trend_indices] * past_trend_ratio,  # Rescaled past time serie.
             initial_load_signal[recent_trend_indices]  # Unnmodified recent time serie.
-            + initial_load_signal[past_trend_indices][-1]
-            * (past_trend_ratio - 1),  # Additive constant for continuity.
+            + initial_load_signal[past_trend_indices][-1] * (past_trend_ratio - 1),  # Additive constant for continuity.
         )
     )
 
@@ -120,9 +109,7 @@ def build_elastic_load_signal_history(
         initial_signal_dates[-1] + 1,
         load_signal_hyper_parameters.last_year_for_trend + 1,
     )
-    extend_part_load_signal = (
-        elastic_load_signal_recent_trend * extend_part_dates + elastic_load_signal_additive_constant
-    )
+    extend_part_load_signal = elastic_load_signal_recent_trend * extend_part_dates + elastic_load_signal_additive_constant
 
     # Eventually includes a LIA effect.
     if load_signal_hyper_parameters.LIA:
@@ -146,10 +133,7 @@ def build_elastic_load_signal_history(
 
     # Creates cubic spline for antisymetry.
     mean_slope = extend_part_load_signal[-1] / load_signal_hyper_parameters.spline_time_years
-    spline = (
-        lambda T: mean_slope / (2.0 * load_signal_hyper_parameters.spline_time_years**2.0) * T**3.0
-        - 3.0 * mean_slope / 2 * T
-    )
+    spline = lambda T: mean_slope / (2.0 * load_signal_hyper_parameters.spline_time_years**2.0) * T**3.0 - 3.0 * mean_slope / 2 * T
 
     # Builds signal history / Creates an initial plateau at zero value.
     extended_time_serie_past = concatenate(
@@ -199,7 +183,7 @@ def build_elastic_load_signal_components(
     ndarray[float],  # Temporal component's dates.
     ndarray[float],  # Spatial component in harmonic domain.
     ndarray[float],  # Unnormalized temporal component.
-    ndarray[float],  # Ocean mask.
+    GeoDataFrame,  # Ocean mask.
 ]:
     """
     Builds the elastic load signal components.

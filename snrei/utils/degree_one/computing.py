@@ -1,10 +1,9 @@
 from multiprocessing import Pool
 
 from numpy import array, concatenate, multiply, ndarray, ones, sqrt, zeros
-from pyshtools.expand import MakeGridDH
 from scipy.linalg import lstsq
 
-from ...functions import surface_ponderation
+from ...functions import make_grid, surface_ponderation
 from ..classes import DENSITY_RATIO, BoundaryCondition, Direction, Result
 
 
@@ -65,21 +64,9 @@ def degree_one_inversion(
     )
     right_hand_side_terms = frequencial_harmonic_geoid - frequencial_harmonic_radial_displacement - anelastic_frequencial_harmonic_load_signal
 
-    P_1_0: ndarray = MakeGridDH(
-        array(object=[[[0.0, 0.0], [1.0, 0.0]], [[0.0, 0.0], [0.0, 0.0]]]),
-        sampling=2,
-        lmax=anelastic_frequencial_harmonic_load_signal.shape[1] - 1,
-    )
-    P_1_1_C: ndarray = MakeGridDH(
-        array(object=[[[0.0, 0.0], [0.0, 1.0]], [[0.0, 0.0], [0.0, 0.0]]]),
-        sampling=2,
-        lmax=anelastic_frequencial_harmonic_load_signal.shape[1] - 1,
-    )
-    P_1_1_S: ndarray = MakeGridDH(
-        array(object=[[[0.0, 0.0], [0.0, 0.0]], [[0.0, 0.0], [0.0, 1.0]]]),
-        sampling=2,
-        lmax=anelastic_frequencial_harmonic_load_signal.shape[1] - 1,
-    )
+    P_1_0: ndarray = make_grid(harmonics=array(object=[[[0.0, 0.0], [1.0, 0.0]], [[0.0, 0.0], [0.0, 0.0]]]))
+    P_1_1_C: ndarray = make_grid(harmonics=array(object=[[[0.0, 0.0], [0.0, 1.0]], [[0.0, 0.0], [0.0, 0.0]]]))
+    P_1_1_S: ndarray = make_grid(harmonics=array(object=[[[0.0, 0.0], [0.0, 0.0]], [[0.0, 0.0], [0.0, 1.0]]]))
 
     degree_one_potential_Love_numbers = Love_numbers.values[Direction.potential][BoundaryCondition.load][0]
     degree_one_radial_Love_numbers = Love_numbers.values[Direction.radial][BoundaryCondition.load][0]
@@ -171,9 +158,7 @@ def solve_degree_one_inversion(
 
     # Right-Hand Side.
     harmonic_right_hand_side[:, :2, :] = 0.0
-    spatial_right_hand_side: ndarray = MakeGridDH(harmonic_right_hand_side.real, sampling=2) + 1.0j * MakeGridDH(
-        harmonic_right_hand_side.imag, sampling=2
-    )
+    spatial_right_hand_side: ndarray = make_grid(harmonics=harmonic_right_hand_side.real) + 1.0j * make_grid(harmonics=harmonic_right_hand_side.imag)
     right_hand_side = spatial_right_hand_side.flatten()[ocean_mask_indices]
 
     # Inversion.

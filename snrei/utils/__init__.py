@@ -5,6 +5,7 @@ from .classes import (
     BoundaryCondition,
     Direction,
     GRACE_data_path,
+    Integration,
     LoadSignalHyperParameters,
     Love_numbers_path,
     LoveNumbersHyperParameters,
@@ -27,6 +28,8 @@ from .classes import (
 from .data import (
     add_result_to_table,
     extract_all_GRACE_data,
+    extract_GRACE_data,
+    extract_temporal_load_signal,
     generate_new_id,
     get_ocean_mask,
     map_sampling,
@@ -52,6 +55,7 @@ from .Love_numbers import (
     interpolate_elastic_Love_numbers,
 )
 from .polar_motion import polar_motion_correction
+from .rheological_formulas import frequencies_to_periods
 from .seismic_fit import remove_earthquakes
 from .variations import create_all_load_signal_hyper_parameters_variations, create_all_model_variations, find_minimal_computing_options
 
@@ -62,6 +66,7 @@ from .variations import create_all_load_signal_hyper_parameters_variations, crea
     BoundaryCondition,
     Direction,
     GRACE_data_path,
+    Integration,
     LoadSignalHyperParameters,
     Love_numbers_path,
     LoveNumbersHyperParameters,
@@ -82,6 +87,8 @@ from .variations import create_all_load_signal_hyper_parameters_variations, crea
     tables_path,
     add_result_to_table,
     extract_all_GRACE_data,
+    extract_GRACE_data,
+    extract_temporal_load_signal,
     generate_new_id,
     get_ocean_mask,
     map_sampling,
@@ -106,6 +113,7 @@ from .variations import create_all_load_signal_hyper_parameters_variations, crea
     interpolate_anelastic_Love_numbers,
     interpolate_elastic_Love_numbers,
     polar_motion_correction,
+    frequencies_to_periods,
     remove_earthquakes,
     create_all_load_signal_hyper_parameters_variations,
     create_all_model_variations,

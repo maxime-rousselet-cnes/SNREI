@@ -61,6 +61,17 @@ class RunHyperParameters(HyperParameters):
     use_short_term_anelasticity: bool  # Whether to use short term anelasticity model or not.
     use_bounded_attenuation_functions: bool  # Whether to use the bounded version of attenuation functions or not.
 
+    def string(self):
+        return (
+            "long-term and short-term anelasticities"
+            if self.use_long_term_anelasticity and self.use_short_term_anelasticity
+            else (
+                "long-term anelasticity"
+                if self.use_long_term_anelasticity
+                else ("short-term anelasticity" if self.use_short_term_anelasticity else "pure elastic")
+            )
+        )
+
 
 class LoveNumbersHyperParameters(HyperParameters):
     """

@@ -1,26 +1,21 @@
 from typing import Optional
 
-from numpy import array, inf, min, ndarray, round
+from numpy import argsort, array, astype, inf, min, ndarray, round
 from scipy import interpolate
 
 from ...database import load_base_model
 from ...rheological_formulas import find_tau_M, mu_k_computing
-from ..constants import (ASYMPTOTIC_MU_RATIO_DECIMALS, LAYER_DECIMALS,
-                         SECONDS_PER_YEAR)
+from ..constants import ASYMPTOTIC_MU_RATIO_DECIMALS, LAYER_DECIMALS, SECONDS_PER_YEAR
 from ..description_layer import DescriptionLayer
 from ..hyper_parameters import AnelasticityDescriptionParameters
 from ..model import ModelPart
 from ..paths import parameters_path
-from ..separators import (DESCRIPTION_PART_NAME_FROM_PARAMETERS_SEPARATOR,
-                          DESCRIPTION_PART_NAMES_SEPARATOR,
-                          LAYER_NAMES_SEPARATOR)
+from ..separators import DESCRIPTION_PART_NAME_FROM_PARAMETERS_SEPARATOR, DESCRIPTION_PART_NAMES_SEPARATOR, LAYER_NAMES_SEPARATOR
 from .description import Description
 from .elasticity_description import ElasticityDescription
 
 
-def anelasticity_description_id_from_part_names(
-    elasticity_name: str, long_term_anelasticity_name: str, short_term_anelasticity_name: str
-) -> str:
+def anelasticity_description_id_from_part_names(elasticity_name: str, long_term_anelasticity_name: str, short_term_anelasticity_name: str) -> str:
     """
     Builds an id for an anelasticity description given the names of its components.
     """
@@ -70,8 +65,7 @@ class AnelasticityDescription(Description):
         # Formats variable array values.
         layer_values_list: list[dict[str, list[float]]] = self.variable_values_per_layer
         self.variable_values_per_layer: list[dict[str, ndarray]] = [
-            {variable_name: array(object=values, dtype=float) for variable_name, values in layer_values.items()}
-            for layer_values in layer_values_list
+            {variable_name: array(object=values, dtype=float) for variable_name, values in layer_values.items()} for layer_values in layer_values_list
         ]
 
     def save(self, overwrite_description: bool = True) -> None:
@@ -168,9 +162,7 @@ class AnelasticityDescription(Description):
                     )
 
                 # Eventually loads the model description part ...
-                if (not overwrite_descriptions) and description_parts[model_part].get_path().joinpath(
-                    description_parts[model_part].id
-                ).is_file():
+                if (not overwrite_descriptions) and description_parts[model_part].get_path().joinpath(description_parts[model_part].id).is_file():
 
                     description_parts[model_part].load()
 
@@ -235,10 +227,7 @@ class AnelasticityDescription(Description):
                     x_inf=x_inf,
                     x_sup=x_sup,
                     layers_per_part={
-                        model_part: description_parts[model_part].description_layers[
-                            layer_indices_per_part[model_part]
-                        ]
-                        for model_part in ModelPart
+                        model_part: description_parts[model_part].description_layers[layer_indices_per_part[model_part]] for model_part in ModelPart
                     },
                 )
             ]
@@ -269,9 +258,7 @@ class AnelasticityDescription(Description):
         # Adds other unitless variables.
         description_layer.splines["c"] = layers_per_part[ModelPart.long_term_anelasticity].splines["c"]
         description_layer.splines["alpha"] = layers_per_part[ModelPart.short_term_anelasticity].splines["alpha"]
-        description_layer.splines["asymptotic_mu_ratio"] = layers_per_part[ModelPart.short_term_anelasticity].splines[
-            "asymptotic_mu_ratio"
-        ]
+        description_layer.splines["asymptotic_mu_ratio"] = layers_per_part[ModelPart.short_term_anelasticity].splines["asymptotic_mu_ratio"]
         description_layer.splines["Q_mu"] = layers_per_part[ModelPart.short_term_anelasticity].splines["Q_mu"]
 
         # Builds other unitless variables from variables with units.
@@ -282,12 +269,11 @@ class AnelasticityDescription(Description):
             ("omega_m", self.frequency_unit, layers_per_part[ModelPart.short_term_anelasticity].splines),
             ("tau_M", self.period_unit / SECONDS_PER_YEAR, layers_per_part[ModelPart.short_term_anelasticity].splines),
         ]:
-            description_layer.splines[variable_name] =                 (
-                    splines[variable_name][0],
-                    splines[variable_name][1] / unit,  # Gets unitless variable.
-                    splines[variable_name][2],
-                )
-            
+            description_layer.splines[variable_name] = (
+                splines[variable_name][0],
+                splines[variable_name][1] / unit,  # Gets unitless variable.
+                splines[variable_name][2],
+            )
 
         return description_layer
 

@@ -7,9 +7,9 @@ import netCDF4
 from cv2 import erode
 from numpy import argsort, array, flip, meshgrid, ndarray, ones, round, unique, zeros
 from pandas import read_csv
-from pyshtools.expand import MakeGridDH, SHExpandDH
+from pyshtools import SHGrid
 
-from ..functions import signal_trend
+from ..functions import make_grid, signal_trend
 from .classes import (
     GRACE_DATA_UNIT_FACTOR,
     RECTANGLES,
@@ -130,8 +130,9 @@ def extract_mask_nc(
             max_longitude=rectangle.max_longitude,
         )
 
-    # Erodes continents (100km).
-    map = erode(map, ones(shape=(3, 3)), iterations=pixels_to_coast)
+    # Erodes continents (~100km per pixel).
+    kernel = ones(shape=(3, 3))
+    map = erode(map, kernel, iterations=pixels_to_coast)
 
     return map
 
@@ -167,13 +168,9 @@ def map_sampling(map: ndarray[float], n_max: int, harmonic_domain: bool = False)
     Returns maximal degree as second output.
     """
     n_max = redefine_n_max(n_max=n_max, map=map)
-    harmonics = SHExpandDH(
-        map,
-        sampling=2,
-        lmax_calc=n_max,
-    )
+    harmonics = SHGrid.from_array(array=map).expand(lmax_calc=n_max).coeffs
     return (
-        (harmonics if harmonic_domain else MakeGridDH(harmonics, sampling=2, lmax=n_max)),
+        (harmonics if harmonic_domain else make_grid(harmonics=harmonics)),
         n_max,
     )
 
@@ -215,9 +212,9 @@ def extract_GRACE_data(name: str, path: Path = GRACE_data_path) -> tuple[ndarray
             * flip(
                 m=[[value for value in df["EWH"][df["lat"] == lat]] for lat in unique(ar=df["lat"])],
                 axis=0,
-            )[:-1, :-1],
-            flip(m=unique(df["lat"]), axis=0)[:-1],
-            unique(df["lon"])[:-1],
+            ),
+            flip(m=unique(df["lat"]), axis=0),
+            unique(df["lon"]),
         )
     else:
         solutions, lat, lon, times = extract_all_GRACE_data(path=path, solution_name=name)
@@ -379,7 +376,7 @@ def save_base_format(
     """
     Saves load signal trends in base json format.
     """
-    grid: ndarray[float] = MakeGridDH(trends_array.real, sampling=2)
+    grid: ndarray[float] = make_grid(harmonics=trends_array.real)
     save_base_model(
         obj=grid.tolist(),
         name=id,

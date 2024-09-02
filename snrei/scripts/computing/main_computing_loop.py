@@ -2,6 +2,7 @@ from copy import deepcopy
 from itertools import product
 from time import time
 
+from geopandas import GeoDataFrame
 from numpy import array, ndarray, tensordot
 
 from ...functions import mean_on_mask
@@ -106,7 +107,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
         str,  # ID.
         tuple[
             LoadSignalHyperParameters,
-            ndarray,  # Ocean mask.
+            GeoDataFrame,  # Ocean mask.
             ndarray,  # Spatial_component.
             ndarray,  # Initial signal dates.
             ndarray,  # Signal frequencies.

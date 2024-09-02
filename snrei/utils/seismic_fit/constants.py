@@ -14,14 +14,12 @@ PARAMETER_BOUNDS = {
 
 # Defines areas where to remove earthquakes signals
 EARTHQUAKE_CORNERS = {
-    "Chili": {"upper_left": (-33.546211, 360 - 81.554043), "lower_right": (-36.712215, 360 - 72.682230)},
-    "Sumatra": {"upper_left": (4.945213, 92.928182), "lower_right": (2.161619, 95.144977)},
-    "Tohoku": {"upper_left": (37.455418, 141.301228), "lower_right": (35.142693, 144.100055)},
+    "Chili": {"upper_left": (-30.546211, 360 - 84.554043), "lower_right": (-39.712215, 360 - 69.682230)},
+    "Sumatra": {"upper_left": (7.945213, 89.928182), "lower_right": (-1.161619, 98.144977)},
+    "Tohoku": {"upper_left": (40.455418, 138.301228), "lower_right": (32.142693, 147.100055)},
 }
 
-SEISMIC_PARAMETERS_NUMBER = len(
-    [parameter for parameter in PARAMETER_BOUNDS.keys() if ("seismic" in parameter) or ("earthquake" in parameter)]
-)
+SEISMIC_PARAMETERS_NUMBER = len([parameter for parameter in PARAMETER_BOUNDS.keys() if ("seismic" in parameter) or ("earthquake" in parameter)])
 PERIODIC_PARAMETERS_NUMBER = len([parameter for parameter in PARAMETER_BOUNDS.keys() if "sinusoidal" in parameter])
 
 OTHER_PARAMETERS_NUMBER = len(PARAMETER_BOUNDS) - PERIODIC_PARAMETERS_NUMBER - SEISMIC_PARAMETERS_NUMBER

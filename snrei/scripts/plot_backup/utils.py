@@ -5,19 +5,7 @@ import matplotlib.pyplot as plt
 from cartopy import crs, feature
 from matplotlib import colors
 from matplotlib.gridspec import GridSpec
-from numpy import (
-    inf,
-    array,
-    concatenate,
-    linspace,
-    maximum,
-    minimum,
-    ndarray,
-    ones,
-    round,
-    vstack,
-)
-from pyshtools.expand import MakeGridDH
+from numpy import array, concatenate, inf, linspace, maximum, minimum, ndarray, ones, round, vstack
 
 from ...utils import (
     BoundaryCondition,
@@ -52,11 +40,7 @@ def option_color(option: RunHyperParameters) -> str:
     return (
         SMALT_BLUE
         if (not option.use_long_term_anelasticity) and (not option.use_short_term_anelasticity)
-        else (
-            KELLY_GREEN
-            if not option.use_long_term_anelasticity
-            else (MOON_YELLOW if not option.use_short_term_anelasticity else VALENCIA_RED)
-        )
+        else (KELLY_GREEN if not option.use_long_term_anelasticity else (MOON_YELLOW if not option.use_short_term_anelasticity else VALENCIA_RED))
     )
 
 
@@ -68,10 +52,7 @@ def options_label(option: RunHyperParameters) -> str:
         "elastic"
         if (not option.use_long_term_anelasticity) and (not option.use_short_term_anelasticity)
         else "with "
-        + " and ".join(
-            (["long-term"] if option.use_long_term_anelasticity else [])
-            + (["short-term"] if option.use_short_term_anelasticity else [])
-        )
+        + " and ".join((["long-term"] if option.use_long_term_anelasticity else []) + (["short-term"] if option.use_short_term_anelasticity else []))
         + " visc."
     )
 
@@ -139,12 +120,10 @@ def plot_harmonics_on_natural_projection(
             figsize=figsize,
         )
         ax = fig.add_subplot(1, 1, 1, projection=crs.Robinson(central_longitude=180))
-        plt.title(
-            title + (" saturated" if not (min_saturation_value is None and max_saturation_value is None) else "")
-        )
+        plt.title(title + (" saturated" if not (min_saturation_value is None and max_saturation_value is None) else ""))
         ax.set_global()
         spatial_result: ndarray[float] = round(
-            a=MakeGridDH(harmonics, sampling=2) * ocean_mask,
+            a=make_grid(harmonics, sampling=2) * ocean_mask,
             decimals=decimals,
         )
         colorbar_values = get_colorbar_values(
@@ -167,9 +146,7 @@ def plot_harmonics_on_natural_projection(
                 colors=concatenate((colorbar_values, ones(shape=(512, 1))), axis=1),
             ),  # "RdBu_r",
             norm=(
-                colors.SymLogNorm(
-                    linthresh=0.1, linscale=1, vmin=min_saturation_value, vmax=max_saturation_value, base=10
-                )
+                colors.SymLogNorm(linthresh=0.1, linscale=1, vmin=min_saturation_value, vmax=max_saturation_value, base=10)
                 if logscale
                 else colors.TwoSlopeNorm(vcenter=0)
             ),
@@ -180,11 +157,7 @@ def plot_harmonics_on_natural_projection(
         cbar = plt.colorbar(contour, ax=ax, orientation="horizontal", fraction=0.06)
         cbar.set_label(label=label)
         plt.savefig(
-            figure_subpath.joinpath(
-                name
-                + ("_saturated" if not (min_saturation_value is None and max_saturation_value is None) else "")
-                + ".png"
-            )
+            figure_subpath.joinpath(name + ("_saturated" if not (min_saturation_value is None and max_saturation_value is None) else "") + ".png")
         )
         plt.close()
 
@@ -218,12 +191,8 @@ def plot_load_signal(
     _, upper_barystatic = extract_temporal_load_signal(path=data_path, name="upper", filename=filename, zero=False)
     _, lower_barystatic = extract_temporal_load_signal(path=data_path, name="lower", filename=filename, zero=False)
 
-    map = extract_trends_GRACE(
-        name=load_signal_hyper_parameters.GRACE, load_signal_hyper_parameters=load_signal_hyper_parameters
-    )
-    spatial_result = round(
-        a=map_sampling(map, n_max=load_signal_hyper_parameters.n_max, harmonic_domain=False)[0], decimals=decimals
-    )
+    map = extract_trends_GRACE(name=load_signal_hyper_parameters.GRACE, load_signal_hyper_parameters=load_signal_hyper_parameters)
+    spatial_result = round(a=map_sampling(map, n_max=load_signal_hyper_parameters.n_max, harmonic_domain=False)[0], decimals=decimals)
 
     plot.fill_between(dates, lower_barystatic, upper_barystatic)
     plot.plot(dates, mean_barystatic, linewidth=linewidth, color=(0, 0, 0))

@@ -1,17 +1,12 @@
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from copy import deepcopy
-from typing import Any, Callable
+from typing import Any, Callable, Dict, List, Tuple
 
 from lmfit import Parameters, minimize
 from lmfit.minimizer import MinimizerResult
 from numpy import array, errstate, exp, log, nan_to_num, ndarray, pi, sin, sum, where
 
-from .constants import (
-    EARTHQUAKE_CORNERS,
-    OTHER_PARAMETERS_NUMBER,
-    PARAMETER_BOUNDS,
-    PERIODIC_PARAMETERS_NUMBER,
-    SEISMIC_PARAMETERS_NUMBER,
-)
+from .constants import EARTHQUAKE_CORNERS, OTHER_PARAMETERS_NUMBER, PARAMETER_BOUNDS, PERIODIC_PARAMETERS_NUMBER, SEISMIC_PARAMETERS_NUMBER
 
 
 def select_area(
@@ -40,9 +35,7 @@ def co_seismic_signal(t: ndarray[float], parameters: Parameters, i_earthquake: i
     """
     Describe a co-seismic signal on EWH time-serie.
     """
-    return get_parameter(
-        parameters=parameters, index=i_earthquake, parameter_base_name="co_seismic_amplitude"
-    ) * array(
+    return get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="co_seismic_amplitude") * array(
         object=t >= get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="earthquake_t_0"),
         dtype=float,
     )
@@ -58,33 +51,19 @@ def post_seismic_signal(t: ndarray[float], parameters: Parameters, i_earthquake:
             dtype=float,
         ) * nan_to_num(
             x=(
-                get_parameter(
-                    parameters=parameters, index=i_earthquake, parameter_base_name="post_seismic_exp_amplitude"
-                )
+                get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="post_seismic_exp_amplitude")
                 * exp(
-                    -(
-                        t
-                        - get_parameter(
-                            parameters=parameters, index=i_earthquake, parameter_base_name="earthquake_t_0"
-                        )
-                    )
+                    -(t - get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="earthquake_t_0"))
                     / get_parameter(
                         parameters=parameters,
                         index=i_earthquake,
                         parameter_base_name="post_seismic_exp_relaxation_time",
                     )
                 )
-                + get_parameter(
-                    parameters=parameters, index=i_earthquake, parameter_base_name="post_seismic_log_amplitude"
-                )
+                + get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="post_seismic_log_amplitude")
                 * log(
                     1
-                    + (
-                        t
-                        - get_parameter(
-                            parameters=parameters, index=i_earthquake, parameter_base_name="earthquake_t_0"
-                        )
-                    )
+                    + (t - get_parameter(parameters=parameters, index=i_earthquake, parameter_base_name="earthquake_t_0"))
                     / get_parameter(
                         parameters=parameters,
                         index=i_earthquake,
@@ -101,10 +80,7 @@ def sinusoidal_signal(t: ndarray[float], parameters: Parameters, harmonic: int) 
     Describes a sinusoidal signal, such as the annual or semi-annual signal.
     """
     return get_parameter(parameters=parameters, index=harmonic, parameter_base_name="sinusoidal_amplitude") * sin(
-        2
-        * pi
-        * harmonic
-        * (t - t[0] - get_parameter(parameters=parameters, index=harmonic, parameter_base_name="sinusoidal_delay"))
+        2 * pi * harmonic * (t - t[0] - get_parameter(parameters=parameters, index=harmonic, parameter_base_name="sinusoidal_delay"))
     )
 
 
@@ -133,8 +109,7 @@ def multiple_earthquake_signal(t: ndarray[float], parameters: Parameters) -> nda
         a=[
             single_earthquake_signal(t=t, parameters=parameters, i_earthquake=i_earthquake)
             for i_earthquake in range(
-                (len(parameters.items()) - (OTHER_PARAMETERS_NUMBER + 2 * PERIODIC_PARAMETERS_NUMBER))
-                // SEISMIC_PARAMETERS_NUMBER
+                (len(parameters.items()) - (OTHER_PARAMETERS_NUMBER + 2 * PERIODIC_PARAMETERS_NUMBER)) // SEISMIC_PARAMETERS_NUMBER
             )
         ],
         axis=0,
@@ -156,7 +131,7 @@ def full_earthquake_signal(t: ndarray[float], parameters: Parameters) -> ndarray
 
 def fit_expression(
     times: ndarray[float], time_serie: ndarray, expression: Callable[[Any], Any], parameters: Parameters, method: str
-) -> dict[str, float]:
+) -> Dict[str, float]:
     """
     Fits a function of time to data.
     """
@@ -171,19 +146,33 @@ def fit_expression(
     return params.valuesdict()
 
 
+def fit_line_series(times: ndarray[float], line_time_series: ndarray, parameters: Parameters, method: str) -> List[Dict[str, float]]:
+    """
+    Fits the earthquake model to each time series in a line of data.
+    """
+    return [
+        fit_expression(
+            times=times,
+            time_serie=time_serie,
+            expression=full_earthquake_signal,
+            parameters=deepcopy(parameters),
+            method=method,
+        )
+        for time_serie in line_time_series
+    ]
+
+
 def fit_earthquakes(
     time_dependent_maps: ndarray,
     times: ndarray,
     lat: ndarray,
     lon: ndarray,
     method: str,
-    corners: dict[str, dict[str, tuple[float, float]]] = EARTHQUAKE_CORNERS,
-) -> dict[str, dict[str, list[list[dict[str, float]]]]]:
+    corners: Dict[str, Dict[str, Tuple[float, float]]] = EARTHQUAKE_CORNERS,
+) -> Dict[str, Dict[str, List[List[Dict[str, float]]]]]:
     """
     Fits all the parameters needed to describe the earthquakes on GRACE level-3 data.
     """
-
-    # Gets restricted areas where fitting is needed.
     restricted_areas_data = {
         area: select_area(
             time_dependent_maps=time_dependent_maps,
@@ -195,54 +184,47 @@ def fit_earthquakes(
         for area, sub_dict_corners in corners.items()
     }
 
-    # Fits data accordingly to earthquake signature expressions.
     fitted_parameters_per_area = {}
-    for area, (
-        time_dependent_map,
-        selected_latitudes_indices,
-        selected_longitudes_indices,
-    ) in restricted_areas_data.items():
+    with ProcessPoolExecutor() as executor:
+        futures = {}
+        for area, (time_dependent_map, selected_latitudes_indices, selected_longitudes_indices) in restricted_areas_data.items():
 
-        # Creates a parameterization class instance to optimize.
-        parameters = Parameters()
-        for parameter_name in PARAMETER_BOUNDS.keys():
-            if "sinusoidal" in parameter_name:
-                for harmonic in range(1, 3):
+            parameters = Parameters()
+            for parameter_name in PARAMETER_BOUNDS.keys():
+                if "sinusoidal" in parameter_name:
+                    for harmonic in range(1, 3):
+                        parameters.add(
+                            name=parameter_name + "_" + str(harmonic),
+                            min=PARAMETER_BOUNDS[parameter_name]["lower_bound"],
+                            max=PARAMETER_BOUNDS[parameter_name]["upper_bound"],
+                        )
+                elif ("earthquake" in parameter_name) or ("seismic" in parameter_name):
+                    for i_earthquake in range(4 if area == "Sumatra" else 1):
+                        parameters.add(
+                            name=parameter_name + "_" + str(i_earthquake),
+                            min=PARAMETER_BOUNDS[parameter_name]["lower_bound"],
+                            max=PARAMETER_BOUNDS[parameter_name]["upper_bound"],
+                        )
+                else:
                     parameters.add(
-                        name=parameter_name + "_" + str(harmonic),
+                        name=parameter_name,
                         min=PARAMETER_BOUNDS[parameter_name]["lower_bound"],
                         max=PARAMETER_BOUNDS[parameter_name]["upper_bound"],
                     )
-            elif ("earthquake" in parameter_name) or ("seismic" in parameter_name):
-                for i_earthquake in range(4 if area == "Sumatra" else 1):
-                    parameters.add(
-                        name=parameter_name + "_" + str(i_earthquake),
-                        min=PARAMETER_BOUNDS[parameter_name]["lower_bound"],
-                        max=PARAMETER_BOUNDS[parameter_name]["upper_bound"],
-                    )
-            else:
-                parameters.add(
-                    name=parameter_name,
-                    min=PARAMETER_BOUNDS[parameter_name]["lower_bound"],
-                    max=PARAMETER_BOUNDS[parameter_name]["upper_bound"],
-                )
-        fitted_parameters_per_area[area] = {
-            "fitted_parameters": [
-                [
-                    fit_expression(
-                        times=times,
-                        time_serie=time_serie,
-                        expression=full_earthquake_signal,
-                        parameters=parameters,
-                        method=method,
-                    )
-                    for time_serie in line_time_series
-                ]
-                for line_time_series in time_dependent_map.transpose((1, 2, 0))
-            ],
-            "latitudes": selected_latitudes_indices,
-            "longitudes": selected_longitudes_indices,
-        }
+
+            # Submit tasks to the executor for parallel execution
+            for line_time_series in time_dependent_map.transpose((1, 2, 0)):
+                futures[executor.submit(fit_line_series, times, line_time_series, deepcopy(parameters), method)] = area
+
+        for future in as_completed(futures):
+            area = futures[future]
+            if area not in fitted_parameters_per_area:
+                fitted_parameters_per_area[area] = {
+                    "fitted_parameters": [],
+                    "latitudes": restricted_areas_data[area][1],
+                    "longitudes": restricted_areas_data[area][2],
+                }
+            fitted_parameters_per_area[area]["fitted_parameters"].append(future.result())
 
     return fitted_parameters_per_area
 
@@ -253,28 +235,19 @@ def remove_earthquakes(
     lat: ndarray,
     lon: ndarray,
     method: str,
-    corners: dict[str, dict[str, tuple[float, float]]] = EARTHQUAKE_CORNERS,
-) -> tuple[dict[str, dict[str, list[list[dict[str, float]]]]], ndarray]:
+    corners: Dict[str, Dict[str, Tuple[float, float]]] = EARTHQUAKE_CORNERS,
+) -> Tuple[Dict[str, Dict[str, List[List[Dict[str, float]]]]], ndarray]:
     """
     Removes earthquakes signal from GRACE level-3 data.
     """
-
-    # Fits the signal parameters on the wanted earthqakes areas.
     fitted_parameters_per_area = fit_earthquakes(
         time_dependent_maps=time_dependent_maps, times=times, lat=lat, lon=lon, corners=corners, method=method
     )
 
-    # Remove modelized signal from real data.
     corrected_time_dependent_maps = deepcopy(time_dependent_maps)
     for _, area_fitted_parameters in fitted_parameters_per_area.items():
-        for latitude, fitted_parameters_line in zip(
-            where(area_fitted_parameters["latitudes"])[0], area_fitted_parameters["fitted_parameters"]
-        ):
-            for longitude, fitted_parameters in zip(
-                where(area_fitted_parameters["longitudes"])[0], fitted_parameters_line
-            ):
-                corrected_time_dependent_maps[:, latitude, longitude] -= multiple_earthquake_signal(
-                    t=times, parameters=fitted_parameters
-                )
+        for latitude, fitted_parameters_line in zip(where(area_fitted_parameters["latitudes"])[0], area_fitted_parameters["fitted_parameters"]):
+            for longitude, fitted_parameters in zip(where(area_fitted_parameters["longitudes"])[0], fitted_parameters_line):
+                corrected_time_dependent_maps[:, latitude, longitude] -= multiple_earthquake_signal(t=times, parameters=fitted_parameters)
 
     return fitted_parameters_per_area, corrected_time_dependent_maps

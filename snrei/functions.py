@@ -1,13 +1,13 @@
 from typing import Callable, Optional
 
 from numpy import (
-    inf,
     abs,
     argsort,
     array,
     concatenate,
     cos,
     expand_dims,
+    inf,
     linspace,
     max,
     ndarray,
@@ -22,7 +22,7 @@ from numpy import (
     zeros,
 )
 from numpy.linalg import pinv
-from pyshtools.expand import MakeGridDH
+from pyshtools import SHCoeffs
 from scipy import interpolate
 
 MASK_DECIMALS = 5
@@ -67,9 +67,9 @@ def precise_curvature(
             x_values[2:],
         ):
             # For maximal curvature: finds where the error is above maximum threshold parameter and adds median values.
-            condition: ndarray = abs(
-                (f_right - f_left) / (x_right - x_left) * (x - x_left) + f_left - f_x
-            ) > max_tol * max(a=abs([f_left, f_x, f_right]), axis=0)
+            condition: ndarray = abs((f_right - f_left) / (x_right - x_left) * (x - x_left) + f_left - f_x) > max_tol * max(
+                a=abs([f_left, f_x, f_right]), axis=0
+            )
             if condition.any():
                 # Updates sampling.
                 x_new_values = concatenate((x_new_values, [(x + x_left) / 2.0, (x + x_right) / 2.0]))
@@ -184,7 +184,12 @@ def mean_on_mask(
     Computes mean value over a given surface. Uses a given mask.
     """
     if grid is None:
-        grid: ndarray[float] = MakeGridDH(harmonics, sampling=2)
+        grid: ndarray[float] = make_grid(harmonics=harmonics)
     surface = surface_ponderation(mask=mask)
     weighted_values = grid * surface
     return round(a=sum(weighted_values.flatten()) / sum(surface.flatten()), decimals=MASK_DECIMALS)
+
+
+def make_grid(harmonics: ndarray[float]) -> ndarray[float]:
+    """ """
+    return SHCoeffs.from_array(harmonics).expand(extend=False).to_array()

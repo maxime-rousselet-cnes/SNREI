@@ -111,8 +111,7 @@ def generate_load_signal_components_figure(
                     mean_on_mask(
                         mask=mask,
                         grid=get_grid(
-                            harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components),
-                            n_max=n_max,
+                            harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components)
                         ),
                     ),
                 )

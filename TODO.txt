@@ -6,5 +6,5 @@ earthquake fit modif : independent parameters
 stat analysis main rewrite
 README
 
-conda create --name venv pygmt ipykernel netCDF4 scipy more-itertools==8.10.0 pathlib pydantic multiprocess cmocean distributed lmfit black isort Cartopy folium geopandas geoviews holoviews matplotlib numpy pandas panel pathos platformdirs podaac-data-subscriber pyshtools scikit-learn setuptools tqdm xarray opencv
+conda create --name venv pygmt ipykernel netCDF4 scipy more-itertools==8.10.0 pathlib pydantic multiprocess cmocean lmfit black isort Cartopy folium geopandas geoviews holoviews matplotlib numpy pandas panel pathos platformdirs podaac-data-subscriber pyshtools scikit-learn setuptools tqdm xarray opencv
 pip install git+https://github.com/kieferk/pymssa.git

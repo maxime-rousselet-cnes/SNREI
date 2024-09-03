@@ -1,10 +1,11 @@
 from multiprocessing import Pool
 
+from geopandas import GeoDataFrame
 from numpy import arange, array, meshgrid, ndarray
 from pandas import DataFrame
 from pyGFOToolbox.processing.filter.filter_ddk import _pool_apply_DDK_filter
 
-from ...functions import make_grid, mean_on_mask
+from ...functions import geopandas_oceanic_mean, make_grid
 from ..data import map_sampling
 
 
@@ -32,6 +33,9 @@ def map_from_collection_SH_data(collection_data: DataFrame, n_max: int) -> ndarr
 def leakage_correction_iterations_function(
     harmonic_load_signal: ndarray[complex],  # (2, n_max + 1, n_max + 1) - shaped.
     right_hand_side: ndarray[complex],  # (2, n_max + 1, n_max + 1) - shaped.
+    continents_buffered_reprojected: GeoDataFrame,
+    latitudes: ndarray[float],
+    longitudes: ndarray[float],
     ocean_mask: ndarray[float],  # (2 * (n_max + 1), 4 * (n_max + 1)) - shaped.
     n_max: int,
     ddk_filter_level: int,
@@ -45,8 +49,11 @@ def leakage_correction_iterations_function(
     ocean_true_level: complex = (  # TODO: replace ocean mean by right hand side (i.e. (1 + k' - h') * EWH)
         # make_grid(harmonics=right_hand_side.real)
         # + 1.0j * make_grid(harmonics=right_hand_side.imag)
-        mean_on_mask(mask=ocean_mask, grid=spatial_load_signal.real)
-        + 1.0j * mean_on_mask(mask=ocean_mask, grid=spatial_load_signal.imag)
+        geopandas_oceanic_mean(continents=continents_buffered_reprojected, latitudes=latitudes, longitudes=longitudes, grid=spatial_load_signal.real)
+        + 1.0j
+        * geopandas_oceanic_mean(
+            continents=continents_buffered_reprojected, latitudes=latitudes, longitudes=longitudes, grid=spatial_load_signal.imag
+        )
     )
 
     # Iterates a leakage correction procedure as many times as asked for.
@@ -81,12 +88,15 @@ def leakage_correction_iterations_function(
     )
 
 
-def leakage_correction(
+def leakage_correction(  # TODO.
     frequencial_harmonic_load_signal_initial: ndarray[complex],
     frequencial_scale_factor: ndarray[complex],
     frequencial_harmonic_geoid: ndarray[complex],
     frequencial_harmonic_radial_displacement: ndarray[complex],
     ocean_mask: ndarray[float],
+    continents_buffered_reprojected: GeoDataFrame,
+    latitudes: ndarray[float],
+    longitudes: ndarray[float],
     iterations: int,
     ddk_filter_level: int,
     n_max: int,
@@ -105,6 +115,9 @@ def leakage_correction(
         (
             frequencial_harmonic_load_signal_initial[:, :, :, i_frequency],
             frequencial_right_hand_side[:, :, :, i_frequency],
+            continents_buffered_reprojected,
+            latitudes,
+            longitudes,
             ocean_mask,
             n_max,
             ddk_filter_level,

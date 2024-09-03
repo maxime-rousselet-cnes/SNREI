@@ -13,6 +13,8 @@ from ...utils import (
     load_Love_numbers_hyper_parameters,
 )
 
+# TODO: re-do.
+
 
 def get_single_float_Love_number(
     anelasticity_desciption_id: str,
@@ -107,10 +109,7 @@ def Love_numbers_for_samplings(
             Love_numbers_hyper_parameters.anelasticity_description_parameters.spline_degree = spline_degree
             anelasticity_description_ids += [
                 Love_numbers_single_run(
-                    forced_anelasticity_description_id="sampling_test__n_s_"
-                    + str(spline_number)
-                    + "_d_s_"
-                    + str(spline_degree),
+                    forced_anelasticity_description_id="sampling_test__n_s_" + str(spline_number) + "_d_s_" + str(spline_degree),
                     overwrite_descriptions=True,
                     elasticity_model_name=elasticity_model_name,
                     long_term_anelasticity_model_name=long_term_anelasticity_model_name,

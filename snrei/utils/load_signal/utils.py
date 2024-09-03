@@ -5,9 +5,9 @@ from numpy import arange, array, ceil, concatenate, flip, linspace, log2, ndarra
 from scipy import interpolate
 from scipy.fft import fft, fftfreq, ifft
 
-from ...functions import map_normalizing, mean_on_mask, signal_trend, surface_ponderation
+from ...functions import build_ocean_mask, map_normalizing, mean_on_mask, signal_trend, surface_ponderation
 from ..classes import LoadSignalHyperParameters
-from ..data import extract_GRACE_data, extract_temporal_load_signal, get_ocean_mask, map_sampling, redefine_n_max
+from ..data import extract_GRACE_data, extract_temporal_load_signal, get_continents, get_ocean_mask, map_sampling
 
 
 def get_trend_dates(
@@ -183,7 +183,10 @@ def build_elastic_load_signal_components(
     ndarray[float],  # Temporal component's dates.
     ndarray[float],  # Spatial component in harmonic domain.
     ndarray[float],  # Unnormalized temporal component.
+    ndarray[float],  # Ocean mask.
     GeoDataFrame,  # Ocean mask.
+    ndarray[float],  # Latitudes.
+    ndarray[float],  # Longitudes.
 ]:
     """
     Builds the elastic load signal components.
@@ -199,17 +202,18 @@ def build_elastic_load_signal_components(
 
     # Gets harmonic component.
     if load_signal_hyper_parameters.load_spatial_behaviour_data == "GRACE":
-        map = extract_GRACE_data(
+        map, latitudes, longitudes = extract_GRACE_data(
             name=load_signal_hyper_parameters.load_spatial_behaviour_file,
-        )[0]
+        )
     else:  # Considered as ocean/land repartition only.
         map = map_normalizing(
             map=get_ocean_mask(
                 name=load_signal_hyper_parameters.load_spatial_behaviour_file,
                 n_max=load_signal_hyper_parameters.n_max,
-                pixels_to_coast=load_signal_hyper_parameters.pixels_to_coast,
             )
         )
+        latitudes = linspace(-90, 90, 2 * (n_max + 1) + 1)
+        longitudes = linspace(0, 360, 4 * (n_max + 1) + 1)
 
     map, n_max = map_sampling(
         map=map,
@@ -217,11 +221,8 @@ def build_elastic_load_signal_components(
     )
 
     # Loads ocean mask.
-    ocean_mask = get_ocean_mask(
-        name=load_signal_hyper_parameters.ocean_mask,
-        n_max=n_max,
-        pixels_to_coast=load_signal_hyper_parameters.pixels_to_coast,
-    )
+    continents = get_continents(name=load_signal_hyper_parameters.continents)
+    ocean_mask = build_ocean_mask(continents=continents, n_max=n_max)
 
     # Loads the continents with opposite value, such that global mean is null.
     if load_signal_hyper_parameters.opposite_load_on_continents:
@@ -237,4 +238,4 @@ def build_elastic_load_signal_components(
 
     # Harmonic component.
     harmonic_component, n_max = map_sampling(map=map, n_max=n_max, harmonic_domain=True)
-    return n_max, dates, harmonic_component, temporal_component, ocean_mask
+    return n_max, dates, harmonic_component, temporal_component, ocean_mask, continents, latitudes[:-1], longitudes[:-1]

@@ -38,7 +38,9 @@ def generate_figure_1(name: str = "TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER
     ax1.fill_between(dates, lower_bound, upper_bound, color="grey", alpha=0.3)
     ax1.tick_params(axis="both", which="both", length=6, direction="inout")
     ax1.set_xlabel(xlabel="date")
-    ax1.set_ylabel(ylabel="(mm)")
+    ax1.set_ylabel(
+        ylabel="(mm)",
+    )
 
     # Panel B.
     contour = natural_projection(ax=ax2, saturation_threshold=50.0, map=map)
@@ -62,5 +64,5 @@ def generate_figure_1(name: str = "TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER
     ax2.legend()
     cbar = fig.colorbar(contour, ax=ax2, orientation="vertical", shrink=0.9, extend="both")
     cbar.set_label(label="Equivalent Water Height (mm/yr)")
-    tight_layout()
+    # tight_layout()
     show()

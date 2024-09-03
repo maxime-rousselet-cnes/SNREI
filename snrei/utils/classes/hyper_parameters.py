@@ -200,7 +200,8 @@ class LoadSignalHyperParameters(HyperParameters):
     erode_high_signal_zones: bool
     ddk_filter_level: int
     ocean_mask: Optional[str]
-    pixels_to_coast: int  # Erosion distance for mask.
+    continents: Optional[str]
+    buffer_distance: float  # Buffer to coast (km).
 
     # Trend computing parameters.
     first_year_for_trend: int

@@ -150,7 +150,7 @@ def generate_figure_2(
             layer.evaluate(x=x, variable="mu_0") * anelasticity_description.elasticity_unit,
             (1.0 - x) * anelasticity_description.radius_unit / 1e3,
             color=(0.5, 0.5, 0.5),
-            label="$\mu$" if k_layer == anelasticity_description.below_CMB_layers else None,
+            label="$\mu_0$" if k_layer == anelasticity_description.below_CMB_layers else None,
             linewidth=2,
         )
         first_value_current_layer = layer.evaluate(x=layer.x_inf, variable="mu_0") * anelasticity_description.elasticity_unit

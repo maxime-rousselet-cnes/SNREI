@@ -20,7 +20,7 @@ def generate_figure_3(
     long_term_anelasticity_model_name: Optional[str] = "VM7",
     short_term_anelasticity_model_name: Optional[str] = "Benjamin_Q_Resovsky",
     Love_numbers_hyper_parameters: LoveNumbersHyperParameters = load_Love_numbers_hyper_parameters(),
-    periods: list[float] = [10.0 / 365.0, 10.0, 100.0, 1000.0],
+    periods: list[float] = [10.0, 100.0, 1000.0],
     run_hyper_parameters_list: list[RunHyperParameters] = [
         RunHyperParameters(use_long_term_anelasticity=True, use_short_term_anelasticity=True, use_bounded_attenuation_functions=True),
         RunHyperParameters(use_long_term_anelasticity=False, use_short_term_anelasticity=True, use_bounded_attenuation_functions=True),
@@ -112,6 +112,7 @@ def generate_figure_3(
     for ax_real, ax_imag, panel_real, panel_imag in zip(
         [sub_axes[0] for sub_axes in axes], [sub_axes[1] for sub_axes in axes], ["A", "C", "E", "G"], ["B", "D", "F", "H"]
     ):
+        ax_real.set_ylabel("Depth (km)")
         ax: Axes
         for ax, panel, part in zip([ax_real, ax_imag], [panel_real, panel_imag], ["real", "imag"]):
             ax.text(
@@ -136,8 +137,6 @@ def generate_figure_3(
             ax.sharex(axes[-1, column])
 
     # Adds legends.
-    axes[0, 0].set_ylabel("Depth (km)")
-    axes[1, 0].set_ylabel("Depth (km)")
     axes[0, 0].legend(loc="lower right", frameon=False)
     tight_layout()
     show()

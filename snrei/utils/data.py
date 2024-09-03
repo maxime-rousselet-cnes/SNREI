@@ -5,11 +5,12 @@ from typing import Optional
 
 import netCDF4
 from cv2 import erode
+from geopandas import GeoDataFrame, read_file
 from numpy import argsort, array, flip, meshgrid, ndarray, ones, round, unique, zeros
 from pandas import read_csv
 from pyshtools import SHGrid
 
-from ..functions import make_grid, signal_trend
+from ..functions import LAT_LON_PROJECTION, make_grid, signal_trend
 from .classes import (
     GRACE_DATA_UNIT_FACTOR,
     RECTANGLES,
@@ -382,3 +383,10 @@ def save_base_format(
         name=id,
         path=path,
     )
+
+
+def get_continents(name: str) -> GeoDataFrame:
+    """"""
+    continents: GeoDataFrame = read_file("zip://" + str(masks_data_path.joinpath(name)))
+    continents.crs = LAT_LON_PROJECTION
+    return continents

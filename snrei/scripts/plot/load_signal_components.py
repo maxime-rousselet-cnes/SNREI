@@ -4,7 +4,7 @@ from cartopy.crs import Robinson
 from cartopy.feature import NaturalEarthFeature
 from cartopy.mpl.geoaxes import GeoAxes
 from matplotlib.pyplot import figure, show
-from numpy import ndarray, zeros
+from numpy import linspace, ndarray, zeros
 
 from ...functions import mean_on_mask
 from ...utils import (
@@ -34,6 +34,8 @@ def select_degrees(harmonics: dict[str, ndarray[complex]], row_name: str, row_co
 
 
 def generate_load_signal_components_figure(
+    latitudes: ndarray[float] = linspace(90, -90, 181),
+    longitudes: ndarray[float] = linspace(0, 360, 361),
     rows: list[tuple[str, Optional[str], float]] = [
         ("step_2", None, 50.0),
         ("step_3", None, 50.0),
@@ -74,7 +76,7 @@ def generate_load_signal_components_figure(
         n_max=load_signal_hyper_parameters.n_max,
         harmonics=trend_harmonic_components_per_column["elastic"][rows[0][:2]],
     )
-    # TODO.
+    # TODO: get it from build...
     mask = get_ocean_mask(name="0", n_max=n_max)
 
     # Figure's configuration.
@@ -97,9 +99,10 @@ def generate_load_signal_components_figure(
             )
             contour = natural_projection(
                 ax=current_ax,
-                harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components),
                 saturation_threshold=row_saturation_threshold,
-                n_max=n_max,
+                latitudes=latitudes,
+                longitudes=longitudes,
+                harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components),
                 mask=mask if not continents else 1.0,
             )
             ax += [current_ax]
@@ -113,6 +116,8 @@ def generate_load_signal_components_figure(
                         grid=get_grid(
                             harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components)
                         ),
+                        latitudes=latitudes,
+                        longitudes=longitudes,
                     ),
                 )
             )

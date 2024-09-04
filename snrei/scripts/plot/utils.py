@@ -20,12 +20,12 @@ SYMBOLS_PER_BOUNDARY_CONDITION = {
 SYMBOLS_PER_DIRECTION = {Direction.radial: "h", Direction.tangential: "l", Direction.potential: "k"}
 
 
-def get_grid(harmonics: ndarray[float], decimals: int = 4) -> ndarray[float]:
+def get_grid(harmonics: ndarray[float], latitudes: ndarray[float], longitudes: ndarray[float], decimals: int = 4) -> ndarray[float]:
     """
     Projects spherical harmonics on a (latitude x longitude) grid.
     """
     return round(
-        a=make_grid(harmonics=harmonics),
+        a=make_grid(harmonics=harmonics, latitudes=latitudes, longitudes=longitudes),
         decimals=decimals,
     )
 
@@ -33,6 +33,8 @@ def get_grid(harmonics: ndarray[float], decimals: int = 4) -> ndarray[float]:
 def natural_projection(
     ax: GeoAxes,
     saturation_threshold: float,
+    latitudes: ndarray[float],
+    longitudes: ndarray[float],
     harmonics: Optional[ndarray[float]] = None,
     map: Optional[ndarray[float]] = None,
     mask: Optional[ndarray[float]] = None,
@@ -42,7 +44,9 @@ def natural_projection(
     """
 
     # Gets quantity in spatial domain.
-    spatial_result = (map if not map is None else get_grid(harmonics=harmonics)) * (mask if not mask is None else 1.0)
+    spatial_result = (map if not map is None else get_grid(harmonics=harmonics, latitudes=latitudes, longitudes=longitudes)) * (
+        mask if not mask is None else 1.0
+    )
 
     # Projects.
     contour = ax.pcolormesh(

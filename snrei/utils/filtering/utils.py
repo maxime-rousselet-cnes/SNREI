@@ -1,7 +1,7 @@
 from multiprocessing import Pool
 
 from geopandas import GeoDataFrame
-from numpy import arange, array, meshgrid, ndarray
+from numpy import arange, array, inf, meshgrid, ndarray
 from pandas import DataFrame
 from pyGFOToolbox.processing.filter.filter_ddk import _pool_apply_DDK_filter
 
@@ -9,11 +9,11 @@ from ...functions import geopandas_oceanic_mean, make_grid
 from ..data import map_sampling
 
 
-def collection_SH_data_from_map(spatial_load_signal: ndarray[float], n_max: int) -> DataFrame:  # (2 * (n_max + 1), 4 * (n_max + 1)) - shaped.
+def collection_SH_data_from_map(spatial_load_signal: ndarray[float], n_max: int, latitudes: ndarray[float], longitudes: ndarray[float]) -> DataFrame:
     """"""
     degrees = arange(n_max + 1)
     fake_frequencies_mesh, degrees_mesh, orders_mesh = meshgrid([0], degrees, degrees, indexing="ij")
-    harmonic_load_signal = map_sampling(map=spatial_load_signal, n_max=n_max, harmonic_domain=True)[0]
+    harmonic_load_signal = map_sampling(map=spatial_load_signal, latitudes=latitudes, longitudes=longitudes, n_max=n_max, harmonic_domain=True)[0]
     c: ndarray[float] = harmonic_load_signal[0]
     s: ndarray[float] = harmonic_load_signal[1]
     data = array([fake_frequencies_mesh.flatten(), degrees_mesh.flatten(), orders_mesh.flatten(), c.flatten(), s.flatten()]).T
@@ -24,16 +24,18 @@ def collection_SH_data_from_map(spatial_load_signal: ndarray[float], n_max: int)
     return collection_data
 
 
-def map_from_collection_SH_data(collection_data: DataFrame, n_max: int) -> ndarray[float]:  # (2 * (n_max + 1), 4 * (n_max + 1)) - shaped.
+def map_from_collection_SH_data(
+    collection_data: DataFrame, n_max: int, latitudes: ndarray[float], longitudes: ndarray[float]
+) -> ndarray[float]:  # (2 * (n_max + 1) + 1, 4 * (n_max + 1) + 1) - shaped.
     """"""
     a = array(object=[coeffs.reshape((n_max + 1, n_max + 1)) for coeffs in collection_data.to_numpy().T])
-    return make_grid(harmonics=a)
+    return make_grid(harmonics=a, latitudes=latitudes, longitudes=longitudes)
 
 
 def leakage_correction_iterations_function(
     harmonic_load_signal: ndarray[complex],  # (2, n_max + 1, n_max + 1) - shaped.
     right_hand_side: ndarray[complex],  # (2, n_max + 1, n_max + 1) - shaped.
-    continents_buffered_reprojected: GeoDataFrame,
+    ocean_land_geopandas_buffered_reprojected: GeoDataFrame,
     latitudes: ndarray[float],
     longitudes: ndarray[float],
     ocean_mask: ndarray[float],  # (2 * (n_max + 1), 4 * (n_max + 1)) - shaped.
@@ -41,18 +43,31 @@ def leakage_correction_iterations_function(
     ddk_filter_level: int,
     iterations: int,
 ) -> ndarray[complex]:
+    """"""
 
     # Gets the input in spatial domain.
-    spatial_load_signal: ndarray[complex] = make_grid(harmonics=harmonic_load_signal.real) + 1.0j * make_grid(harmonics=harmonic_load_signal.imag)
+    spatial_load_signal: ndarray[complex] = make_grid(
+        harmonics=harmonic_load_signal.real, latitudes=latitudes, longitudes=longitudes
+    ) + 1.0j * make_grid(harmonics=harmonic_load_signal.imag, latitudes=latitudes, longitudes=longitudes)
 
     # Oceanic true level.
     ocean_true_level: complex = (  # TODO: replace ocean mean by right hand side (i.e. (1 + k' - h') * EWH)
-        # make_grid(harmonics=right_hand_side.real)
-        # + 1.0j * make_grid(harmonics=right_hand_side.imag)
-        geopandas_oceanic_mean(continents=continents_buffered_reprojected, latitudes=latitudes, longitudes=longitudes, grid=spatial_load_signal.real)
+        # make_grid(harmonics=right_hand_side.real, latitudes=latitudes, longitudes=longitudes)
+        # + 1.0j * make_grid(harmonics=right_hand_side.imag,latitudes=latitudes, longitudes=longitudes)
+        geopandas_oceanic_mean(
+            signal_threshold=inf,
+            ocean_land_geopandas_buffered_reprojected=ocean_land_geopandas_buffered_reprojected,
+            latitudes=latitudes,
+            longitudes=longitudes,
+            grid=spatial_load_signal.real,
+        )
         + 1.0j
         * geopandas_oceanic_mean(
-            continents=continents_buffered_reprojected, latitudes=latitudes, longitudes=longitudes, grid=spatial_load_signal.imag
+            signal_threshold=inf,
+            ocean_land_geopandas_buffered_reprojected=ocean_land_geopandas_buffered_reprojected,
+            latitudes=latitudes,
+            longitudes=longitudes,
+            grid=spatial_load_signal.imag,
         )
     )
 
@@ -60,21 +75,31 @@ def leakage_correction_iterations_function(
     for _ in range(iterations):
 
         # Leakage input.
-        EWH_2_prime: ndarray[complex] = map_sampling(map=ocean_true_level * ocean_mask + spatial_load_signal * (1.0 - ocean_mask), n_max=n_max)[0]
+        EWH_2_prime: ndarray[complex] = map_sampling(
+            map=ocean_true_level * ocean_mask + spatial_load_signal * (1.0 - ocean_mask), n_max=n_max, latitudes=latitudes, longitudes=longitudes
+        )[0]
 
         # Computes continental leakage on oceans.
         EWH_2_second: ndarray[complex] = map_from_collection_SH_data(
             collection_data=_pool_apply_DDK_filter(
-                grace_monthly_sh=collection_SH_data_from_map(spatial_load_signal=EWH_2_prime.real, n_max=n_max),
+                grace_monthly_sh=collection_SH_data_from_map(
+                    spatial_load_signal=EWH_2_prime.real, n_max=n_max, latitudes=latitudes, longitudes=longitudes
+                ),
                 ddk_filter_level=ddk_filter_level,
             ),
             n_max=n_max,
+            latitudes=latitudes,
+            longitudes=longitudes,
         ) + 1.0j * map_from_collection_SH_data(
             collection_data=_pool_apply_DDK_filter(
-                grace_monthly_sh=collection_SH_data_from_map(spatial_load_signal=EWH_2_prime.imag, n_max=n_max),
+                grace_monthly_sh=collection_SH_data_from_map(
+                    spatial_load_signal=EWH_2_prime.imag, n_max=n_max, latitudes=latitudes, longitudes=longitudes
+                ),
                 ddk_filter_level=ddk_filter_level,
             ),
             n_max=n_max,
+            latitudes=latitudes,
+            longitudes=longitudes,
         )
 
         # Applies correction.
@@ -83,18 +108,18 @@ def leakage_correction_iterations_function(
 
     # Gets the result back in spherical harmonics domain.
     return (
-        map_sampling(map=spatial_load_signal.real, n_max=n_max, harmonic_domain=True)[0]
-        + 1.0j * map_sampling(map=spatial_load_signal.imag, n_max=n_max, harmonic_domain=True)[0]
+        map_sampling(map=spatial_load_signal.real, n_max=n_max, latitudes=latitudes, longitudes=longitudes, harmonic_domain=True)[0]
+        + 1.0j * map_sampling(map=spatial_load_signal.imag, n_max=n_max, latitudes=latitudes, longitudes=longitudes, harmonic_domain=True)[0]
     )
 
 
-def leakage_correction(  # TODO.
+def leakage_correction(
     frequencial_harmonic_load_signal_initial: ndarray[complex],
     frequencial_scale_factor: ndarray[complex],
     frequencial_harmonic_geoid: ndarray[complex],
     frequencial_harmonic_radial_displacement: ndarray[complex],
-    ocean_mask: ndarray[float],
-    continents_buffered_reprojected: GeoDataFrame,
+    ocean_land_mask: ndarray[float],
+    ocean_land_geopandas_buffered_reprojected: GeoDataFrame,
     latitudes: ndarray[float],
     longitudes: ndarray[float],
     iterations: int,
@@ -115,10 +140,10 @@ def leakage_correction(  # TODO.
         (
             frequencial_harmonic_load_signal_initial[:, :, :, i_frequency],
             frequencial_right_hand_side[:, :, :, i_frequency],
-            continents_buffered_reprojected,
+            ocean_land_geopandas_buffered_reprojected,
             latitudes,
             longitudes,
-            ocean_mask,
+            ocean_land_mask,
             n_max,
             ddk_filter_level,
             iterations,

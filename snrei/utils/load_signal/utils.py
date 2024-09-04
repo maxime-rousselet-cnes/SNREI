@@ -1,12 +1,13 @@
 from typing import Optional
 
 from geopandas import GeoDataFrame
-from numpy import arange, array, ceil, concatenate, flip, linspace, log2, ndarray, round, where, zeros
+from numpy import arange, array, ceil, concatenate, flip, linspace, log2, meshgrid, ndarray, round, where, zeros
 from scipy import interpolate
 from scipy.fft import fft, fftfreq, ifft
+from shapely.geometry import Point
 
-from ...functions import build_ocean_mask, map_normalizing, mean_on_mask, signal_trend, surface_ponderation
-from ..classes import LoadSignalHyperParameters
+from ...functions import EARTH_EQUAL_PROJECTION, LAT_LON_PROJECTION, map_normalizing, mean_on_mask, signal_trend, surface_ponderation
+from ..classes import LoadSignalHyperParameters, load_load_signal_hyper_parameters
 from ..data import extract_GRACE_data, extract_temporal_load_signal, get_continents, get_ocean_mask, map_sampling
 
 
@@ -177,14 +178,15 @@ def build_elastic_load_signal_history(
 
 
 def build_elastic_load_signal_components(
-    load_signal_hyper_parameters: LoadSignalHyperParameters,
+    load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
 ) -> tuple[
     int,
     ndarray[float],  # Temporal component's dates.
     ndarray[float],  # Spatial component in harmonic domain.
     ndarray[float],  # Unnormalized temporal component.
-    ndarray[float],  # Ocean mask.
-    GeoDataFrame,  # Ocean mask.
+    GeoDataFrame,  # Ocean/land geopandas buffered reprojected.
+    ndarray[float],  # Ocean/land mask.
+    ndarray[float],  # Ocean/land buffered mask,
     ndarray[float],  # Latitudes.
     ndarray[float],  # Longitudes.
 ]:
@@ -206,36 +208,48 @@ def build_elastic_load_signal_components(
             name=load_signal_hyper_parameters.load_spatial_behaviour_file,
         )
     else:  # Considered as ocean/land repartition only.
-        map = map_normalizing(
-            map=get_ocean_mask(
-                name=load_signal_hyper_parameters.load_spatial_behaviour_file,
-                n_max=load_signal_hyper_parameters.n_max,
-            )
+        map, latitudes, longitudes = get_ocean_mask(
+            name=load_signal_hyper_parameters.load_spatial_behaviour_file,
+            n_max=load_signal_hyper_parameters.n_max,
         )
-        latitudes = linspace(-90, 90, 2 * (n_max + 1) + 1)
-        longitudes = linspace(0, 360, 4 * (n_max + 1) + 1)
+        map = map_normalizing(map=map)
 
-    map, n_max = map_sampling(
-        map=map,
-        n_max=load_signal_hyper_parameters.n_max,
-    )
+    map, n_max = map_sampling(map=map, n_max=load_signal_hyper_parameters.n_max, latitudes=latitudes, longitudes=longitudes)
+
+    if n_max != load_signal_hyper_parameters.n_max:
+        latitudes = linspace(90, -90, 2 * (n_max + 1) + 1)
+        latitudes = linspace(0, 360, 4 * (n_max + 1) + 1)
 
     # Loads ocean mask.
-    continents = get_continents(name=load_signal_hyper_parameters.continents)
-    ocean_mask = build_ocean_mask(continents=continents, n_max=n_max)
+    continents = get_continents(name=load_signal_hyper_parameters.continents).to_crs(epsg=EARTH_EQUAL_PROJECTION)
+    lon_grid, lat_grid = meshgrid(longitudes, latitudes)
+    gdf = GeoDataFrame(geometry=[Point(xy) for xy in zip(lon_grid.ravel(), lat_grid.ravel())])
+    gdf.set_crs(epsg=LAT_LON_PROJECTION, inplace=True)
+    gdf = gdf.to_crs(epsg=EARTH_EQUAL_PROJECTION)
+    ocean_land_geopandas_buffered_reprojected: GeoDataFrame = continents.buffer(load_signal_hyper_parameters.buffer_distance * 1e3)
+    oceanic_mask = ~gdf.intersects(continents.unary_union)
+    oceanic_mask_buffered = ~gdf.intersects(ocean_land_geopandas_buffered_reprojected.unary_union)
+    ocean_land_mask = oceanic_mask.to_numpy().reshape(lon_grid.shape).astype(int)
+    ocean_land_buffered_mask = oceanic_mask_buffered.to_numpy().reshape(lon_grid.shape).astype(int)
 
     # Loads the continents with opposite value, such that global mean is null.
     if load_signal_hyper_parameters.opposite_load_on_continents:
-        map = map * ocean_mask - (1.0 - ocean_mask) * (
-            mean_on_mask(grid=map, mask=ocean_mask)
-            * sum(surface_ponderation(mask=ocean_mask).flatten())
-            / sum(surface_ponderation(mask=(1.0 - ocean_mask)).flatten())
+        map = map * ocean_land_mask - (1 - ocean_land_mask) * (
+            mean_on_mask(grid=map, mask=ocean_land_mask, latitudes=latitudes, longitudes=longitudes)
+            * sum(surface_ponderation(mask=ocean_land_mask, latitudes=latitudes).flatten())
+            / sum(surface_ponderation(mask=(1 - ocean_land_mask), latitudes=latitudes).flatten())
         )
 
-    # Sets high signal areas (such has earthquakes) out of the considered ocean mask.
-    if load_signal_hyper_parameters.erode_high_signal_zones:
-        ocean_mask = ocean_mask * (abs(map) < load_signal_hyper_parameters.continental_leakage_signal_threshold)
-
     # Harmonic component.
-    harmonic_component, n_max = map_sampling(map=map, n_max=n_max, harmonic_domain=True)
-    return n_max, dates, harmonic_component, temporal_component, ocean_mask, continents, latitudes[:-1], longitudes[:-1]
+    harmonic_component, _ = map_sampling(map=map, n_max=n_max, latitudes=latitudes, longitudes=longitudes, harmonic_domain=True)
+    return (
+        n_max,
+        dates,
+        harmonic_component,
+        temporal_component,
+        ocean_land_geopandas_buffered_reprojected,
+        ocean_land_mask,
+        ocean_land_buffered_mask,
+        latitudes,
+        longitudes,
+    )

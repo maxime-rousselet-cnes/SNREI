@@ -5,7 +5,7 @@ from time import time
 from geopandas import GeoDataFrame
 from numpy import array, ndarray, tensordot
 
-from ...functions import generate_continents_buffered_reprojected_grid, geopandas_oceanic_mean
+from ...functions import geopandas_oceanic_mean
 from ...utils import (
     ELASTIC_RUN_HYPER_PARAMETERS,
     SECONDS_PER_YEAR,
@@ -106,9 +106,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
         str,  # ID.
         tuple[
             LoadSignalHyperParameters,
-            ndarray,  # Ocean mask.
-            GeoDataFrame,  # Continents.
-            GeoDataFrame,  # Continents buffered reprojected.
+            GeoDataFrame,  # Ocean/land geopandas buffered reprojected.
+            ndarray,  # Ocean/land mask.
+            ndarray,  # Ocean/land buffered mask,
             ndarray,  # Spatial_component.
             ndarray,  # Initial signal dates.
             ndarray,  # Signal frequencies.
@@ -128,8 +128,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             initial_signal_dates,  # Temporal component's dates.
             harmonic_elastic_load_signal_spatial_component,
             initial_load_signal,
-            ocean_mask,
-            continents,
+            ocean_land_geopandas_buffered_reprojected,
+            ocean_land_mask,
+            ocean_land_buffered_mask,
             latitudes,
             longitudes,
         ) = build_elastic_load_signal_components(load_signal_hyper_parameters=load_signal_hyper_parameters)
@@ -140,24 +141,6 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             load_signal_hyper_parameters=load_signal_hyper_parameters,
         )
 
-        # Buffer to coast.
-        continents_buffered_reprojected = generate_continents_buffered_reprojected_grid(
-            EWH=ocean_mask,
-            latitudes=latitudes,
-            longitudes=longitudes,
-            n_max=load_signal_hyper_parameters.n_max,
-            continents=continents,
-            buffer_distance=load_signal_hyper_parameters.buffer_distance,
-        )
-
-        continents_reprojected = generate_continents_buffered_reprojected_grid(
-            EWH=ocean_mask,
-            latitudes=latitudes,
-            longitudes=longitudes,
-            n_max=load_signal_hyper_parameters.n_max,
-            continents=continents,
-            buffer_distance=0.0,
-        )
         # Saves dates, frequencies, and load signal trends.
         elastic_load_signal_trends_id = generate_new_id(path=elastic_load_signal_trends_path)
         save_base_model(obj=signal_dates, name=elastic_load_signal_trends_id, path=dates_path)
@@ -175,9 +158,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
         # Updates.
         elastic_load_signal_datas[elastic_load_signal_trends_id] = (
             load_signal_hyper_parameters,
-            ocean_mask,
-            continents_reprojected,
-            continents_buffered_reprojected,
+            ocean_land_geopandas_buffered_reprojected,
+            ocean_land_mask,
+            ocean_land_buffered_mask,
             harmonic_elastic_load_signal_spatial_component,
             initial_signal_dates,
             signal_frequencies,
@@ -273,9 +256,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             # III - Loops on elastic load signals to compute anelastic load signals.
             for elastic_load_signal_trends_id, (
                 load_signal_hyper_parameters,
-                ocean_mask,
-                continents_reprojected,
-                continents_buffered_reprojected,
+                ocean_land_geopandas_buffered_reprojected,
+                ocean_land_mask,
+                ocean_land_buffered_mask,
                 harmonic_elastic_load_signal_spatial_component,
                 initial_signal_dates,
                 signal_frequencies,
@@ -371,7 +354,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     ) = degree_one_inversion(
                         anelastic_frequencial_harmonic_load_signal=frequencial_harmonic_load_signal_step_1,
                         Love_numbers=anelastic_Love_numbers,
-                        buffer_distance=load_signal_hyper_parameters.buffer_distance,
+                        ocean_land_buffered_mask=ocean_land_buffered_mask,
+                        latitudes=latitudes,
+                        longitudes=longitudes,
                     )
 
                     print("Degree one inversion:", time() - t_2)
@@ -386,8 +371,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             frequencial_scale_factor=frequencial_scale_factor,
                             frequencial_harmonic_geoid=frequencial_harmonic_geoid,
                             frequencial_harmonic_radial_displacement=frequencial_harmonic_radial_displacement,
-                            ocean_çmask=ocean_mask,
-                            continents_buffered_reprojected=continents_reprojected,
+                            ocean_land_mask=ocean_land_mask,
+                            ocean_land_geopandas_buffered_reprojected=ocean_land_geopandas_buffered_reprojected,
                             latitudes=latitudes,
                             longitudes=longitudes,
                             buffer_distance=load_signal_hyper_parameters.buffer_distance,
@@ -401,7 +386,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
 
                     # Normalizes so that the data previous to 2003 matches source datas.
                     past_trend = geopandas_oceanic_mean(
-                        continents=continents_buffered_reprojected,
+                        signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                        ocean_land_geopandas_buffered_reprojected=ocean_land_geopandas_buffered_reprojected,
                         latitudes=latitudes,
                         longitudes=longitudes,
                         harmonics=compute_harmonic_signal_trends(
@@ -425,7 +411,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     frequencial_harmonic_signal=frequencial_harmonic_load_signal_step_1,
                 )
                 ocean_mean_step_1 = geopandas_oceanic_mean(
-                    continents=continents_buffered_reprojected,
+                    signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                    ocean_land_geopandas_buffered_reprojected=ocean_land_geopandas_buffered_reprojected,
                     latitudes=latitudes,
                     longitudes=longitudes,
                     harmonics=harmonic_load_signal_step_1_trends,
@@ -438,7 +425,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     frequencial_harmonic_signal=frequencial_harmonic_load_signal_step_2,
                 )
                 ocean_mean_step_2 = geopandas_oceanic_mean(
-                    continents=continents_buffered_reprojected,
+                    signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                    ocean_land_geopandas_buffered_reprojected=ocean_land_geopandas_buffered_reprojected,
                     latitudes=latitudes,
                     longitudes=longitudes,
                     harmonics=harmonic_load_signal_step_2_trends,
@@ -454,7 +442,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 )
 
                 ocean_mean_step_3 = geopandas_oceanic_mean(
-                    continents=continents_buffered_reprojected,
+                    signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                    ocean_land_geopandas_buffered_reprojected=ocean_land_geopandas_buffered_reprojected,
                     latitudes=latitudes,
                     longitudes=longitudes,
                     harmonics=harmonic_load_signal_step_3_trends,
@@ -476,7 +465,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     frequencial_harmonic_signal=frequencial_harmonic_geoid,
                 )
                 ocean_mean_geoid_component = geopandas_oceanic_mean(
-                    continents=continents_buffered_reprojected,
+                    signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                    ocean_land_geopandas_buffered_reprojected=ocean_land_geopandas_buffered_reprojected,
                     latitudes=latitudes,
                     longitudes=longitudes,
                     harmonics=harmonic_geoid_trends,
@@ -489,7 +479,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     frequencial_harmonic_signal=frequencial_harmonic_radial_displacement,
                 )
                 ocean_mean_radial_displacement_component = geopandas_oceanic_mean(
-                    continents=continents_buffered_reprojected,
+                    signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                    ocean_land_geopandas_buffered_reprojected=ocean_land_geopandas_buffered_reprojected,
                     latitudes=latitudes,
                     longitudes=longitudes,
                     harmonics=harmonic_radial_displacement_trends,
@@ -500,16 +491,19 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     harmonic_load_signal_step_2_trends  # L
                     + scale_factor_component
                     * map_sampling(
-                        map=ocean_mask,
+                        map=ocean_land_buffered_mask,
                         n_max=load_signal_hyper_parameters.n_max,
                         harmonic_domain=True,
+                        latitudes=latitudes,
+                        longitudes=longitudes,
                     )[
                         0
                     ]  # + D
                     - (harmonic_geoid_trends - harmonic_radial_displacement_trends)  # - (G - R)
                 )
                 ocean_mean_residuals = geopandas_oceanic_mean(
-                    continents=continents_buffered_reprojected,
+                    signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                    ocean_land_geopandas_buffered_reprojected=ocean_land_geopandas_buffered_reprojected,
                     latitudes=latitudes,
                     longitudes=longitudes,
                     harmonics=harmonic_residual_trends,
@@ -555,6 +549,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             trends_array=harmonic_load_signal_step_1_trends,
                             id=harmonic_load_signal_id,
                             path=save_base_path.joinpath("step_1"),
+                            latitudes=latitudes,
+                            longitudes=longitudes,
                         )
                     # Anelastic load signal after degree one inversion.
                     if load_signal_hyper_parameters.save_parameters[kind].step_2:
@@ -562,6 +558,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             trends_array=harmonic_load_signal_step_2_trends,
                             id=harmonic_load_signal_id,
                             path=save_base_path.joinpath("step_2"),
+                            latitudes=latitudes,
+                            longitudes=longitudes,
                         )
                     # Anelastic load signal after leakage correction.
                     if load_signal_hyper_parameters.save_parameters[kind].step_3:
@@ -569,6 +567,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             trends_array=harmonic_load_signal_step_3_trends,
                             id=harmonic_load_signal_id,
                             path=save_base_path.joinpath("step_3"),
+                            latitudes=latitudes,
+                            longitudes=longitudes,
                         )
                     # Degree one inversion components.
                     if load_signal_hyper_parameters.save_parameters[kind].inversion_components:
@@ -576,16 +576,22 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             trends_array=harmonic_geoid_trends,
                             id=harmonic_load_signal_id,
                             path=save_base_path.joinpath("geoid"),
+                            latitudes=latitudes,
+                            longitudes=longitudes,
                         )
                         save_function(
                             trends_array=harmonic_radial_displacement_trends,
                             id=harmonic_load_signal_id,
                             path=save_base_path.joinpath("radial_displacement"),
+                            latitudes=latitudes,
+                            longitudes=longitudes,
                         )
                         save_function(
                             trends_array=harmonic_residual_trends,
                             id=harmonic_load_signal_id,
                             path=save_base_path.joinpath("residual"),
+                            latitudes=latitudes,
+                            longitudes=longitudes,
                         )
 
                 print("Computing anelastic induced signal:", time() - t_0)

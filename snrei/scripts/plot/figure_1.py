@@ -26,7 +26,7 @@ def generate_figure_1(name: str = "TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER
         filename=load_signal_hyper_parameters.load_history,
     )
 
-    map = extract_GRACE_data(name=name)[0]
+    map, latitudes, longitudes = extract_GRACE_data(name=name)
 
     # Creates subplots.
     fig = figure(figsize=(8.0, 8.0))
@@ -43,7 +43,7 @@ def generate_figure_1(name: str = "TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER
     )
 
     # Panel B.
-    contour = natural_projection(ax=ax2, saturation_threshold=50.0, map=map)
+    contour = natural_projection(ax=ax2, saturation_threshold=50.0, map=map, latitudes=latitudes, longitudes=longitudes)
 
     # Add "A" and "B" labels in the top-left corners of each subplot inside boxes.
     for ax, panel in zip([ax1, ax2], ["A", "B"]):

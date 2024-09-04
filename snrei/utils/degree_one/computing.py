@@ -38,7 +38,9 @@ def frequencial_harmonic_component(
 def degree_one_inversion(
     anelastic_frequencial_harmonic_load_signal: ndarray[complex],
     Love_numbers: Result,
-    ocean_mask: ndarray[float],
+    ocean_land_buffered_mask: ndarray[float],
+    latitudes: ndarray[float],
+    longitudes: ndarray[float],
 ) -> tuple[ndarray[complex], ndarray[complex], ndarray[complex], ndarray[complex]]:
 
     n_frequencies = anelastic_frequencial_harmonic_load_signal.shape[-1]
@@ -48,7 +50,7 @@ def degree_one_inversion(
     )
     scale_factor = zeros(shape=(n_frequencies), dtype=complex)
     ocean_mask_indices = ocean_mask.flatten().astype(dtype=bool)
-    least_square_weights = sqrt(surface_ponderation(mask=ocean_mask).flatten()[ocean_mask_indices])
+    least_square_weights = sqrt(surface_ponderation(mask=ocean_mask, latitudes=latitudes).flatten()[ocean_mask_indices])
 
     frequencial_harmonic_geoid = frequencial_harmonic_component(
         anelastic_frequencial_harmonic_load_signal=anelastic_frequencial_harmonic_load_signal,
@@ -64,9 +66,15 @@ def degree_one_inversion(
     )
     right_hand_side_terms = frequencial_harmonic_geoid - frequencial_harmonic_radial_displacement - anelastic_frequencial_harmonic_load_signal
 
-    P_1_0: ndarray = make_grid(harmonics=array(object=[[[0.0, 0.0], [1.0, 0.0]], [[0.0, 0.0], [0.0, 0.0]]]))
-    P_1_1_C: ndarray = make_grid(harmonics=array(object=[[[0.0, 0.0], [0.0, 1.0]], [[0.0, 0.0], [0.0, 0.0]]]))
-    P_1_1_S: ndarray = make_grid(harmonics=array(object=[[[0.0, 0.0], [0.0, 0.0]], [[0.0, 0.0], [0.0, 1.0]]]))
+    P_1_0: ndarray = make_grid(
+        harmonics=array(object=[[[0.0, 0.0], [1.0, 0.0]], [[0.0, 0.0], [0.0, 0.0]]]), latitudes=latitudes, longitudes=longitudes
+    )
+    P_1_1_C: ndarray = make_grid(
+        harmonics=array(object=[[[0.0, 0.0], [0.0, 1.0]], [[0.0, 0.0], [0.0, 0.0]]]), latitudes=latitudes, longitudes=longitudes
+    )
+    P_1_1_S: ndarray = make_grid(
+        harmonics=array(object=[[[0.0, 0.0], [0.0, 0.0]], [[0.0, 0.0], [0.0, 1.0]]]), latitudes=latitudes, longitudes=longitudes
+    )
 
     degree_one_potential_Love_numbers = Love_numbers.values[Direction.potential][BoundaryCondition.load][0]
     degree_one_radial_Love_numbers = Love_numbers.values[Direction.radial][BoundaryCondition.load][0]
@@ -97,6 +105,8 @@ def degree_one_inversion(
             constant_column,
             least_square_weights,
             ocean_mask_indices,
+            latitudes,
+            longitudes,
         )
         for frequencial_index, (
             degree_one_Love_number_term,
@@ -150,6 +160,8 @@ def solve_degree_one_inversion(
     constant_column: ndarray[complex],
     least_square_weights: ndarray[float],
     ocean_mask_indices: ndarray[float],
+    latitudes: ndarray[float],
+    longitudes: ndarray[float],
 ):
     # Left-Hand Side.
     left_hand_side = concatenate(
@@ -158,7 +170,9 @@ def solve_degree_one_inversion(
 
     # Right-Hand Side.
     harmonic_right_hand_side[:, :2, :] = 0.0
-    spatial_right_hand_side: ndarray = make_grid(harmonics=harmonic_right_hand_side.real) + 1.0j * make_grid(harmonics=harmonic_right_hand_side.imag)
+    spatial_right_hand_side: ndarray = make_grid(
+        harmonics=harmonic_right_hand_side.real, latitudes=latitudes, longitudes=longitudes
+    ) + 1.0j * make_grid(harmonics=harmonic_right_hand_side.imag, latitudes=latitudes, longitudes=longitudes)
     right_hand_side = spatial_right_hand_side.flatten()[ocean_mask_indices]
 
     # Inversion.

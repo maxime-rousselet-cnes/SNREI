@@ -1,22 +1,22 @@
 from typing import Callable, Optional
 
-from cv2 import dilate, erode
-from geopandas import GeoDataFrame, clip, sjoin
+LAT_LON_PROJECTION = 4326
+EARTH_EQUAL_PROJECTION = 3857
+from geopandas import GeoDataFrame
 from numpy import (
     abs,
-    arange,
+    argmin,
     argsort,
     array,
     concatenate,
     cos,
     expand_dims,
     inf,
-    linspace,
     max,
+    meshgrid,
     ndarray,
     newaxis,
     ones,
-    pi,
     prod,
     round,
     setdiff1d,
@@ -28,12 +28,9 @@ from numpy.linalg import pinv
 from pandas import DataFrame
 from pyshtools import SHCoeffs
 from scipy import interpolate
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Point
 
-LAT_LON_PROJECTION = 4326
-EARTH_EQUAL_PROJECTION = 3857
 MASK_DECIMALS = 5
-KERNEL = ones(shape=(3, 3))
 
 
 def precise_curvature(
@@ -174,17 +171,17 @@ def map_normalizing(
     return map / (max_map - sum_map / n_t) + sum_map / (sum_map - max_map * n_t)
 
 
-def surface_ponderation(
-    mask: ndarray[float],
-) -> ndarray[float]:
+def surface_ponderation(mask: ndarray[float], latitudes: ndarray[float]) -> ndarray[float]:
     """
     Gets the surface of a (latitude * longitude) array.
     """
-    return mask * expand_dims(a=cos(linspace(start=-pi / 2, stop=pi / 2, num=len(mask))), axis=1)
+    return mask * expand_dims(a=cos(latitudes), axis=1)
 
 
 def mean_on_mask(
     mask: ndarray[float],
+    latitudes: ndarray[float],
+    longitudes: ndarray[float],
     harmonics: Optional[ndarray[float]] = None,
     grid: Optional[ndarray[float]] = None,
 ) -> float:
@@ -192,29 +189,29 @@ def mean_on_mask(
     Computes mean value over a given surface. Uses a given mask.
     """
     if grid is None:
-        grid: ndarray[float] = make_grid(harmonics=harmonics)
-    surface = surface_ponderation(mask=mask)
+        grid: ndarray[float] = make_grid(harmonics=harmonics, latitudes=latitudes, longitudes=longitudes)
+    surface = surface_ponderation(mask=mask, latitudes=latitudes)
     weighted_values = grid * surface
     return round(a=sum(weighted_values.flatten()) / sum(surface.flatten()), decimals=MASK_DECIMALS)
 
 
-def make_grid(harmonics: ndarray[float]) -> ndarray[float]:
+def make_grid(harmonics: ndarray[float], latitudes: ndarray[float], longitudes: ndarray[float]) -> ndarray[float]:
     """ """
-    return SHCoeffs.from_array(harmonics).expand(extend=False).to_array()
+    lat, lon = meshgrid(latitudes, longitudes)
+    return SHCoeffs.from_array(harmonics).expand(lat=lat, lon=lon, extend=True).T
 
 
-def build_ocean_mask(continents: GeoDataFrame, n_max: int) -> ndarray[float]:
-    """"""
-    lat = list(90 - arange(2 * (n_max + 1)))
-    lon = list(180 - arange(4 * (n_max + 1)))
-    ocean_mask = ones(shape=(len(lat), len(lon)))
-    for centroid in continents.geometry.centroid:
-        ocean_mask[lat.index(round(centroid.y)), (180 - lon.index(round(centroid.x)) % 360)] = 0.0
-    return dilate(erode(ocean_mask, kernel=KERNEL), kernel=KERNEL)
+def closest_index(array: ndarray, value: float) -> int:
+    """Returns the index of the closest element in array to value."""
+    return argmin(abs(array - value))
+
+
+from matplotlib.pyplot import imshow, show
 
 
 def geopandas_oceanic_mean(
-    continents: GeoDataFrame,
+    signal_threshold: float,
+    ocean_land_geopandas_buffered_reprojected: GeoDataFrame,
     latitudes: ndarray[float],
     longitudes: ndarray[float],
     harmonics: Optional[ndarray[float]] = None,
@@ -222,80 +219,14 @@ def geopandas_oceanic_mean(
 ) -> float:
     """"""
     if grid is None:
-        grid: ndarray[float] = make_grid(harmonics=harmonics)
-        n_max = harmonics.shape[1] - 1
-    else:
-        n_max = len(grid) // 2 - 1
-    grid_gdf = generate_grid(EWH=grid, latitudes=latitudes, longitudes=longitudes, n_max=n_max)
-    # Performs a spatial join to identify points on land or near land.
-    land_gdf = sjoin(grid_gdf, continents[continents["EWH"] == 1.0], predicate="intersects")
-
-    # Identifies oceanic points by selecting points not in land_gdf.
-    oceanic_gdf = grid_gdf.loc[~grid_gdf.index.isin(land_gdf.index)]
-
-    # Computes the mean EWH value over the oceanic points.
+        grid: ndarray[float] = make_grid(harmonics=harmonics, latitudes=latitudes, longitudes=longitudes)
+    lon_grid, lat_grid = meshgrid(longitudes, latitudes)
+    data = DataFrame({"longitude": lon_grid.ravel(), "latitude": lat_grid.ravel(), "EWH": grid.ravel()})
+    geometry = [Point(xy) for xy in zip(data["longitude"], data["latitude"])]
+    gdf = GeoDataFrame(data, geometry=geometry)
+    gdf.plot("EWH")
+    show()
+    gdf.set_crs(epsg=LAT_LON_PROJECTION, inplace=True)
+    gdf = gdf.to_crs(EARTH_EQUAL_PROJECTION)
+    oceanic_gdf = gdf[~gdf.intersects(ocean_land_geopandas_buffered_reprojected.unary_union)].loc[abs(gdf["EWH"]) > signal_threshold]
     return oceanic_gdf["EWH"].mean()
-
-
-def generate_grid(
-    EWH: ndarray[float],
-    latitudes: ndarray[float],
-    longitudes: ndarray[float],
-    n_max: int,
-):
-    """"""
-    # Adjust longitude in EWH to shift from 0-360 to -180 to 180
-    longitudes = [(lon - 360 if lon > 180 else lon) for lon in longitudes]
-
-    # Converts EWH to a DataFrame with adjusted longitude.
-    ewh_df = DataFrame(EWH, columns=longitudes, index=latitudes)
-    ewh_df = ewh_df.stack().reset_index()
-    ewh_df.columns = ["latitude", "longitude", "EWH"]
-
-    # Converts to GeoDataFrame.
-    ewh_df["geometry"] = ewh_df.apply(lambda row: Point(row["longitude"], row["latitude"]), axis=1)
-    ewh_gdf = GeoDataFrame(ewh_df, geometry="geometry")
-    ewh_gdf.crs = LAT_LON_PROJECTION
-
-    # Step 2: Create a grid of polygons.
-    polygons = []
-    values = []
-    lon_len = 4 * (n_max + 1)
-
-    for i_line in range(1, 2 * n_max + 1):
-        for i_column in range(lon_len - 1):
-            # Gets the current points.
-            p1 = ewh_gdf.iloc[(lon_len * i_line) + ((2 * n_max + 2 + i_column) % lon_len)].geometry
-            p2 = ewh_gdf.iloc[(lon_len * (i_line + 1)) + ((2 * n_max + 2 + i_column) % lon_len)].geometry
-            p3 = ewh_gdf.iloc[(lon_len * (i_line + 1)) + ((2 * n_max + 2 + i_column + 1) % lon_len)].geometry
-            p4 = ewh_gdf.iloc[(lon_len * i_line) + ((2 * n_max + 2 + i_column + 1) % lon_len)].geometry
-
-            # Creates a polygon using the four points.
-            polygon = Polygon([p1, p2, p3, p4])
-            polygons.append(polygon)
-            values.append(ewh_gdf.iloc[lon_len * i_line + (2 * n_max + 3 + i_column) % lon_len]["EWH"])
-
-    # Step 3: Creates a new GeoDataFrame with the polygons.
-    return GeoDataFrame({"EWH": values}, geometry=polygons, crs=ewh_gdf.crs)
-
-
-def generate_continents_buffered_reprojected_grid(
-    EWH: ndarray[float],
-    latitudes: ndarray[float],
-    longitudes: ndarray[float],
-    n_max: int,
-    continents: GeoDataFrame,
-    buffer_distance: float,
-):
-    """ """
-    grid = generate_grid(EWH=EWH, latitudes=latitudes, longitudes=longitudes, n_max=n_max)
-
-    # Projects to an earth equal projection CRS to bufferize.
-    continents_projected = continents.to_crs(crs=EARTH_EQUAL_PROJECTION)
-    grid_projected = grid.to_crs(EARTH_EQUAL_PROJECTION)
-    continents_buffered: GeoDataFrame = continents_projected.copy()
-    continents_buffered["geometry"] = continents_buffered.buffer(buffer_distance * 1e3)  # (km) -> (m).
-    continents_clipped = clip(grid_projected, continents_buffered)
-
-    # Gets base projection.
-    return continents_clipped.to_crs(crs=LAT_LON_PROJECTION)

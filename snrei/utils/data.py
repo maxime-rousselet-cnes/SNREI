@@ -4,9 +4,8 @@ from pathlib import Path
 from typing import Optional
 
 import netCDF4
-from cv2 import erode
 from geopandas import GeoDataFrame, read_file
-from numpy import argsort, array, flip, meshgrid, ndarray, ones, round, unique, zeros
+from numpy import argsort, array, flip, meshgrid, ndarray, unique, zeros
 from pandas import read_csv
 from pyshtools import SHGrid
 
@@ -19,11 +18,10 @@ from .classes import (
     Love_numbers_path,
     LoveNumbersHyperParameters,
     Result,
-    computed_masks_path,
     masks_data_path,
     tables_path,
 )
-from .database import load_base_model, save_base_model, save_complex_array_to_binary
+from .database import save_base_model, save_complex_array_to_binary
 
 COLUMNS = ["lower", "mean", "upper"]
 
@@ -102,8 +100,7 @@ def erase_island(
 def extract_mask_nc(
     path: Path = masks_data_path,
     name: str = "IMERG_land_sea_mask.nc",
-    pixels_to_coast: int = 10,
-) -> ndarray:
+) -> tuple[ndarray[float], ndarray[float], ndarray[float]]:
     """
     Opens NASA's nc file for land/sea mask and formats its data.
     """
@@ -111,12 +108,13 @@ def extract_mask_nc(
     # Gets raw data.
     ds = netCDF4.Dataset(path.joinpath(name))
     map: ndarray[float] = flip(m=ds.variables["landseamask"], axis=0).data
+    latitudes = flip(m=[latitude for latitude in ds.variables["lat"]])
+    longitudes = array(object=[longitude for longitude in ds.variables["lon"]])
     lat, lon = meshgrid(
-        flip(m=[latitude for latitude in ds.variables["lat"]]),
-        array(object=[longitude for longitude in ds.variables["lon"]]),
+        latitudes,
+        longitudes,
         indexing="ij",
     )
-
     map /= max(map.flatten())  # Normalizes (land = 0, ocean = 1).
 
     # Rejects big lakes and icy islands from ocean label.
@@ -131,25 +129,27 @@ def extract_mask_nc(
             max_longitude=rectangle.max_longitude,
         )
 
-    # Erodes continents (~100km per pixel).
-    kernel = ones(shape=(3, 3))
-    map = erode(map, kernel, iterations=pixels_to_coast)
-
-    return map
+    return map[:, 1:-1], latitudes, longitudes
 
 
 def extract_mask_csv(
     path: Path = masks_data_path,
     name: str = "ocean_mask_buffer_coast_300km_eq_removed_0_360.csv",
-) -> ndarray:
+) -> tuple[ndarray[float], ndarray[float], ndarray[float]]:
     """
     Opens and formats ocean mask CSV datafile.
     """
     # Gets raw data.
     df = read_csv(filepath_or_buffer=path.joinpath(name), sep=",")
-    return flip(
-        m=[[value for value in df["mask"][df["lat"] == lat]] for lat in unique(ar=df["lat"])],
-        axis=0,
+    latitudes = unique(ar=df["lat"])
+    longitudes = unique(ar=df["lon"])
+    return (
+        flip(
+            m=[[value for value in df["mask"][df["lat"] == lat]] for lat in latitudes],
+            axis=0,
+        ),
+        latitudes,
+        longitudes,
     )
 
 
@@ -160,10 +160,12 @@ def redefine_n_max(n_max: int, map: Optional[ndarray] = None, harmonics: Optiona
     if map is None:
         return min(n_max, len(harmonics[0]) - 1)
     else:
-        return min(n_max, len(map) // 2 - 1)
+        return min(n_max, (len(map) - 1) // 2 - 1)
 
 
-def map_sampling(map: ndarray[float], n_max: int, harmonic_domain: bool = False) -> tuple[ndarray[float], int]:
+def map_sampling(
+    map: ndarray[float], n_max: int, latitudes: ndarray[float], longitudes: ndarray[float], harmonic_domain: bool = False
+) -> tuple[ndarray[float], int]:
     """
     Redefined a (latitude, longitude) map definition. Eventually returns it in harmonic domain.
     Returns maximal degree as second output.
@@ -171,34 +173,34 @@ def map_sampling(map: ndarray[float], n_max: int, harmonic_domain: bool = False)
     n_max = redefine_n_max(n_max=n_max, map=map)
     harmonics = SHGrid.from_array(array=map).expand(lmax_calc=n_max).coeffs
     return (
-        (harmonics if harmonic_domain else make_grid(harmonics=harmonics)),
+        (harmonics if harmonic_domain else make_grid(harmonics=harmonics, latitudes=latitudes, longitudes=longitudes)),
         n_max,
     )
 
 
-def get_ocean_mask(name: Optional[str], n_max: int, pixels_to_coast: int = 10) -> ndarray[float] | float:
+def get_ocean_mask(
+    name: Optional[str],
+    n_max: int,
+) -> tuple[ndarray[float] | float, ndarray[float], ndarray[float]]:
     """
     Gets the wanted ocean mask and adjusts it.
     """
     if name == None:
         return 1.0
     elif name.split(".")[-1] == "csv":
-        ocean_mask = extract_mask_csv(name=name)
+        ocean_mask, latitudes, longitudes = extract_mask_csv(name=name)
     elif name.split(".")[-1] == "nc":
-        ocean_mask = extract_mask_nc(name=name, pixels_to_coast=pixels_to_coast)[:, 1:-1]
-        return round(
-            a=map_sampling(
-                map=ocean_mask,
-                n_max=n_max,
-            )[0]
-        )
-    else:
-        return array(object=load_base_model(name=name, path=computed_masks_path), dtype=float)
+        ocean_mask, latitudes, longitudes = extract_mask_nc(name=name)
+    return map_sampling(map=ocean_mask, n_max=n_max, latitudes=latitudes, longitudes=longitudes)[0], latitudes, longitudes
 
 
-def extract_GRACE_data(name: str, path: Path = GRACE_data_path) -> tuple[ndarray, ndarray, ndarray]:
+def extract_GRACE_data(name: str, path: Path = GRACE_data_path) -> tuple[
+    ndarray[float],  # Length 2 * (n_max + 1) + 1.
+    ndarray[float],  # Length 4 * (n_max + 1) + 1.
+    ndarray[float],  # Shape (2 * (n_max + 1) + 1, 4 * (n_max + 1) + 1).
+]:
     """
-    Opens and formats GRACE (.xyz) datafile.
+    Opens and formats GRACE (.xyz) or (.csv) datafile.
     """
     if "xyz" in name or "csv" in name:
         # Gets raw data.
@@ -354,11 +356,7 @@ def load_Love_numbers_result(
     return Love_numbers
 
 
-def save_harmonics(
-    trends_array: ndarray[float],
-    id: str,
-    path: Path,
-) -> None:
+def save_harmonics(trends_array: ndarray[float], id: str, path: Path, _, __) -> None:
     """
     Saves load signal harmonic trends.
     """
@@ -373,11 +371,13 @@ def save_base_format(
     trends_array: ndarray[float],
     id: str,
     path: Path,
+    latitudes: ndarray[float],
+    longitudes: ndarray[float],
 ) -> None:
     """
     Saves load signal trends in base json format.
     """
-    grid: ndarray[float] = make_grid(harmonics=trends_array.real)
+    grid: ndarray[float] = make_grid(harmonics=trends_array.real, latitudes=latitudes, longitudes=longitudes)
     save_base_model(
         obj=grid.tolist(),
         name=id,
@@ -387,6 +387,6 @@ def save_base_format(
 
 def get_continents(name: str) -> GeoDataFrame:
     """"""
-    continents: GeoDataFrame = read_file("zip://" + str(masks_data_path.joinpath(name)))
+    continents: GeoDataFrame = read_file(str(masks_data_path.joinpath(name)))
     continents.crs = LAT_LON_PROJECTION
     return continents

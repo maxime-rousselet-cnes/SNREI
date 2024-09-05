@@ -184,7 +184,6 @@ def build_elastic_load_signal_components(
     ndarray[float],  # Temporal component's dates.
     ndarray[float],  # Spatial component in harmonic domain.
     ndarray[float],  # Unnormalized temporal component.
-    GeoDataFrame,  # Ocean/land geopandas buffered reprojected.
     ndarray[float],  # Ocean/land mask.
     ndarray[float],  # Ocean/land buffered mask,
     ndarray[float],  # Latitudes.
@@ -223,7 +222,7 @@ def build_elastic_load_signal_components(
     # Loads ocean mask.
     ocean_land_geopandas = get_continents(name=load_signal_hyper_parameters.continents).to_crs(epsg=EARTH_EQUAL_PROJECTION)
     lon_grid, lat_grid = meshgrid(longitudes, latitudes)
-    gdf = GeoDataFrame(geometry=[Point(xy) for xy in zip(lon_grid.ravel(), lat_grid.ravel())])
+    gdf = GeoDataFrame(geometry=[Point(x, y) for x, y in zip(lon_grid.ravel(), lat_grid.ravel())])
     gdf.set_crs(epsg=LAT_LON_PROJECTION, inplace=True)
     gdf = gdf.to_crs(epsg=EARTH_EQUAL_PROJECTION)
     ocean_land_geopandas_buffered_reprojected: GeoDataFrame = ocean_land_geopandas.buffer(load_signal_hyper_parameters.buffer_distance * 1e3)
@@ -247,7 +246,6 @@ def build_elastic_load_signal_components(
         dates,
         harmonic_component,
         temporal_component,
-        ocean_land_geopandas_buffered_reprojected,
         ocean_land_mask,
         ocean_land_buffered_mask,
         latitudes,

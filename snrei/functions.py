@@ -180,6 +180,7 @@ def surface_ponderation(mask: ndarray[float], latitudes: ndarray[float]) -> ndar
 
 
 def mean_on_mask(
+    signal_threshold: float,
     mask: ndarray[float],
     latitudes: ndarray[float],
     longitudes: ndarray[float],
@@ -191,6 +192,7 @@ def mean_on_mask(
     """
     if grid is None:
         grid: ndarray[float] = make_grid(harmonics=harmonics, latitudes=latitudes, longitudes=longitudes)
+    mask = mask * (abs(grid) < signal_threshold)
     surface = surface_ponderation(mask=mask, latitudes=latitudes)
     weighted_values = grid * surface
     return round(a=sum(weighted_values.flatten()) / sum(surface.flatten()), decimals=MASK_DECIMALS)
@@ -205,32 +207,3 @@ def make_grid(harmonics: ndarray[float], latitudes: ndarray[float], longitudes: 
 def closest_index(array: ndarray, value: float) -> int:
     """Returns the index of the closest element in array to value."""
     return argmin(abs(array - value))
-
-
-def geopandas_oceanic_mean(
-    signal_threshold: float,
-    ocean_land_geopandas_buffered_reprojected: GeoDataFrame,
-    latitudes: ndarray[float],
-    longitudes: ndarray[float],
-    harmonics: Optional[ndarray[float]] = None,
-    grid: Optional[ndarray[float]] = None,
-) -> float:
-    """"""
-    if grid is None:
-        grid: ndarray[float] = make_grid(harmonics=harmonics, latitudes=latitudes, longitudes=longitudes)
-    lon_grid, lat_grid = meshgrid(longitudes, latitudes)
-    data = DataFrame({"longitude": lon_grid.ravel(), "latitude": lat_grid.ravel(), "EWH": grid.ravel()})
-    geometry = [Point(x, y) for x, y in zip(data["longitude"], data["latitude"])]
-    gdf = GeoDataFrame(data, geometry=geometry)
-    gdf.set_crs(epsg=LAT_LON_PROJECTION, inplace=True)
-    gdf: GeoDataFrame = gdf.to_crs(EARTH_EQUAL_PROJECTION)
-    oceanic_gdf: GeoDataFrame = gdf[~gdf.intersects(ocean_land_geopandas_buffered_reprojected.unary_union)]
-    oceanic_gdf = oceanic_gdf[abs(oceanic_gdf["EWH"]) < signal_threshold]
-    """
-    from matplotlib.pyplot import show
-
-    ax = ocean_land_geopandas_buffered_reprojected.plot()
-    ax = oceanic_gdf.plot("EWH", ax=ax)
-    show()
-    """
-    return oceanic_gdf["EWH"].mean()

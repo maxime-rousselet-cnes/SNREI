@@ -17,7 +17,7 @@ if __name__ == "__main__":
             "LIA": [False],
             "opposite_load_on_continents": [False],
             "leakage_correction_iterations": [0, 1, 2],
-            "pixels_to_coast": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+            "buffer_distance": [50, 100, 200, 300, 500, 700, 1000],
             "erode_high_signal_zones": [False, True],
         },
         options=[

@@ -31,15 +31,15 @@ def generate_figure_1(name: str = "TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER
     # Creates subplots.
     fig = figure(figsize=(8.0, 8.0))
     ax1: GeoAxes = fig.add_subplot(2, 1, 1)
-    ax2: GeoAxes = fig.add_subplot(2, 1, 2, projection=Robinson(central_longitude=180))
+    ax2: GeoAxes = fig.add_subplot(2, 1, 2, projection=Robinson(central_longitude=0))
 
     # Panel A.
-    ax1.plot(dates, mean_curb, color=REFERENCE_RED, label="Barystatic mean sea level relative to 1900")
+    ax1.plot(dates, mean_curb, color=REFERENCE_RED)
     ax1.fill_between(dates, lower_bound, upper_bound, color="grey", alpha=0.3)
     ax1.tick_params(axis="both", which="both", length=6, direction="inout")
-    ax1.set_xlabel(xlabel="date")
+    ax1.set_xlabel(xlabel="date (year)")
     ax1.set_ylabel(
-        ylabel="(mm)",
+        ylabel="Barystatic mean sea level\n(mm)",
     )
 
     # Panel B.
@@ -48,7 +48,7 @@ def generate_figure_1(name: str = "TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER
     # Add "A" and "B" labels in the top-left corners of each subplot inside boxes.
     for ax, panel in zip([ax1, ax2], ["A", "B"]):
         ax.text(
-            0.05 if panel == "A" else 0.08,
+            -0.1,
             0.95 if panel == "A" else 0.99,
             panel,
             transform=ax.transAxes,
@@ -60,9 +60,9 @@ def generate_figure_1(name: str = "TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER
         )
 
     # Adds legends.
+    cbar = fig.colorbar(contour, ax=ax2, orientation="vertical", shrink=0.9, extend="both")
+    cbar.set_label(label="GRACE/-FO Equivalent Water Height\ntrends 2002-2022 (mm/yr)")
     ax1.legend()
     ax2.legend()
-    cbar = fig.colorbar(contour, ax=ax2, orientation="vertical", shrink=0.9, extend="both")
-    cbar.set_label(label="Equivalent Water Height (mm/yr)")
     # tight_layout()
     show()

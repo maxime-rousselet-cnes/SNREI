@@ -5,13 +5,34 @@ from cartopy.mpl.geoaxes import GeoAxes
 from cartopy.mpl.gridliner import LATITUDE_FORMATTER, LONGITUDE_FORMATTER
 from cmocean import cm
 from matplotlib.colors import TwoSlopeNorm
-from numpy import array, inf, linspace, maximum, minimum, ndarray, round
+from numpy import array, inf, maximum, minimum, ndarray, round
 
 from ...functions import make_grid
 from ...utils import BoundaryCondition, Direction
 
 REFERENCE_RED = (176.0 / 255.0, 0.0, 39.0 / 255.0)
-COLORS = array([(176, 0, 39), (226, 121, 106), (204, 106, 226), (106, 122, 226), (226, 149, 106), (36, 144, 223)]) / 255.0
+COLORS = (
+    array(
+        [
+            (176, 0, 39),
+            (153, 204, 255),
+            (102, 178, 255),
+            (51, 153, 255),
+            (0, 128, 255),
+            (0, 102, 204),
+            (176, 0, 39),
+            (255, 178, 102),
+            (255, 153, 51),
+            (255, 108, 0),
+            (204, 102, 0),
+            (176, 0, 39),
+            (0, 128, 255),
+            (255, 108, 0),
+            (204, 0, 204),
+        ]
+    )
+    / 255.0
+)
 SYMBOLS_PER_BOUNDARY_CONDITION = {
     BoundaryCondition.load: "'",
     BoundaryCondition.shear: "*",
@@ -47,24 +68,23 @@ def natural_projection(
     spatial_result = (map if not map is None else get_grid(harmonics=harmonics, latitudes=latitudes, longitudes=longitudes)) * (
         mask if not mask is None else 1.0
     )
-
     # Projects.
     contour = ax.pcolormesh(
-        linspace(start=0, stop=360, num=len(spatial_result[0])),
-        linspace(start=90, stop=-90, num=len(spatial_result)),
+        longitudes,
+        latitudes,
         maximum(
             -inf if saturation_threshold is None else -saturation_threshold,
             minimum(inf if saturation_threshold is None else saturation_threshold, spatial_result),
         ),
-        transform=PlateCarree(),
+        transform=PlateCarree(central_longitude=0),
         cmap=cm.balance,
         norm=TwoSlopeNorm(vcenter=0, vmin=-saturation_threshold, vmax=saturation_threshold),
     )
-    # generates coastlines.
+    # Generates coastlines.
     ax.coastlines()
 
     # Generates parallels and labels.
-    gl = ax.gridlines(crs=PlateCarree(), draw_labels=True, linewidth=2, color="gray", alpha=0.5, linestyle="--")
+    gl = ax.gridlines(crs=PlateCarree(central_longitude=0), draw_labels=True, linewidth=2, color="gray", alpha=0.5, linestyle="--")
     gl.top_labels = False
     gl.left_labels = False
     gl.xlines = False

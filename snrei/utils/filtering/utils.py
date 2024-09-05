@@ -38,13 +38,12 @@ def leakage_correction_iterations_function(
     ocean_land_geopandas_buffered_reprojected: GeoDataFrame,
     latitudes: ndarray[float],
     longitudes: ndarray[float],
-    ocean_mask: ndarray[float],  # (2 * (n_max + 1), 4 * (n_max + 1)) - shaped.
+    ocean_mask: ndarray[float],  # (2 * (n_max + 1) + 1, 4 * (n_max + 1) + 1) - shaped.
     n_max: int,
     ddk_filter_level: int,
     iterations: int,
 ) -> ndarray[complex]:
     """"""
-
     # Gets the input in spatial domain.
     spatial_load_signal: ndarray[complex] = make_grid(
         harmonics=harmonic_load_signal.real, latitudes=latitudes, longitudes=longitudes
@@ -75,9 +74,21 @@ def leakage_correction_iterations_function(
     for _ in range(iterations):
 
         # Leakage input.
-        EWH_2_prime: ndarray[complex] = map_sampling(
-            map=ocean_true_level * ocean_mask + spatial_load_signal * (1.0 - ocean_mask), n_max=n_max, latitudes=latitudes, longitudes=longitudes
-        )[0]
+        EWH_2_prime: ndarray[complex] = (
+            map_sampling(
+                map=ocean_true_level.real * ocean_mask + spatial_load_signal.real * (1 - ocean_mask),
+                n_max=n_max,
+                latitudes=latitudes,
+                longitudes=longitudes,
+            )[0]
+            + 1.0j
+            * map_sampling(
+                map=ocean_true_level.imag * ocean_mask + spatial_load_signal.imag * (1 - ocean_mask),
+                n_max=n_max,
+                latitudes=latitudes,
+                longitudes=longitudes,
+            )[0]
+        )
 
         # Computes continental leakage on oceans.
         EWH_2_second: ndarray[complex] = map_from_collection_SH_data(
@@ -104,7 +115,7 @@ def leakage_correction_iterations_function(
 
         # Applies correction.
         differential_term: ndarray[complex] = EWH_2_second - EWH_2_prime
-        spatial_load_signal += differential_term * (1.0 - ocean_mask) - differential_term * ocean_mask
+        spatial_load_signal += differential_term * (1 - ocean_mask) - differential_term * ocean_mask
 
     # Gets the result back in spherical harmonics domain.
     return (

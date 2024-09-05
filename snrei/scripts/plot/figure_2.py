@@ -111,7 +111,7 @@ def generate_figure_2(
             long_term_anelasticity_name=long_term_anelasticity_model_names[0],
             short_term_anelasticity_name=short_term_anelasticity_model_name,
         )
-        color = COLORS[i_model]
+        color = COLORS[i_model + 6]
         linewidth = 4 if i_model == 0 else 2
         last_value_previous_layer = anelasticity_description.description_layers[anelasticity_description.below_CMB_layers].evaluate(
             x=anelasticity_description.description_layers[anelasticity_description.below_CMB_layers].x_inf, variable="Q_mu"
@@ -165,8 +165,8 @@ def generate_figure_2(
     # Adds "A" and "B" labels in the top-left corners of each subplot inside boxes.
     for ax_i, panel in zip([ax1, ax2], ["A", "B"]):
         ax_i.text(
-            0.9,
-            0.50,
+            0.1,
+            1.05,
             panel,
             transform=ax_i.transAxes,
             fontsize=16,
@@ -177,15 +177,16 @@ def generate_figure_2(
         )
 
     # Adds horizontal lines for mantle principal layers:
-    for k_layer, name in zip([2, 18, 24, 27, 30], ["Inf. Mantle", "Sup. Mantle", "Asthenosphere", "Lithosphere", "Crust"]):
+    for k_layer, name in zip([2, 18, 24, 27, 30], ["Lower Mantle", "Upper Mantle", "Asthenosphere", "Lithosphere", "Crust"]):
         layer = anelasticity_description.description_layers[k_layer]
         y = (1 - layer.x_inf) * anelasticity_description.radius_unit / 1e3
-        ax1.axhline(y=y, linewidth=1, color=(0.5, 0.5, 0.5))
+        ax1.axhline(y=y, linewidth=1, color=(0.5, 0.5, 0.5), linestyle="--" if name == "Asthenosphere" or name == "Lithosphere" else "-")
         ax2.axhline(y=y, linewidth=1, color=(0.5, 0.5, 0.5))
-        ax1.text(x=1.5e22 if name == "Lithosphere" else 5e22, y=y - 10.0, s=name)
+        ax1.text(x=1e18, y=y - 10.0, s=name)
 
     # Adds legends.
     ax1.set_xlabel("$\eta_m$ (Pa.s)")
+    ax1.set_xlim(left=9e17, right=1e24)
     ax2.set_xlabel("$Q_{\mu}$")
     ax1.invert_yaxis()
     ax.set_xscale("log")

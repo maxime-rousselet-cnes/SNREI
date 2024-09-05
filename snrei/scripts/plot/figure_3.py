@@ -1,7 +1,7 @@
 from typing import Optional
 
 from matplotlib.axes import Axes
-from matplotlib.pyplot import setp, show, subplots, tight_layout
+from matplotlib.pyplot import show, subplots, tight_layout
 from numpy import linspace, log10
 
 from ...utils import (
@@ -23,8 +23,8 @@ def generate_figure_3(
     periods: list[float] = [10.0, 100.0, 1000.0],
     run_hyper_parameters_list: list[RunHyperParameters] = [
         RunHyperParameters(use_long_term_anelasticity=True, use_short_term_anelasticity=True, use_bounded_attenuation_functions=True),
-        RunHyperParameters(use_long_term_anelasticity=False, use_short_term_anelasticity=True, use_bounded_attenuation_functions=True),
         RunHyperParameters(use_long_term_anelasticity=True, use_short_term_anelasticity=False, use_bounded_attenuation_functions=False),
+        RunHyperParameters(use_long_term_anelasticity=False, use_short_term_anelasticity=True, use_bounded_attenuation_functions=True),
         RunHyperParameters(use_long_term_anelasticity=False, use_short_term_anelasticity=False, use_bounded_attenuation_functions=False),
     ],
 ) -> None:
@@ -65,7 +65,7 @@ def generate_figure_3(
                 use_bounded_attenuation_functions=run_hyper_parameters.use_bounded_attenuation_functions,
             )
             linewidth = 4 if run_hyper_parameters.use_long_term_anelasticity and run_hyper_parameters.use_short_term_anelasticity else 2
-            color = COLORS[i_parameters]
+            color = COLORS[i_parameters + 11]
             # Iterates on layers.
             last_value_previous_layer = integration.description_layers[integration.below_CMB_layers].evaluate(
                 x=integration.description_layers[integration.below_CMB_layers].x_inf, variable="mu_0"
@@ -109,15 +109,15 @@ def generate_figure_3(
                 )
 
     # Adds "A" and "B" labels in the top-left corners of each subplot inside boxes.
-    for ax_real, ax_imag, panel_real, panel_imag in zip(
-        [sub_axes[0] for sub_axes in axes], [sub_axes[1] for sub_axes in axes], ["A", "C", "E", "G"], ["B", "D", "F", "H"]
+    for ax_real, ax_imag, panel_real, panel_imag, period in zip(
+        [sub_axes[0] for sub_axes in axes], [sub_axes[1] for sub_axes in axes], ["A", "C", "E", "G"], ["B", "D", "F", "H"], periods
     ):
         ax_real.set_ylabel("Depth (km)")
         ax: Axes
         for ax, panel, part in zip([ax_real, ax_imag], [panel_real, panel_imag], ["real", "imag"]):
             ax.text(
-                0.15,
-                0.2,
+                -0.07 if part == "imag" else -0.1,
+                0.98,
                 panel,
                 transform=ax.transAxes,
                 fontsize=16,
@@ -127,7 +127,24 @@ def generate_figure_3(
                 bbox=dict(facecolor="white", edgecolor="black", boxstyle="round,pad=0.3"),
             )
             ax.tick_params(axis="both", which="both", length=6, direction="inout")
-            # ax.set_xscale("log")
+        ax_real.text(
+            0.7,
+            0.1,
+            "T = " + str(int(period)) + " y",
+            transform=ax_real.transAxes,
+            fontsize=12,
+            va="top",
+            ha="left",
+        )
+        ax_imag.text(
+            0.08,
+            0.1,
+            "T = " + str(int(period)) + " y",
+            transform=ax_imag.transAxes,
+            fontsize=12,
+            va="top",
+            ha="left",
+        )
     ax_real.set_xlabel("$Re(\mu_0/\mu)$")
     ax_imag.set_xlabel("$Im(\mu_0/\mu)$")
 

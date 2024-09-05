@@ -17,6 +17,7 @@ from numpy import (
     ndarray,
     newaxis,
     ones,
+    pi,
     prod,
     round,
     setdiff1d,
@@ -175,7 +176,7 @@ def surface_ponderation(mask: ndarray[float], latitudes: ndarray[float]) -> ndar
     """
     Gets the surface of a (latitude * longitude) array.
     """
-    return mask * expand_dims(a=cos(latitudes), axis=1)
+    return mask * expand_dims(a=cos(latitudes * pi / 180), axis=1)
 
 
 def mean_on_mask(
@@ -206,9 +207,6 @@ def closest_index(array: ndarray, value: float) -> int:
     return argmin(abs(array - value))
 
 
-from matplotlib.pyplot import imshow, show
-
-
 def geopandas_oceanic_mean(
     signal_threshold: float,
     ocean_land_geopandas_buffered_reprojected: GeoDataFrame,
@@ -224,9 +222,8 @@ def geopandas_oceanic_mean(
     data = DataFrame({"longitude": lon_grid.ravel(), "latitude": lat_grid.ravel(), "EWH": grid.ravel()})
     geometry = [Point(xy) for xy in zip(data["longitude"], data["latitude"])]
     gdf = GeoDataFrame(data, geometry=geometry)
-    gdf.plot("EWH")
-    show()
     gdf.set_crs(epsg=LAT_LON_PROJECTION, inplace=True)
-    gdf = gdf.to_crs(EARTH_EQUAL_PROJECTION)
-    oceanic_gdf = gdf[~gdf.intersects(ocean_land_geopandas_buffered_reprojected.unary_union)].loc[abs(gdf["EWH"]) > signal_threshold]
+    gdf: GeoDataFrame = gdf.to_crs(EARTH_EQUAL_PROJECTION)
+    oceanic_gdf: GeoDataFrame = gdf[~gdf.intersects(ocean_land_geopandas_buffered_reprojected.unary_union)]
+    oceanic_gdf = oceanic_gdf[abs(oceanic_gdf["EWH"]) < signal_threshold]
     return oceanic_gdf["EWH"].mean()

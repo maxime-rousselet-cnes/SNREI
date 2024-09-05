@@ -221,13 +221,13 @@ def build_elastic_load_signal_components(
         latitudes = linspace(0, 360, 4 * (n_max + 1) + 1)
 
     # Loads ocean mask.
-    continents = get_continents(name=load_signal_hyper_parameters.continents).to_crs(epsg=EARTH_EQUAL_PROJECTION)
+    ocean_land_geopandas = get_continents(name=load_signal_hyper_parameters.continents).to_crs(epsg=EARTH_EQUAL_PROJECTION)
     lon_grid, lat_grid = meshgrid(longitudes, latitudes)
     gdf = GeoDataFrame(geometry=[Point(xy) for xy in zip(lon_grid.ravel(), lat_grid.ravel())])
     gdf.set_crs(epsg=LAT_LON_PROJECTION, inplace=True)
     gdf = gdf.to_crs(epsg=EARTH_EQUAL_PROJECTION)
-    ocean_land_geopandas_buffered_reprojected: GeoDataFrame = continents.buffer(load_signal_hyper_parameters.buffer_distance * 1e3)
-    oceanic_mask = ~gdf.intersects(continents.unary_union)
+    ocean_land_geopandas_buffered_reprojected: GeoDataFrame = ocean_land_geopandas.buffer(load_signal_hyper_parameters.buffer_distance * 1e3)
+    oceanic_mask = ~gdf.intersects(ocean_land_geopandas.unary_union)
     oceanic_mask_buffered = ~gdf.intersects(ocean_land_geopandas_buffered_reprojected.unary_union)
     ocean_land_mask = oceanic_mask.to_numpy().reshape(lon_grid.shape).astype(int)
     ocean_land_buffered_mask = oceanic_mask_buffered.to_numpy().reshape(lon_grid.shape).astype(int)

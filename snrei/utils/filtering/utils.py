@@ -1,7 +1,7 @@
 from multiprocessing import Pool
 
 from geopandas import GeoDataFrame
-from numpy import arange, array, inf, meshgrid, ndarray
+from numpy import abs, arange, array, inf, meshgrid, ndarray
 from pandas import DataFrame
 from pyGFOToolbox.processing.filter.filter_ddk import _pool_apply_DDK_filter
 
@@ -42,6 +42,7 @@ def leakage_correction_iterations_function(
     n_max: int,
     ddk_filter_level: int,
     iterations: int,
+    signal_threshold: float,
 ) -> ndarray[complex]:
     """"""
     # Gets the input in spatial domain.
@@ -72,18 +73,35 @@ def leakage_correction_iterations_function(
 
     # Iterates a leakage correction procedure as many times as asked for.
     for _ in range(iterations):
+        mask_non_oceanic_signal = ocean_mask * (abs(spatial_load_signal) > signal_threshold) + (1 - ocean_mask)
 
         # Leakage input.
         EWH_2_prime: ndarray[complex] = (
             map_sampling(
-                map=ocean_true_level.real * ocean_mask + spatial_load_signal.real * (1 - ocean_mask),
+                map=ocean_true_level.real * (1 - mask_non_oceanic_signal) + spatial_load_signal.real * mask_non_oceanic_signal,
                 n_max=n_max,
                 latitudes=latitudes,
                 longitudes=longitudes,
             )[0]
             + 1.0j
             * map_sampling(
-                map=ocean_true_level.imag * ocean_mask + spatial_load_signal.imag * (1 - ocean_mask),
+                map=ocean_true_level.imag * (1 - mask_non_oceanic_signal) + spatial_load_signal.imag * mask_non_oceanic_signal,
+                n_max=n_max,
+                latitudes=latitudes,
+                longitudes=longitudes,
+            )[0]
+        )
+
+        EWH_2_third: ndarray[complex] = (
+            map_sampling(
+                map=ocean_true_level.real * (1 - mask_non_oceanic_signal) + spatial_load_signal.real * (1 - ocean_mask),
+                n_max=n_max,
+                latitudes=latitudes,
+                longitudes=longitudes,
+            )[0]
+            + 1.0j
+            * map_sampling(
+                map=ocean_true_level.imag * (1 - mask_non_oceanic_signal) + spatial_load_signal.imag * (1 - ocean_mask),
                 n_max=n_max,
                 latitudes=latitudes,
                 longitudes=longitudes,
@@ -114,7 +132,7 @@ def leakage_correction_iterations_function(
         )
 
         # Applies correction.
-        differential_term: ndarray[complex] = EWH_2_second - EWH_2_prime
+        differential_term: ndarray[complex] = EWH_2_second - EWH_2_third
         spatial_load_signal += differential_term * (1 - ocean_mask) - differential_term * ocean_mask
 
     # Gets the result back in spherical harmonics domain.
@@ -136,6 +154,7 @@ def leakage_correction(
     iterations: int,
     ddk_filter_level: int,
     n_max: int,
+    signal_threshold: float,
 ) -> ndarray[complex]:
     """
     Performs a correction for continental data leak on oceans and ocean data leak on continents.
@@ -158,6 +177,7 @@ def leakage_correction(
             n_max,
             ddk_filter_level,
             iterations,
+            signal_threshold,
         )
         for i_frequency in range(len(frequencial_scale_factor))
     ]

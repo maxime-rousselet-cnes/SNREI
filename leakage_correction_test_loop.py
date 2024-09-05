@@ -1,7 +1,7 @@
 from matplotlib.pyplot import grid, legend, plot, show, xlabel, ylabel
-from numpy import expand_dims, inf, unique, zeros
+from numpy import expand_dims, inf, zeros
 
-from snrei.functions import geopandas_oceanic_mean
+from snrei.functions import geopandas_oceanic_mean, mean_on_mask
 from snrei.utils import build_elastic_load_signal_components, load_load_signal_hyper_parameters
 from snrei.utils.filtering import leakage_correction
 
@@ -18,7 +18,11 @@ m = []
 n = []
 d = [50, 100, 200, 300, 500, 700, 1000]
 
-signal_threshold = 8
+signal_threshold_for_mean = inf
+signal_threshold = 8.0
+
+from numpy import cos, mean, meshgrid, pi
+
 for buffer_distance in d:
     # Buffer to coast.
     load_signal_hyper_parameters.buffer_distance = buffer_distance
@@ -35,12 +39,24 @@ for buffer_distance in d:
         longitudes,
     ) = build_elastic_load_signal_components(load_signal_hyper_parameters=load_signal_hyper_parameters)
 
-    print(unique(ocean_land_mask.flatten()))
+    grid = cos(2 * meshgrid(latitudes, longitudes)[0] * pi / 180).T
+    print(
+        geopandas_oceanic_mean(
+            signal_threshold=signal_threshold_for_mean,
+            ocean_land_geopandas_buffered_reprojected=ocean_land_geopandas_buffered_reprojected,
+            latitudes=latitudes,
+            longitudes=longitudes,
+            grid=grid,
+        )
+    )
+    print(mean_on_mask(mask=ocean_land_buffered_mask, latitudes=latitudes, longitudes=longitudes, grid=grid))
+    print(mean(grid[ocean_land_buffered_mask == 1].flatten()))
+
     harmonics_1_0 = expand_dims(harmonics_1, axis=-1)
 
     l += [
         geopandas_oceanic_mean(
-            signal_threshold=signal_threshold,
+            signal_threshold=signal_threshold_for_mean,
             ocean_land_geopandas_buffered_reprojected=ocean_land_geopandas_buffered_reprojected,
             latitudes=latitudes,
             longitudes=longitudes,
@@ -60,12 +76,13 @@ for buffer_distance in d:
         iterations=1,
         ddk_filter_level=7,
         n_max=89,
+        signal_threshold=signal_threshold,
     )
 
     harmonics_2 = harmonics_2_0[:, :, :, 0].real
     m += [
         geopandas_oceanic_mean(
-            signal_threshold=signal_threshold,
+            signal_threshold=signal_threshold_for_mean,
             ocean_land_geopandas_buffered_reprojected=ocean_land_geopandas_buffered_reprojected,
             latitudes=latitudes,
             longitudes=longitudes,
@@ -85,12 +102,13 @@ for buffer_distance in d:
         iterations=2,
         ddk_filter_level=7,
         n_max=89,
+        signal_threshold=signal_threshold,
     )
 
     harmonics_3 = harmonics_3_0[:, :, :, 0].real
     n += [
         geopandas_oceanic_mean(
-            signal_threshold=signal_threshold,
+            signal_threshold=signal_threshold_for_mean,
             ocean_land_geopandas_buffered_reprojected=ocean_land_geopandas_buffered_reprojected,
             latitudes=latitudes,
             longitudes=longitudes,

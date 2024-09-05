@@ -220,10 +220,17 @@ def geopandas_oceanic_mean(
         grid: ndarray[float] = make_grid(harmonics=harmonics, latitudes=latitudes, longitudes=longitudes)
     lon_grid, lat_grid = meshgrid(longitudes, latitudes)
     data = DataFrame({"longitude": lon_grid.ravel(), "latitude": lat_grid.ravel(), "EWH": grid.ravel()})
-    geometry = [Point(xy) for xy in zip(data["longitude"], data["latitude"])]
+    geometry = [Point(x, y) for x, y in zip(data["longitude"], data["latitude"])]
     gdf = GeoDataFrame(data, geometry=geometry)
     gdf.set_crs(epsg=LAT_LON_PROJECTION, inplace=True)
     gdf: GeoDataFrame = gdf.to_crs(EARTH_EQUAL_PROJECTION)
     oceanic_gdf: GeoDataFrame = gdf[~gdf.intersects(ocean_land_geopandas_buffered_reprojected.unary_union)]
     oceanic_gdf = oceanic_gdf[abs(oceanic_gdf["EWH"]) < signal_threshold]
+    """
+    from matplotlib.pyplot import show
+
+    ax = ocean_land_geopandas_buffered_reprojected.plot()
+    ax = oceanic_gdf.plot("EWH", ax=ax)
+    show()
+    """
     return oceanic_gdf["EWH"].mean()

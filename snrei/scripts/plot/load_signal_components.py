@@ -104,6 +104,7 @@ def generate_load_signal_components_figure(
                 longitudes=longitudes,
                 harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components),
                 mask=mask if not continents else 1.0,
+                n_max=load_signal_hyper_parameters.n_max,
             )
             ax += [current_ax]
             # Adds layout.
@@ -114,10 +115,11 @@ def generate_load_signal_components_figure(
                     mean_on_mask(
                         mask=mask,
                         grid=get_grid(
-                            harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components)
+                            harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components),
+                            n_max=n_max,
                         ),
                         latitudes=latitudes,
-                        longitudes=longitudes,
+                        n_max=load_signal_hyper_parameters.n_max,
                     ),
                 )
             )

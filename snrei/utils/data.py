@@ -163,9 +163,7 @@ def redefine_n_max(n_max: int, map: Optional[ndarray] = None, harmonics: Optiona
         return min(n_max, (len(map) - 1) // 2 - 1)
 
 
-def map_sampling(
-    map: ndarray[float], n_max: int, latitudes: ndarray[float], longitudes: ndarray[float], harmonic_domain: bool = False
-) -> tuple[ndarray[float], int]:
+def map_sampling(map: ndarray[float], n_max: int, harmonic_domain: bool = False) -> tuple[ndarray[float], int]:
     """
     Redefined a (latitude, longitude) map definition. Eventually returns it in harmonic domain.
     Returns maximal degree as second output.
@@ -173,7 +171,7 @@ def map_sampling(
     n_max = redefine_n_max(n_max=n_max, map=map)
     harmonics = SHGrid.from_array(array=map).expand(lmax_calc=n_max).coeffs
     return (
-        (harmonics if harmonic_domain else make_grid(harmonics=harmonics, latitudes=latitudes, longitudes=longitudes)),
+        (harmonics if harmonic_domain else make_grid(harmonics=harmonics, n_max=n_max)),
         n_max,
     )
 
@@ -191,7 +189,7 @@ def get_ocean_mask(
         ocean_mask, latitudes, longitudes = extract_mask_csv(name=name)
     elif name.split(".")[-1] == "nc":
         ocean_mask, latitudes, longitudes = extract_mask_nc(name=name)
-    return map_sampling(map=ocean_mask, n_max=n_max, latitudes=latitudes, longitudes=longitudes)[0], latitudes, longitudes
+    return map_sampling(map=ocean_mask, n_max=n_max)[0], latitudes, longitudes
 
 
 def extract_GRACE_data(name: str, path: Path = GRACE_data_path) -> tuple[
@@ -356,7 +354,7 @@ def load_Love_numbers_result(
     return Love_numbers
 
 
-def save_harmonics(trends_array: ndarray[float], id: str, path: Path, _, __) -> None:
+def save_harmonics(trends_array: ndarray[float], id: str, path: Path, n_max: int) -> None:
     """
     Saves load signal harmonic trends.
     """
@@ -371,13 +369,12 @@ def save_base_format(
     trends_array: ndarray[float],
     id: str,
     path: Path,
-    latitudes: ndarray[float],
-    longitudes: ndarray[float],
+    n_max: int,
 ) -> None:
     """
     Saves load signal trends in base json format.
     """
-    grid: ndarray[float] = make_grid(harmonics=trends_array.real, latitudes=latitudes, longitudes=longitudes)
+    grid: ndarray[float] = make_grid(harmonics=trends_array.real, n_max=n_max)
     save_base_model(
         obj=grid.tolist(),
         name=id,

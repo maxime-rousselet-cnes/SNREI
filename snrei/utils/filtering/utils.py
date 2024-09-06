@@ -9,11 +9,11 @@ from ...functions import make_grid, mean_on_mask
 from ..data import map_sampling
 
 
-def collection_SH_data_from_map(spatial_load_signal: ndarray[float], n_max: int, latitudes: ndarray[float], longitudes: ndarray[float]) -> DataFrame:
+def collection_SH_data_from_map(spatial_load_signal: ndarray[float], n_max: int) -> DataFrame:
     """"""
     degrees = arange(n_max + 1)
     fake_frequencies_mesh, degrees_mesh, orders_mesh = meshgrid([0], degrees, degrees, indexing="ij")
-    harmonic_load_signal = map_sampling(map=spatial_load_signal, latitudes=latitudes, longitudes=longitudes, n_max=n_max, harmonic_domain=True)[0]
+    harmonic_load_signal = map_sampling(map=spatial_load_signal, n_max=n_max, harmonic_domain=True)[0]
     c: ndarray[float] = harmonic_load_signal[0]
     s: ndarray[float] = harmonic_load_signal[1]
     data = array([fake_frequencies_mesh.flatten(), degrees_mesh.flatten(), orders_mesh.flatten(), c.flatten(), s.flatten()]).T
@@ -25,11 +25,12 @@ def collection_SH_data_from_map(spatial_load_signal: ndarray[float], n_max: int,
 
 
 def map_from_collection_SH_data(
-    collection_data: DataFrame, n_max: int, latitudes: ndarray[float], longitudes: ndarray[float]
+    collection_data: DataFrame,
+    n_max: int,
 ) -> ndarray[float]:  # (2 * (n_max + 1) + 1, 4 * (n_max + 1) + 1) - shaped.
     """"""
     a = array(object=[coeffs.reshape((n_max + 1, n_max + 1)) for coeffs in collection_data.to_numpy().T])
-    return make_grid(harmonics=a, latitudes=latitudes, longitudes=longitudes)
+    return make_grid(harmonics=a, n_max=n_max)
 
 
 def leakage_correction_iterations_function(
@@ -37,7 +38,6 @@ def leakage_correction_iterations_function(
     right_hand_side: ndarray[complex],  # (2, n_max + 1, n_max + 1) - shaped.
     ocean_land_buffered_mask: ndarray[float],
     latitudes: ndarray[float],
-    longitudes: ndarray[float],
     ocean_mask: ndarray[float],  # (2 * (n_max + 1) + 1, 4 * (n_max + 1) + 1) - shaped.
     n_max: int,
     ddk_filter_level: int,
@@ -46,19 +46,19 @@ def leakage_correction_iterations_function(
 ) -> ndarray[complex]:
     """"""
     # Gets the input in spatial domain.
-    spatial_load_signal: ndarray[complex] = make_grid(
-        harmonics=harmonic_load_signal.real, latitudes=latitudes, longitudes=longitudes
-    ) + 1.0j * make_grid(harmonics=harmonic_load_signal.imag, latitudes=latitudes, longitudes=longitudes)
+    spatial_load_signal: ndarray[complex] = make_grid(harmonics=harmonic_load_signal.real, n_max=n_max) + 1.0j * make_grid(
+        harmonics=harmonic_load_signal.imag, n_max=n_max
+    )
 
     # Oceanic true level.
     ocean_true_level: complex = (  # TODO: replace ocean mean by right hand side (i.e. (1 + k' - h') * EWH)
-        # make_grid(harmonics=right_hand_side.real, latitudes=latitudes, longitudes=longitudes)
-        # + 1.0j * make_grid(harmonics=right_hand_side.imag,latitudes=latitudes, longitudes=longitudes)
+        # make_grid(harmonics=right_hand_side.real, n_max=n_max)
+        # + 1.0j * make_grid(harmonics=right_hand_side.imag, n_max=n_max)
         mean_on_mask(
             signal_threshold=inf,
             mask=ocean_land_buffered_mask,
             latitudes=latitudes,
-            longitudes=longitudes,
+            n_max=n_max,
             grid=spatial_load_signal.real,
         )
         + 1.0j
@@ -66,7 +66,7 @@ def leakage_correction_iterations_function(
             signal_threshold=inf,
             ocean_land_buffered_mask=ocean_land_buffered_mask,
             latitudes=latitudes,
-            longitudes=longitudes,
+            n_max=n_max,
             grid=spatial_load_signal.imag,
         )
     )
@@ -80,15 +80,11 @@ def leakage_correction_iterations_function(
             map_sampling(
                 map=ocean_true_level.real * (1 - mask_non_oceanic_signal) + spatial_load_signal.real * mask_non_oceanic_signal,
                 n_max=n_max,
-                latitudes=latitudes,
-                longitudes=longitudes,
             )[0]
             + 1.0j
             * map_sampling(
                 map=ocean_true_level.imag * (1 - mask_non_oceanic_signal) + spatial_load_signal.imag * mask_non_oceanic_signal,
                 n_max=n_max,
-                latitudes=latitudes,
-                longitudes=longitudes,
             )[0]
         )
 
@@ -96,15 +92,11 @@ def leakage_correction_iterations_function(
             map_sampling(
                 map=ocean_true_level.real * (1 - mask_non_oceanic_signal) + spatial_load_signal.real * (1 - ocean_mask),
                 n_max=n_max,
-                latitudes=latitudes,
-                longitudes=longitudes,
             )[0]
             + 1.0j
             * map_sampling(
                 map=ocean_true_level.imag * (1 - mask_non_oceanic_signal) + spatial_load_signal.imag * (1 - ocean_mask),
                 n_max=n_max,
-                latitudes=latitudes,
-                longitudes=longitudes,
             )[0]
         )
 
@@ -112,23 +104,21 @@ def leakage_correction_iterations_function(
         EWH_2_second: ndarray[complex] = map_from_collection_SH_data(
             collection_data=_pool_apply_DDK_filter(
                 grace_monthly_sh=collection_SH_data_from_map(
-                    spatial_load_signal=EWH_2_prime.real, n_max=n_max, latitudes=latitudes, longitudes=longitudes
+                    spatial_load_signal=EWH_2_prime.real,
+                    n_max=n_max,
                 ),
                 ddk_filter_level=ddk_filter_level,
             ),
             n_max=n_max,
-            latitudes=latitudes,
-            longitudes=longitudes,
         ) + 1.0j * map_from_collection_SH_data(
             collection_data=_pool_apply_DDK_filter(
                 grace_monthly_sh=collection_SH_data_from_map(
-                    spatial_load_signal=EWH_2_prime.imag, n_max=n_max, latitudes=latitudes, longitudes=longitudes
+                    spatial_load_signal=EWH_2_prime.imag,
+                    n_max=n_max,
                 ),
                 ddk_filter_level=ddk_filter_level,
             ),
             n_max=n_max,
-            latitudes=latitudes,
-            longitudes=longitudes,
         )
 
         # Applies correction.
@@ -137,8 +127,8 @@ def leakage_correction_iterations_function(
 
     # Gets the result back in spherical harmonics domain.
     return (
-        map_sampling(map=spatial_load_signal.real, n_max=n_max, latitudes=latitudes, longitudes=longitudes, harmonic_domain=True)[0]
-        + 1.0j * map_sampling(map=spatial_load_signal.imag, n_max=n_max, latitudes=latitudes, longitudes=longitudes, harmonic_domain=True)[0]
+        map_sampling(map=spatial_load_signal.real, n_max=n_max, harmonic_domain=True)[0]
+        + 1.0j * map_sampling(map=spatial_load_signal.imag, n_max=n_max, harmonic_domain=True)[0]
     )
 
 
@@ -150,7 +140,6 @@ def leakage_correction(
     ocean_land_mask: ndarray[float],
     ocean_land_buffered_mask: ndarray[float],
     latitudes: ndarray[float],
-    longitudes: ndarray[float],
     iterations: int,
     ddk_filter_level: int,
     n_max: int,
@@ -172,7 +161,6 @@ def leakage_correction(
             frequencial_right_hand_side[:, :, :, i_frequency],
             ocean_land_buffered_mask,
             latitudes,
-            longitudes,
             ocean_land_mask,
             n_max,
             ddk_filter_level,

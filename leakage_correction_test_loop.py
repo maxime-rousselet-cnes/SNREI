@@ -43,7 +43,7 @@ for buffer_distance in d:
             signal_threshold=signal_threshold_for_mean,
             mask=ocean_land_buffered_mask,
             latitudes=latitudes,
-            longitudes=longitudes,
+            n_max=89,
             harmonics=harmonics_1,
         )
     ]
@@ -56,7 +56,6 @@ for buffer_distance in d:
         ocean_land_mask=ocean_land_mask,
         ocean_land_buffered_mask=ocean_land_buffered_mask,
         latitudes=latitudes,
-        longitudes=longitudes,
         iterations=1,
         ddk_filter_level=7,
         n_max=89,
@@ -69,7 +68,7 @@ for buffer_distance in d:
             signal_threshold=signal_threshold_for_mean,
             mask=ocean_land_buffered_mask,
             latitudes=latitudes,
-            longitudes=longitudes,
+            n_max=89,
             harmonics=harmonics_2,
         )
     ]
@@ -82,7 +81,6 @@ for buffer_distance in d:
         ocean_land_mask=ocean_land_mask,
         ocean_land_buffered_mask=ocean_land_buffered_mask,
         latitudes=latitudes,
-        longitudes=longitudes,
         iterations=2,
         ddk_filter_level=7,
         n_max=89,
@@ -95,7 +93,7 @@ for buffer_distance in d:
             signal_threshold=signal_threshold_for_mean,
             mask=ocean_land_buffered_mask,
             latitudes=latitudes,
-            longitudes=longitudes,
+            n_max=89,
             harmonics=harmonics_3,
         )
     ]

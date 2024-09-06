@@ -183,7 +183,7 @@ def mean_on_mask(
     signal_threshold: float,
     mask: ndarray[float],
     latitudes: ndarray[float],
-    longitudes: ndarray[float],
+    n_max: int,
     harmonics: Optional[ndarray[float]] = None,
     grid: Optional[ndarray[float]] = None,
 ) -> float:
@@ -191,17 +191,21 @@ def mean_on_mask(
     Computes mean value over a given surface. Uses a given mask.
     """
     if grid is None:
-        grid: ndarray[float] = make_grid(harmonics=harmonics, latitudes=latitudes, longitudes=longitudes)
+        grid: ndarray[float] = make_grid(harmonics=harmonics, n_max=n_max)
     mask = mask * (abs(grid) < signal_threshold)
     surface = surface_ponderation(mask=mask, latitudes=latitudes)
     weighted_values = grid * surface
     return round(a=sum(weighted_values.flatten()) / sum(surface.flatten()), decimals=MASK_DECIMALS)
 
 
-def make_grid(harmonics: ndarray[float], latitudes: ndarray[float], longitudes: ndarray[float]) -> ndarray[float]:
+def make_grid(
+    harmonics: ndarray[float],
+    n_max: int,
+) -> ndarray[float]:
     """ """
-    lat, lon = meshgrid(latitudes, longitudes)
-    return SHCoeffs.from_array(harmonics).expand(lat=lat, lon=lon, extend=True).T
+    result = SHCoeffs.from_array(harmonics).expand(l_max=n_max, extend=True).T
+    print(result.shape)
+    return result
 
 
 def closest_index(array: ndarray, value: float) -> int:

@@ -1,7 +1,7 @@
 from typing import Optional
 
 from geopandas import GeoDataFrame
-from numpy import arange, array, ceil, concatenate, flip, linspace, log2, meshgrid, ndarray, round, where, zeros
+from numpy import arange, array, ceil, concatenate, flip, inf, linspace, log2, meshgrid, ndarray, round, where, zeros
 from scipy import interpolate
 from scipy.fft import fft, fftfreq, ifft
 from shapely.geometry import Point
@@ -213,7 +213,7 @@ def build_elastic_load_signal_components(
         )
         map = map_normalizing(map=map)
 
-    map, n_max = map_sampling(map=map, n_max=load_signal_hyper_parameters.n_max, latitudes=latitudes, longitudes=longitudes)
+    map, n_max = map_sampling(map=map, n_max=load_signal_hyper_parameters.n_max)
 
     if n_max != load_signal_hyper_parameters.n_max:
         latitudes = linspace(90, -90, 2 * (n_max + 1) + 1)
@@ -234,13 +234,19 @@ def build_elastic_load_signal_components(
     # Loads the continents with opposite value, such that global mean is null.
     if load_signal_hyper_parameters.opposite_load_on_continents:
         map = map * ocean_land_mask - (1 - ocean_land_mask) * (
-            mean_on_mask(grid=map, mask=ocean_land_mask, latitudes=latitudes, longitudes=longitudes)
+            mean_on_mask(
+                signal_threshold=inf,
+                grid=map,
+                latitudes=latitudes,
+                mask=ocean_land_mask,
+                n_max=n_max,
+            )
             * sum(surface_ponderation(mask=ocean_land_mask, latitudes=latitudes).flatten())
             / sum(surface_ponderation(mask=(1 - ocean_land_mask), latitudes=latitudes).flatten())
         )
 
     # Harmonic component.
-    harmonic_component, _ = map_sampling(map=map, n_max=n_max, latitudes=latitudes, longitudes=longitudes, harmonic_domain=True)
+    harmonic_component, _ = map_sampling(map=map, n_max=n_max, harmonic_domain=True)
     return (
         n_max,
         dates,

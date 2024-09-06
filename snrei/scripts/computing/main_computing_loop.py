@@ -354,7 +354,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         Love_numbers=anelastic_Love_numbers,
                         ocean_land_buffered_mask=ocean_land_buffered_mask,
                         latitudes=latitudes,
-                        longitudes=longitudes,
+                        n_max=load_signal_hyper_parameters.n_max,
                     )
 
                     print("Degree one inversion:", time() - t_2)
@@ -372,8 +372,6 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             ocean_land_mask=ocean_land_mask,
                             ocean_land_buffered_mask=ocean_land_buffered_mask,
                             latitudes=latitudes,
-                            longitudes=longitudes,
-                            buffer_distance=load_signal_hyper_parameters.buffer_distance,
                             iterations=load_signal_hyper_parameters.leakage_correction_iterations,
                             ddk_filter_level=load_signal_hyper_parameters.ddk_filter_level,
                             n_max=load_signal_hyper_parameters.n_max,
@@ -388,7 +386,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         signal_threshold=load_signal_hyper_parameters.signal_threshold,
                         mask=ocean_land_buffered_mask,
                         latitudes=latitudes,
-                        longitudes=longitudes,
+                        n_max=load_signal_hyper_parameters.n_max,
                         harmonics=compute_harmonic_signal_trends(
                             signal_dates=signal_dates,
                             load_signal_hyper_parameters=load_signal_hyper_parameters,
@@ -413,7 +411,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     signal_threshold=load_signal_hyper_parameters.signal_threshold,
                     mask=ocean_land_buffered_mask,
                     latitudes=latitudes,
-                    longitudes=longitudes,
+                    n_max=load_signal_hyper_parameters.n_max,
                     harmonics=harmonic_load_signal_step_1_trends,
                 )
 
@@ -427,7 +425,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     signal_threshold=load_signal_hyper_parameters.signal_threshold,
                     mask=ocean_land_buffered_mask,
                     latitudes=latitudes,
-                    longitudes=longitudes,
+                    n_max=load_signal_hyper_parameters.n_max,
                     harmonics=harmonic_load_signal_step_2_trends,
                 )
 
@@ -444,7 +442,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     signal_threshold=load_signal_hyper_parameters.signal_threshold,
                     mask=ocean_land_buffered_mask,
                     latitudes=latitudes,
-                    longitudes=longitudes,
+                    n_max=load_signal_hyper_parameters.n_max,
                     harmonics=harmonic_load_signal_step_3_trends,
                 )
 
@@ -467,7 +465,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     signal_threshold=load_signal_hyper_parameters.signal_threshold,
                     mask=ocean_land_buffered_mask,
                     latitudes=latitudes,
-                    longitudes=longitudes,
+                    n_max=load_signal_hyper_parameters.n_max,
                     harmonics=harmonic_geoid_trends,
                 )
 
@@ -481,7 +479,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     signal_threshold=load_signal_hyper_parameters.signal_threshold,
                     mask=ocean_land_buffered_mask,
                     latitudes=latitudes,
-                    longitudes=longitudes,
+                    n_max=load_signal_hyper_parameters.n_max,
                     harmonics=harmonic_radial_displacement_trends,
                 )
 
@@ -493,8 +491,6 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         map=ocean_land_buffered_mask,
                         n_max=load_signal_hyper_parameters.n_max,
                         harmonic_domain=True,
-                        latitudes=latitudes,
-                        longitudes=longitudes,
                     )[
                         0
                     ]  # + D
@@ -504,7 +500,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     signal_threshold=load_signal_hyper_parameters.signal_threshold,
                     mask=ocean_land_buffered_mask,
                     latitudes=latitudes,
-                    longitudes=longitudes,
+                    n_max=load_signal_hyper_parameters.n_max,
                     harmonics=harmonic_residual_trends,
                 )
 
@@ -548,8 +544,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             trends_array=harmonic_load_signal_step_1_trends,
                             id=harmonic_load_signal_id,
                             path=save_base_path.joinpath("step_1"),
-                            latitudes=latitudes,
-                            longitudes=longitudes,
+                            n_max=load_signal_hyper_parameters.n_max,
                         )
                     # Anelastic load signal after degree one inversion.
                     if load_signal_hyper_parameters.save_parameters[kind].step_2:
@@ -557,8 +552,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             trends_array=harmonic_load_signal_step_2_trends,
                             id=harmonic_load_signal_id,
                             path=save_base_path.joinpath("step_2"),
-                            latitudes=latitudes,
-                            longitudes=longitudes,
+                            n_max=load_signal_hyper_parameters.n_max,
                         )
                     # Anelastic load signal after leakage correction.
                     if load_signal_hyper_parameters.save_parameters[kind].step_3:
@@ -566,8 +560,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             trends_array=harmonic_load_signal_step_3_trends,
                             id=harmonic_load_signal_id,
                             path=save_base_path.joinpath("step_3"),
-                            latitudes=latitudes,
-                            longitudes=longitudes,
+                            n_max=load_signal_hyper_parameters.n_max,
                         )
                     # Degree one inversion components.
                     if load_signal_hyper_parameters.save_parameters[kind].inversion_components:
@@ -575,22 +568,19 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             trends_array=harmonic_geoid_trends,
                             id=harmonic_load_signal_id,
                             path=save_base_path.joinpath("geoid"),
-                            latitudes=latitudes,
-                            longitudes=longitudes,
+                            n_max=load_signal_hyper_parameters.n_max,
                         )
                         save_function(
                             trends_array=harmonic_radial_displacement_trends,
                             id=harmonic_load_signal_id,
                             path=save_base_path.joinpath("radial_displacement"),
-                            latitudes=latitudes,
-                            longitudes=longitudes,
+                            n_max=load_signal_hyper_parameters.n_max,
                         )
                         save_function(
                             trends_array=harmonic_residual_trends,
                             id=harmonic_load_signal_id,
                             path=save_base_path.joinpath("residual"),
-                            latitudes=latitudes,
-                            longitudes=longitudes,
+                            n_max=load_signal_hyper_parameters.n_max,
                         )
 
                 print("Computing anelastic induced signal:", time() - t_0)

@@ -36,8 +36,8 @@ def select_degrees(harmonics: dict[str, ndarray[complex]], row_name: str, row_co
 def generate_load_signal_components_figure(
     load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
     rows: list[tuple[str, Optional[str], float]] = [
-        ("step_2", None, 50.0),
-        ("step_3", None, 50.0),
+        ("step_2", None, 50.0, 10.0),
+        ("step_3", None, 50.0, 10.0),
         # ("continental_leakage", None, 5.0),
         # ("oceanic_leakage", None, 5.0),
     ],  # Plot row names, components and their corresponding saturation thresholds
@@ -52,15 +52,15 @@ def generate_load_signal_components_figure(
         - elastic signal.
         - anelastic signal.
         - (OPTIONAL) difference between the anelastic and the elastic signal.
-    One may select specific harmonic components of a signal. The corresponding way to write row name is:
-        "residual: C_0_1 C_1_1 S_1_1"
+    One may select specific harmonic components of a signal. The corresponding way to write row is:
+        ("residual, "C_0_1 C_1_1 S_1_1", 10.0, 2.0) for 10.0 mm/yr absolute saturation threshold and 2.0 for difference threshold.
     """
 
     # Gets results.
     trend_harmonic_components_per_column: dict[tuple[str, Optional[str]], dict[str, ndarray]] = {
         column: {
             (row_name, row_components): load_complex_array_from_binary(name=load_signal_id, path=harmonic_load_signal_trends_path.joinpath(row_name))
-            for row_name, row_components, _ in rows
+            for row_name, row_components, _, _ in rows
         }
         for column, load_signal_id in zip(["elastic", "anelastic"], [elastic_load_signal_id, anelastic_load_signal_id])
     }
@@ -68,7 +68,7 @@ def generate_load_signal_components_figure(
         trend_harmonic_components_per_column["difference"] = {
             (row_name, row_components): trend_harmonic_components_per_column["anelastic"][row_name, row_components]
             - trend_harmonic_components_per_column["elastic"][row_name, row_components]
-            for row_name, row_components, _ in rows
+            for row_name, row_components, _, _ in rows
         }
     (
         load_signal_hyper_parameters.n_max,
@@ -86,7 +86,7 @@ def generate_load_signal_components_figure(
     row_number = len(rows)
 
     # Loops on all plots to generate.
-    for i_row, (row_name, row_components, row_saturation_threshold) in enumerate(rows):
+    for i_row, (row_name, row_components, row_saturation_threshold, difference_saturation_threshold) in enumerate(rows):
 
         ax: list[GeoAxes] = []
 
@@ -101,7 +101,7 @@ def generate_load_signal_components_figure(
             )
             contour = natural_projection(
                 ax=current_ax,
-                saturation_threshold=row_saturation_threshold,
+                saturation_threshold=difference_saturation_threshold if column == "difference" else row_saturation_threshold,
                 latitudes=latitudes,
                 longitudes=longitudes,
                 harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components),

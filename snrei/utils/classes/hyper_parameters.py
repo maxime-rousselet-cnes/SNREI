@@ -157,6 +157,10 @@ class SaveParameters(HyperParameters):
     Describes whether to save all the resulting load signals or not.
     """
 
+    # Initial.
+    initial: bool
+    # Anelastic correcting polatr tide coefficients.
+    step_0: bool
     # Anelastic load signal computed after frequencial filtering by Love number fractions.
     step_1: bool
     # Anelastic load signal computed after degree one inversion.

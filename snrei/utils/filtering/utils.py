@@ -64,7 +64,7 @@ def leakage_correction_iterations_function(
         + 1.0j
         * mean_on_mask(
             signal_threshold=inf,
-            ocean_land_buffered_mask=ocean_land_buffered_mask,
+            mask=ocean_land_buffered_mask,
             latitudes=latitudes,
             n_max=n_max,
             grid=spatial_load_signal.imag,

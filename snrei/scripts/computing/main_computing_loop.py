@@ -383,7 +383,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
 
                     # Normalizes so that the data previous to 2003 matches source datas.
                     past_trend = mean_on_mask(
-                        signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                        signal_threshold=inf,
                         mask=ocean_land_buffered_mask,
                         latitudes=latitudes,
                         n_max=load_signal_hyper_parameters.n_max,
@@ -408,7 +408,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     frequencial_harmonic_signal=frequencial_harmonic_load_signal_step_1,
                 )
                 ocean_mean_step_1 = mean_on_mask(
-                    signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                    signal_threshold=inf,
                     mask=ocean_land_buffered_mask,
                     latitudes=latitudes,
                     n_max=load_signal_hyper_parameters.n_max,
@@ -422,7 +422,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     frequencial_harmonic_signal=frequencial_harmonic_load_signal_step_2,
                 )
                 ocean_mean_step_2 = mean_on_mask(
-                    signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                    signal_threshold=inf,
                     mask=ocean_land_buffered_mask,
                     latitudes=latitudes,
                     n_max=load_signal_hyper_parameters.n_max,
@@ -439,7 +439,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 )
 
                 ocean_mean_step_3 = mean_on_mask(
-                    signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                    signal_threshold=inf,
                     mask=ocean_land_buffered_mask,
                     latitudes=latitudes,
                     n_max=load_signal_hyper_parameters.n_max,
@@ -462,7 +462,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     frequencial_harmonic_signal=frequencial_harmonic_geoid,
                 )
                 ocean_mean_geoid_component = mean_on_mask(
-                    signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                    signal_threshold=inf,
                     mask=ocean_land_buffered_mask,
                     latitudes=latitudes,
                     n_max=load_signal_hyper_parameters.n_max,
@@ -476,7 +476,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     frequencial_harmonic_signal=frequencial_harmonic_radial_displacement,
                 )
                 ocean_mean_radial_displacement_component = mean_on_mask(
-                    signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                    signal_threshold=inf,
                     mask=ocean_land_buffered_mask,
                     latitudes=latitudes,
                     n_max=load_signal_hyper_parameters.n_max,
@@ -497,7 +497,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     - (harmonic_geoid_trends - harmonic_radial_displacement_trends)  # - (G - R)
                 )
                 ocean_mean_residuals = mean_on_mask(
-                    signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                    signal_threshold=inf,
                     mask=ocean_land_buffered_mask,
                     latitudes=latitudes,
                     n_max=load_signal_hyper_parameters.n_max,

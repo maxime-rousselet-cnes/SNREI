@@ -8,11 +8,11 @@ from numpy import linspace, ndarray, zeros
 
 from ...functions import mean_on_mask
 from ...utils import (
-    get_ocean_mask,
+    LoadSignalHyperParameters,
+    build_elastic_load_signal_components,
     harmonic_load_signal_trends_path,
     load_complex_array_from_binary,
     load_load_signal_hyper_parameters,
-    redefine_n_max,
 )
 from .utils import get_grid, natural_projection
 
@@ -34,8 +34,7 @@ def select_degrees(harmonics: dict[str, ndarray[complex]], row_name: str, row_co
 
 
 def generate_load_signal_components_figure(
-    latitudes: ndarray[float] = linspace(90, -90, 181),
-    longitudes: ndarray[float] = linspace(0, 360, 361),
+    load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
     rows: list[tuple[str, Optional[str], float]] = [
         ("step_2", None, 50.0),
         ("step_3", None, 50.0),
@@ -71,13 +70,16 @@ def generate_load_signal_components_figure(
             - trend_harmonic_components_per_column["elastic"][row_name, row_components]
             for row_name, row_components, _ in rows
         }
-    load_signal_hyper_parameters = load_load_signal_hyper_parameters()
-    n_max = redefine_n_max(
-        n_max=load_signal_hyper_parameters.n_max,
-        harmonics=trend_harmonic_components_per_column["elastic"][rows[0][:2]],
-    )
-    # TODO: get it from build...
-    mask = get_ocean_mask(name="0", n_max=n_max)
+    (
+        load_signal_hyper_parameters.n_max,
+        _,
+        _,
+        _,
+        _,
+        ocean_land_buffered_mask,
+        latitudes,
+        longitudes,
+    ) = build_elastic_load_signal_components(load_signal_hyper_parameters=load_signal_hyper_parameters)
 
     # Figure's configuration.
     fig = figure(layout="compressed")
@@ -103,7 +105,7 @@ def generate_load_signal_components_figure(
                 latitudes=latitudes,
                 longitudes=longitudes,
                 harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components),
-                mask=mask if not continents else 1.0,
+                mask=ocean_land_buffered_mask if not continents else 1.0,
                 n_max=load_signal_hyper_parameters.n_max,
             )
             ax += [current_ax]
@@ -113,10 +115,11 @@ def generate_load_signal_components_figure(
                 + ": "
                 + str(
                     mean_on_mask(
-                        mask=mask,
+                        signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                        mask=ocean_land_buffered_mask,
                         grid=get_grid(
                             harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components),
-                            n_max=n_max,
+                            n_max=load_signal_hyper_parameters.n_max,
                         ),
                         latitudes=latitudes,
                         n_max=load_signal_hyper_parameters.n_max,

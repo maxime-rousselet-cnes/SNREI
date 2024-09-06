@@ -18,7 +18,6 @@ if __name__ == "__main__":
             "opposite_load_on_continents": [False],
             "leakage_correction_iterations": [0, 1, 2],
             "buffer_distance": [50, 100, 200, 300, 500, 700, 1000],
-            "erode_high_signal_zones": [False, True],
         },
         options=[
             RunHyperParameters(

@@ -2,7 +2,6 @@ from typing import Callable, Optional
 
 LAT_LON_PROJECTION = 4326
 EARTH_EQUAL_PROJECTION = 3857
-from geopandas import GeoDataFrame
 from numpy import (
     abs,
     argmin,
@@ -13,7 +12,6 @@ from numpy import (
     expand_dims,
     inf,
     max,
-    meshgrid,
     ndarray,
     newaxis,
     ones,
@@ -26,10 +24,9 @@ from numpy import (
     zeros,
 )
 from numpy.linalg import pinv
-from pandas import DataFrame
 from pyshtools import SHCoeffs
+from pyshtools.shclasses import DHRealGrid
 from scipy import interpolate
-from shapely.geometry import Point
 
 MASK_DECIMALS = 5
 
@@ -203,9 +200,8 @@ def make_grid(
     n_max: int,
 ) -> ndarray[float]:
     """ """
-    result = SHCoeffs.from_array(harmonics).expand(l_max=n_max, extend=True).T
-    print(result.shape)
-    return result
+    result: DHRealGrid = SHCoeffs.from_array(harmonics).expand(lmax=n_max, extend=True)
+    return result.data
 
 
 def closest_index(array: ndarray, value: float) -> int:

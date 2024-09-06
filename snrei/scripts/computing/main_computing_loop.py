@@ -385,7 +385,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         n_max=load_signal_hyper_parameters.n_max,
                         ddk_filter_level=load_signal_hyper_parameters.ddk_filter_level,
                         iterations=load_signal_hyper_parameters.leakage_correction_iterations,
-                        signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                        signal_threshold=load_signal_hyper_parameters.signal_threshold_past,
                     )
 
                     print("Leakage correction:", time() - t_2)

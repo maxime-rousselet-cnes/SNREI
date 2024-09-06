@@ -17,7 +17,7 @@ if __name__ == "__main__":
             "LIA": [False],
             "opposite_load_on_continents": [False],
             "leakage_correction_iterations": [1, 2, 0],
-            "buffer_distance": [50, 500],  # [50, 100, 200, 300, 500, 700, 1000],
+            "buffer_distance": [50, 100, 200, 300, 500, 700, 1000],
         },
         options=[
             RunHyperParameters(

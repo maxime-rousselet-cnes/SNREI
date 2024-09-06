@@ -198,6 +198,7 @@ class LoadSignalHyperParameters(HyperParameters):
     leakage_correction_iterations: int
     erode_high_signal_zones: bool  # Whether to consider as oceanic signal the high level signal areas or not during leakage correction.
     signal_threshold: float  # (mm/yr).
+    signal_threshold_past: float  # (mm/yr).
     ddk_filter_level: int
     ocean_mask: Optional[str]
     continents: Optional[str]

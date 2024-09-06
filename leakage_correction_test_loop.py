@@ -48,11 +48,9 @@ for buffer_distance in d:
         )
     ]
 
-    harmonics_2_0 = leakage_correction(
-        frequencial_harmonic_load_signal_initial=harmonics_1_0,
-        frequencial_harmonic_geoid=harmonics_1_0,
-        frequencial_scale_factor=zeros(shape=(1)),
-        frequencial_harmonic_radial_displacement=harmonics_1_0,
+    harmonics_2 = leakage_correction(
+        harmonic_load_signal=harmonics_1,
+        right_hand_side=harmonics_1,
         ocean_land_mask=ocean_land_mask,
         ocean_land_buffered_mask=ocean_land_buffered_mask,
         latitudes=latitudes,
@@ -62,7 +60,6 @@ for buffer_distance in d:
         signal_threshold=signal_threshold,
     )
 
-    harmonics_2 = harmonics_2_0[:, :, :, 0].real
     m += [
         mean_on_mask(
             signal_threshold=signal_threshold_for_mean,
@@ -73,11 +70,9 @@ for buffer_distance in d:
         )
     ]
 
-    harmonics_3_0 = leakage_correction(
-        frequencial_harmonic_load_signal_initial=harmonics_1_0,
-        frequencial_harmonic_geoid=harmonics_1_0,
-        frequencial_scale_factor=zeros(shape=(1)),
-        frequencial_harmonic_radial_displacement=harmonics_1_0,
+    harmonics_3 = leakage_correction(
+        harmonic_load_signal=harmonics_1,
+        right_hand_side=harmonics_1,
         ocean_land_mask=ocean_land_mask,
         ocean_land_buffered_mask=ocean_land_buffered_mask,
         latitudes=latitudes,
@@ -87,7 +82,6 @@ for buffer_distance in d:
         signal_threshold=signal_threshold,
     )
 
-    harmonics_3 = harmonics_3_0[:, :, :, 0].real
     n += [
         mean_on_mask(
             signal_threshold=signal_threshold_for_mean,

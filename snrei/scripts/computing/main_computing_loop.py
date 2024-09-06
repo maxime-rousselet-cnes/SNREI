@@ -360,23 +360,32 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     print("Degree one inversion:", time() - t_2)
                     t_2 = time()
 
+                    # Prepares arrays.
+                    harmonic_load_signal_step_2_past_trends = compute_harmonic_signal_trends(
+                        signal_dates=signal_dates,
+                        load_signal_hyper_parameters=load_signal_hyper_parameters,
+                        frequencial_harmonic_signal=frequencial_harmonic_load_signal_step_2,
+                        recent_trend=False,
+                    )
+                    frequencial_right_hand_side = frequencial_harmonic_geoid - frequencial_harmonic_radial_displacement - frequencial_scale_factor
+                    right_hand_side_past_trends = compute_harmonic_signal_trends(
+                        signal_dates=signal_dates,
+                        load_signal_hyper_parameters=load_signal_hyper_parameters,
+                        frequencial_harmonic_signal=frequencial_right_hand_side,
+                        recent_trend=False,
+                    )
+
                     # Leakage correction.
-                    frequencial_harmonic_load_signal_step_3 = (
-                        frequencial_harmonic_load_signal_step_2
-                        if load_signal_hyper_parameters.leakage_correction_iterations == 0
-                        else leakage_correction(
-                            frequencial_harmonic_load_signal_initial=frequencial_harmonic_load_signal_step_2,
-                            frequencial_scale_factor=frequencial_scale_factor,
-                            frequencial_harmonic_geoid=frequencial_harmonic_geoid,
-                            frequencial_harmonic_radial_displacement=frequencial_harmonic_radial_displacement,
-                            ocean_land_mask=ocean_land_mask,
-                            ocean_land_buffered_mask=ocean_land_buffered_mask,
-                            latitudes=latitudes,
-                            iterations=load_signal_hyper_parameters.leakage_correction_iterations,
-                            ddk_filter_level=load_signal_hyper_parameters.ddk_filter_level,
-                            n_max=load_signal_hyper_parameters.n_max,
-                            signal_threshold=load_signal_hyper_parameters.signal_threshold,
-                        )
+                    harmonic_load_signal_step_3_past_trends = leakage_correction(  # Past trend leakage correction.
+                        harmonic_load_signal=harmonic_load_signal_step_2_past_trends,
+                        right_hand_side=right_hand_side_past_trends,
+                        ocean_land_mask=ocean_land_mask,
+                        ocean_land_buffered_mask=ocean_land_buffered_mask,
+                        latitudes=latitudes,
+                        n_max=load_signal_hyper_parameters.n_max,
+                        ddk_filter_level=load_signal_hyper_parameters.ddk_filter_level,
+                        iterations=load_signal_hyper_parameters.leakage_correction_iterations,
+                        signal_threshold=load_signal_hyper_parameters.signal_threshold,
                     )
 
                     print("Leakage correction:", time() - t_2)
@@ -387,14 +396,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         mask=ocean_land_buffered_mask,
                         latitudes=latitudes,
                         n_max=load_signal_hyper_parameters.n_max,
-                        harmonics=compute_harmonic_signal_trends(
-                            signal_dates=signal_dates,
-                            load_signal_hyper_parameters=load_signal_hyper_parameters,
-                            frequencial_harmonic_signal=frequencial_harmonic_load_signal_step_3,
-                            recent_trend=False,
-                        ),
+                        harmonics=harmonic_load_signal_step_3_past_trends,
                     )
-                    print(past_trend - target_past_trend)
+                    print("past trend: ", past_trend, " / ", target_past_trend)
                     print("Iteration process:", time() - t_1)
 
                 # Computes trends.
@@ -430,12 +434,23 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 )
 
                 # After leakage correction.
-
-                # Leakage correction.
-                harmonic_load_signal_step_3_trends = compute_harmonic_signal_trends(
+                right_hand_side_trends = compute_harmonic_signal_trends(
                     signal_dates=signal_dates,
                     load_signal_hyper_parameters=load_signal_hyper_parameters,
-                    frequencial_harmonic_signal=frequencial_harmonic_load_signal_step_3,
+                    frequencial_harmonic_signal=frequencial_right_hand_side,
+                )
+
+                # Leakage correction.
+                harmonic_load_signal_step_3_trends = leakage_correction(  # Recent trend leakage correction.
+                    harmonic_load_signal=harmonic_load_signal_step_2_trends,
+                    right_hand_side=right_hand_side_trends,
+                    ocean_land_mask=ocean_land_mask,
+                    ocean_land_buffered_mask=ocean_land_buffered_mask,
+                    latitudes=latitudes,
+                    n_max=load_signal_hyper_parameters.n_max,
+                    ddk_filter_level=load_signal_hyper_parameters.ddk_filter_level,
+                    iterations=load_signal_hyper_parameters.leakage_correction_iterations,
+                    signal_threshold=load_signal_hyper_parameters.signal_threshold,
                 )
 
                 ocean_mean_step_3 = mean_on_mask(

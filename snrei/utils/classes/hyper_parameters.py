@@ -197,7 +197,7 @@ class LoadSignalHyperParameters(HyperParameters):
     renormalize_recent_trend: bool  # Wether to rescale recent period trends on GRACE ocean mean trend.
     leakage_correction_iterations: int
     erode_high_signal_zones: bool  # Whether to consider as oceanic signal the high level signal areas or not during leakage correction.
-    signal_threshold: float  # (Unitless).
+    signal_threshold: float  # (mm/yr).
     ddk_filter_level: int
     ocean_mask: Optional[str]
     continents: Optional[str]

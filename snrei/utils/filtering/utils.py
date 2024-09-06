@@ -33,12 +33,12 @@ def map_from_collection_SH_data(
     return make_grid(harmonics=a, n_max=n_max)
 
 
-def leakage_correction_iterations_function(
+def leakage_correction(
     harmonic_load_signal: ndarray[complex],  # (2, n_max + 1, n_max + 1) - shaped.
     right_hand_side: ndarray[complex],  # (2, n_max + 1, n_max + 1) - shaped.
+    ocean_land_mask: ndarray[float],  # (2 * (n_max + 1) + 1, 4 * (n_max + 1) + 1) - shaped.
     ocean_land_buffered_mask: ndarray[float],
     latitudes: ndarray[float],
-    ocean_mask: ndarray[float],  # (2 * (n_max + 1) + 1, 4 * (n_max + 1) + 1) - shaped.
     n_max: int,
     ddk_filter_level: int,
     iterations: int,
@@ -73,11 +73,11 @@ def leakage_correction_iterations_function(
 
     # Iterates a leakage correction procedure as many times as asked for.
     for _ in range(iterations):
-        mask_non_oceanic_signal = ocean_mask * (abs(spatial_load_signal) > signal_threshold * abs(ocean_true_level)) + (1 - ocean_mask)
+        mask_non_oceanic_signal = ocean_land_mask * (abs(spatial_load_signal) > signal_threshold * abs(ocean_true_level)) + (1 - ocean_land_mask)
 
         # Leakage input.
         EWH_2_prime: ndarray[complex] = ocean_true_level * (1 - mask_non_oceanic_signal) + spatial_load_signal * mask_non_oceanic_signal
-        EWH_2_third: ndarray[complex] = ocean_true_level * (1 - mask_non_oceanic_signal) + spatial_load_signal * (1 - ocean_mask)
+        EWH_2_third: ndarray[complex] = ocean_true_level * (1 - mask_non_oceanic_signal) + spatial_load_signal * (1 - ocean_land_mask)
 
         # Computes continental leakage on oceans.
         EWH_2_second: ndarray[complex] = map_from_collection_SH_data(
@@ -102,53 +102,10 @@ def leakage_correction_iterations_function(
 
         # Applies correction.
         differential_term: ndarray[complex] = EWH_2_second - EWH_2_third
-        spatial_load_signal += differential_term * (1 - ocean_mask) - differential_term * ocean_mask
+        spatial_load_signal += differential_term * (1 - ocean_land_mask) - differential_term * ocean_land_mask
 
     # Gets the result back in spherical harmonics domain.
     return (
         map_sampling(map=spatial_load_signal.real, n_max=n_max, harmonic_domain=True)[0]
         + 1.0j * map_sampling(map=spatial_load_signal.imag, n_max=n_max, harmonic_domain=True)[0]
     )
-
-
-def leakage_correction(
-    frequencial_harmonic_load_signal_initial: ndarray[complex],
-    frequencial_scale_factor: ndarray[complex],
-    frequencial_harmonic_geoid: ndarray[complex],
-    frequencial_harmonic_radial_displacement: ndarray[complex],
-    ocean_land_mask: ndarray[float],
-    ocean_land_buffered_mask: ndarray[float],
-    latitudes: ndarray[float],
-    iterations: int,
-    ddk_filter_level: int,
-    n_max: int,
-    signal_threshold: float,
-) -> ndarray[complex]:
-    """
-    Performs a correction for continental data leak on oceans and ocean data leak on continents.
-    Iterates on frequencies and asked iterations for leakage correction.
-    Returns data corrected from leakage.
-    """
-
-    # Prepares arrays.
-    frequencial_right_hand_side = frequencial_harmonic_geoid - frequencial_harmonic_radial_displacement - frequencial_scale_factor
-
-    # Prepares arguments for parallel processing.
-    args = [
-        (
-            frequencial_harmonic_load_signal_initial[:, :, :, i_frequency],
-            frequencial_right_hand_side[:, :, :, i_frequency],
-            ocean_land_buffered_mask,
-            latitudes,
-            ocean_land_mask,
-            n_max,
-            ddk_filter_level,
-            iterations,
-            signal_threshold,
-        )
-        for i_frequency in range(len(frequencial_scale_factor))
-    ]
-
-    # Uses multiprocessing to parallelize the loop over frequencies.
-    with Pool() as p:
-        return array(object=p.starmap(leakage_correction_iterations_function, args)).transpose((1, 2, 3, 0))

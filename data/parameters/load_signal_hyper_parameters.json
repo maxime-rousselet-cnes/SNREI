@@ -18,7 +18,7 @@
     "polar_tide_correction": true,
     "renormalize_recent_trend": true,
     "leakage_correction_iterations": 1,
-    "signal_threshold": 4,
+    "signal_threshold": 8,
     "erode_high_signal_zones": true,
     "ddk_filter_level": 5,
     "ocean_mask": "IMERG_land_sea_mask.nc",

@@ -4,7 +4,7 @@ from cartopy.crs import Robinson
 from cartopy.feature import NaturalEarthFeature
 from cartopy.mpl.geoaxes import GeoAxes
 from matplotlib.pyplot import figure, show
-from numpy import linspace, ndarray, zeros
+from numpy import ndarray, zeros
 
 from ...functions import mean_on_mask
 from ...utils import (
@@ -82,7 +82,7 @@ def generate_load_signal_components_figure(
     ) = build_elastic_load_signal_components(load_signal_hyper_parameters=load_signal_hyper_parameters)
 
     # Figure's configuration.
-    fig = figure(layout="compressed")
+    fig = figure(layout="compressed", figsize=(17, 15))
     row_number = len(rows)
 
     # Loops on all plots to generate.
@@ -97,7 +97,7 @@ def generate_load_signal_components_figure(
                 row_number,
                 3 if difference else 2,
                 (3 if difference else 2) * i_row + i_column + 1,
-                projection=Robinson(central_longitude=180),
+                projection=Robinson(central_longitude=0),
             )
             contour = natural_projection(
                 ax=current_ax,
@@ -130,10 +130,10 @@ def generate_load_signal_components_figure(
                 current_ax.add_feature(NaturalEarthFeature("physical", "land", "50m", edgecolor="face", facecolor="grey"))
             # Eventually memorizes the contour for scale.
             if column == "anelastic":
-                cbar = fig.colorbar(contour, ax=ax, orientation="horizontal", shrink=0.5, extend="both")
+                cbar = fig.colorbar(contour, ax=ax, orientation="vertical", shrink=0.9, extend="both")
                 cbar.set_label(label=row_name + ": " + str(row_components) + " (mm/yr)")
             elif column == "difference":
-                cbar = fig.colorbar(contour, ax=current_ax, orientation="horizontal", shrink=0.5, extend="both")
+                cbar = fig.colorbar(contour, ax=current_ax, orientation="vertical", shrink=0.8, extend="both")
                 cbar.set_label(label="(mm/yr)")
 
     show()

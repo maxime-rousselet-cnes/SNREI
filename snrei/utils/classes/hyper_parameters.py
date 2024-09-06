@@ -196,8 +196,8 @@ class LoadSignalHyperParameters(HyperParameters):
     polar_tide_correction: bool  # Whether to performs Wahr (2015) recommended polar tide correction.
     renormalize_recent_trend: bool  # Wether to rescale recent period trends on GRACE ocean mean trend.
     leakage_correction_iterations: int
-    signal_threshold: float  # (mm).
     erode_high_signal_zones: bool  # Whether to consider as oceanic signal the high level signal areas or not during leakage correction.
+    signal_threshold: float  # (Unitless).
     ddk_filter_level: int
     ocean_mask: Optional[str]
     continents: Optional[str]

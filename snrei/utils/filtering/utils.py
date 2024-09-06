@@ -73,32 +73,11 @@ def leakage_correction_iterations_function(
 
     # Iterates a leakage correction procedure as many times as asked for.
     for _ in range(iterations):
-        mask_non_oceanic_signal = ocean_mask * (abs(spatial_load_signal) > signal_threshold) + (1 - ocean_mask)
+        mask_non_oceanic_signal = ocean_mask * (abs(spatial_load_signal) > signal_threshold * abs(ocean_true_level)) + (1 - ocean_mask)
 
         # Leakage input.
-        EWH_2_prime: ndarray[complex] = (
-            map_sampling(
-                map=ocean_true_level.real * (1 - mask_non_oceanic_signal) + spatial_load_signal.real * mask_non_oceanic_signal,
-                n_max=n_max,
-            )[0]
-            + 1.0j
-            * map_sampling(
-                map=ocean_true_level.imag * (1 - mask_non_oceanic_signal) + spatial_load_signal.imag * mask_non_oceanic_signal,
-                n_max=n_max,
-            )[0]
-        )
-
-        EWH_2_third: ndarray[complex] = (
-            map_sampling(
-                map=ocean_true_level.real * (1 - mask_non_oceanic_signal) + spatial_load_signal.real * (1 - ocean_mask),
-                n_max=n_max,
-            )[0]
-            + 1.0j
-            * map_sampling(
-                map=ocean_true_level.imag * (1 - mask_non_oceanic_signal) + spatial_load_signal.imag * (1 - ocean_mask),
-                n_max=n_max,
-            )[0]
-        )
+        EWH_2_prime: ndarray[complex] = ocean_true_level * (1 - mask_non_oceanic_signal) + spatial_load_signal * mask_non_oceanic_signal
+        EWH_2_third: ndarray[complex] = ocean_true_level * (1 - mask_non_oceanic_signal) + spatial_load_signal * (1 - ocean_mask)
 
         # Computes continental leakage on oceans.
         EWH_2_second: ndarray[complex] = map_from_collection_SH_data(

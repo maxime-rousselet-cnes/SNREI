@@ -192,6 +192,7 @@ class LoadSignalHyperParameters(HyperParameters):
     LIA_end_date: int  # Usualy ~ 1400 (yr).
     LIA_time_years: int  # Usually ~ 100 (yr).
     LIA_amplitude_effect: float  # Usually ~ 0.25 (unitless).
+    wobble_filtering_frequency: float  # (yr^-1).
     # Parameters describing spacially-dependent load signal.
     load_spatial_behaviour_data: str  # For now: "GRACE" is managed only.
     opposite_load_on_continents: bool

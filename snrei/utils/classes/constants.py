@@ -1,10 +1,12 @@
 from typing import Optional
 
-from numpy import array
+from numpy import array, pi
 from pydantic import BaseModel
 
 from .hyper_parameters import RunHyperParameters
 from .paths import ModelPart
+
+MILLI_ARC_SECOND_TO_RADIANS = 2 * pi / (1000 * 60 * 60 * 360)
 
 # Earth mean rotation rate (rad.s⁻1).
 OMEGA = 7.2921150e-5

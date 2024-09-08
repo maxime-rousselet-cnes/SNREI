@@ -11,6 +11,7 @@
     "LIA_end_date": 1400,
     "LIA_time_years": 100,
     "LIA_amplitude_effect": 0.25,
+    "wobble_filtering_frequency": 0.763,
     "load_spatial_behaviour_data": "GRACE",
     "opposite_load_on_continents": false,
     "n_max": 89,

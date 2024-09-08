@@ -4,7 +4,7 @@ from cartopy.crs import Robinson
 from cartopy.feature import NaturalEarthFeature
 from cartopy.mpl.geoaxes import GeoAxes
 from matplotlib.pyplot import figure, show
-from numpy import ndarray, zeros
+from numpy import inf, ndarray, zeros
 
 from ...functions import mean_on_mask
 from ...utils import (
@@ -115,7 +115,7 @@ def generate_load_signal_components_figure(
                 + ": "
                 + str(
                     mean_on_mask(
-                        signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                        signal_threshold=inf,
                         mask=ocean_land_buffered_mask,
                         grid=get_grid(
                             harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components),

@@ -342,30 +342,6 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             / anelasticity_description.period_unit**2,
                             target_frequencies=signal_frequencies,
                         )
-                        print(
-                            compute_signal_trend(
-                                signal_dates=signal_dates, load_signal_hyper_parameters=load_signal_hyper_parameters, input_signal=C_2_1_PM
-                            )
-                        )
-                        print(
-                            compute_signal_trend(
-                                signal_dates=signal_dates, load_signal_hyper_parameters=load_signal_hyper_parameters, input_signal=S_2_1_PM
-                            )
-                        )
-                        print(
-                            compute_signal_trend(
-                                signal_dates=signal_dates,
-                                load_signal_hyper_parameters=load_signal_hyper_parameters,
-                                input_signal=frequencial_harmonic_load_signal_step_0[0, 2, 1, :],
-                            )
-                        )
-                        print(
-                            compute_signal_trend(
-                                signal_dates=signal_dates,
-                                load_signal_hyper_parameters=load_signal_hyper_parameters,
-                                input_signal=frequencial_harmonic_load_signal_step_0[1, 2, 1, :],
-                            )
-                        )
                         frequencial_harmonic_load_signal_step_0[0, 2, 1, :] -= C_2_1_PM
                         frequencial_harmonic_load_signal_step_0[1, 2, 1, :] -= S_2_1_PM
 

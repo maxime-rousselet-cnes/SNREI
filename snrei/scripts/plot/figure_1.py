@@ -63,7 +63,7 @@ def generate_figure_1(name: str = "TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER
 
     # Adds legends.
     cbar = fig.colorbar(contour, ax=ax2, orientation="vertical", shrink=0.9, extend="both")
-    cbar.set_label(label="GRACE/-FO Equivalent Water Height\ntrends 2002-2022 (mm/yr)")
+    cbar.set_label(label="GRACE/-FO Equivalent Water Height\ntrends 2003-2022 (mm/yr)")
     ax1.legend()
     ax2.legend()
     # tight_layout()

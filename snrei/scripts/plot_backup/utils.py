@@ -201,7 +201,7 @@ def plot_load_signal(
     plot.grid()
 
     ax = fig.add_subplot(gs[:, 1:], projection=crs.Robinson(central_longitude=180))
-    ax.set_title("GRACE's solution 2003-2023 trend")
+    ax.set_title("GRACE's solution 2003-2022 trend")
     ax.set_global()
     colorbar_values = get_colorbar_values(
         negative_saturated_color=negative_saturated_color,

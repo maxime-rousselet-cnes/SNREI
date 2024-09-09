@@ -1,6 +1,4 @@
-mu as fnt of depth/frequency plots rewrite
 attenuation functions plot rewrite
-profiles rewrite
 main notebooks & tutorial rewrite
 earthquake fit modif : independent parameters
 stat analysis main rewrite

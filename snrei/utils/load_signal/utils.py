@@ -18,7 +18,7 @@ def get_trend_dates(
     shift: bool = True,
 ) -> tuple[ndarray[float], ndarray[int]]:
     """
-    Returns trend indices and trend dates. Works for 1900-2003 trend or 2003 - 2023 depending on the boolean value.
+    Returns trend indices and trend dates. Works for 1900-2003 trend or 2003 - 2022 depending on the boolean value.
     """
 
     shifted_dates = (

@@ -556,6 +556,11 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         "ocean_mean_geoid_component": ocean_mean_geoid_component,  # (G).
                         "ocean_mean_radial_displacement_component": ocean_mean_radial_displacement_component,  # (R).
                         "ocean_mean_radial_residuals": ocean_mean_residuals,  # (L + D - (G - R)).
+                        "short-term": run_hyper_parameters.use_short_term_anelasticity,
+                        "long-term": run_hyper_parameters.use_long_term_anelasticity,
+                        "elasticity_model": elasticity_model_name,
+                        "long_term_anelasticity_model": long_term_anelasticity_model_name,
+                        "short_term_anelasticity_model": short_term_anelasticity_model_name,
                     }
                     | load_signal_hyper_parameters.__dict__,
                 )

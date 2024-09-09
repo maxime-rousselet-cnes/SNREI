@@ -51,8 +51,7 @@ def generate_figure_3(
         long_term_anelasticity_name=long_term_anelasticity_model_name,
         short_term_anelasticity_name=short_term_anelasticity_model_name,
     )
-    # Panel A.
-    # Iterates on viscosity models. A curb per loop.
+
     for i_period, period in enumerate(periods):
         for i_parameters, run_hyper_parameters in enumerate(run_hyper_parameters_list):
             integration = Integration(
@@ -108,7 +107,6 @@ def generate_figure_3(
                     layer.evaluate(x=layer.x_sup, variable="mu_real") + 1.0j * layer.evaluate(x=layer.x_sup, variable="mu_imag")
                 )
 
-    # Adds "A" and "B" labels in the top-left corners of each subplot inside boxes.
     for ax_real, ax_imag, panel_real, panel_imag, period in zip(
         [sub_axes[0] for sub_axes in axes], [sub_axes[1] for sub_axes in axes], ["A", "C", "E", "G"], ["B", "D", "F", "H"], periods
     ):

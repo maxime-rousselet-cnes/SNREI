@@ -10,7 +10,12 @@ if __name__ == "__main__":
             ModelPart.long_term_anelasticity: {"eta_m": {"ASTHENOSPHERE": [[3e19]]}},
             ModelPart.short_term_anelasticity: {"asymptotic_mu_ratio": {"MANTLE": [[0.1], [0.2]]}},
         },
-        load_signal_parameters={"case": ["mean", "lower", "upper"], "LIA": [True, False], "opposite_load_on_continents": [True, False]},
+        load_signal_parameters={
+            "case": ["mean", "lower", "upper"],
+            "LIA": [True, False],
+            "opposite_load_on_continents": [True, False],
+            "load_spatial_behaviour_file": ["TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER_ICE6G-D.csv", "CSR"],
+        },
         options=[
             RunHyperParameters(
                 use_long_term_anelasticity=True,

@@ -20,7 +20,7 @@
     "renormalize_recent_trend": true,
     "leakage_correction_iterations": 1,
     "signal_threshold": 8,
-    "signal_threshold_past": 5,
+    "signal_threshold_past": 8,
     "erode_high_signal_zones": true,
     "ddk_filter_level": 5,
     "ocean_mask": "IMERG_land_sea_mask.nc",

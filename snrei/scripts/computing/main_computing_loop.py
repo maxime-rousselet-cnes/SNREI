@@ -384,18 +384,10 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         frequencial_harmonic_signal=frequencial_harmonic_load_signal_step_2,
                         recent_trend=False,
                     )
-                    frequencial_right_hand_side = frequencial_harmonic_geoid - frequencial_harmonic_radial_displacement - frequencial_scale_factor
-                    right_hand_side_past_trends = compute_harmonic_signal_trends(
-                        signal_dates=signal_dates,
-                        load_signal_hyper_parameters=load_signal_hyper_parameters,
-                        frequencial_harmonic_signal=frequencial_right_hand_side,
-                        recent_trend=False,
-                    )
 
                     # Leakage correction.
                     harmonic_load_signal_step_3_past_trends = leakage_correction(  # Past trend leakage correction.
                         harmonic_load_signal=harmonic_load_signal_step_2_past_trends,
-                        right_hand_side=right_hand_side_past_trends,
                         ocean_land_mask=ocean_land_mask,
                         ocean_land_buffered_mask=ocean_land_buffered_mask,
                         latitudes=latitudes,
@@ -465,16 +457,10 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 )
 
                 # After leakage correction.
-                right_hand_side_trends = compute_harmonic_signal_trends(
-                    signal_dates=signal_dates,
-                    load_signal_hyper_parameters=load_signal_hyper_parameters,
-                    frequencial_harmonic_signal=frequencial_right_hand_side,
-                )
 
                 # Leakage correction.
                 harmonic_load_signal_step_3_trends = leakage_correction(  # Recent trend leakage correction.
                     harmonic_load_signal=harmonic_load_signal_step_2_trends,
-                    right_hand_side=right_hand_side_trends,
                     ocean_land_mask=ocean_land_mask,
                     ocean_land_buffered_mask=ocean_land_buffered_mask,
                     latitudes=latitudes,

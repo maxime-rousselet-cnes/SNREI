@@ -9,7 +9,7 @@ generate_load_signal_components_figure(
     anelastic_load_signal_id="2",
     rows=[
         ("step_2", None, 50.0, 5.0),
-        ("step_3", None, 50.0, 5.0),
+        ("step_3", "C_1_0 C_1_1 S_1_1", 50.0, 5.0),
     ],
 )
 

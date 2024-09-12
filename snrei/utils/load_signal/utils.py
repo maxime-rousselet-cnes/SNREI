@@ -8,7 +8,7 @@ from shapely.geometry import Point
 
 from ...functions import EARTH_EQUAL_PROJECTION, LAT_LON_PROJECTION, map_normalizing, mean_on_mask, signal_trend, surface_ponderation
 from ..classes import LoadSignalHyperParameters, load_load_signal_hyper_parameters
-from ..data import extract_GRACE_data, extract_temporal_load_signal, get_continents, get_ocean_mask, map_sampling
+from ..data import RECTANGLES, erase_lake, extract_GRACE_data, extract_temporal_load_signal, get_continents, get_ocean_mask, map_sampling
 
 
 def get_trend_dates(
@@ -203,17 +203,17 @@ def build_elastic_load_signal_components(
 
     # Gets harmonic component.
     if load_signal_hyper_parameters.load_spatial_behaviour_data == "GRACE":
-        map, latitudes, longitudes = extract_GRACE_data(
+        map_0, latitudes, longitudes = extract_GRACE_data(
             name=load_signal_hyper_parameters.load_spatial_behaviour_file,
         )
     else:  # Considered as ocean/land repartition only.
-        map, latitudes, longitudes = get_ocean_mask(
+        map_0, latitudes, longitudes = get_ocean_mask(
             name=load_signal_hyper_parameters.load_spatial_behaviour_file,
             n_max=load_signal_hyper_parameters.n_max,
         )
-        map = map_normalizing(map=map)
+        map_0 = map_normalizing(map=map_0)
 
-    map, n_max = map_sampling(map=map, n_max=load_signal_hyper_parameters.n_max)
+    map, n_max = map_sampling(map=map_0, n_max=load_signal_hyper_parameters.n_max)
 
     if n_max != load_signal_hyper_parameters.n_max:
         latitudes = linspace(90, -90, 2 * (n_max + 1) + 1)
@@ -234,13 +234,7 @@ def build_elastic_load_signal_components(
     # Loads the continents with opposite value, such that global mean is null.
     if load_signal_hyper_parameters.opposite_load_on_continents:
         map = map * ocean_land_mask - (1 - ocean_land_mask) * (
-            mean_on_mask(
-                signal_threshold=inf,
-                grid=map,
-                latitudes=latitudes,
-                mask=ocean_land_mask,
-                n_max=n_max,
-            )
+            mean_on_mask(grid=map, latitudes=latitudes, mask=ocean_land_mask, n_max=n_max, signal_threshold=inf)
             * sum(surface_ponderation(mask=ocean_land_mask, latitudes=latitudes).flatten())
             / sum(surface_ponderation(mask=(1 - ocean_land_mask), latitudes=latitudes).flatten())
         )

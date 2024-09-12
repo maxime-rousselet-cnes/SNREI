@@ -43,8 +43,14 @@ def generate_figure_1(name: str = "TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER
     )
 
     # Panel B.
-    contour = natural_projection(
-        ax=ax2, saturation_threshold=50.0, map=map, latitudes=latitudes, longitudes=longitudes, n_max=load_signal_hyper_parameters.n_max
+    contour, mask = natural_projection(
+        ax=ax2,
+        saturation_threshold=50.0,
+        map=map,
+        latitudes=latitudes,
+        longitudes=longitudes,
+        n_max=load_signal_hyper_parameters.n_max,
+        signal_threshold=load_signal_hyper_parameters.signal_threshold,
     )
 
     # Add "A" and "B" labels in the top-left corners of each subplot inside boxes.

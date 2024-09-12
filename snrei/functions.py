@@ -173,14 +173,14 @@ def surface_ponderation(mask: ndarray[float], latitudes: ndarray[float]) -> ndar
     """
     Gets the surface of a (latitude * longitude) array.
     """
-    return mask * expand_dims(a=cos(latitudes * pi / 180), axis=1)
+    return mask * expand_dims(a=cos(latitudes * pi / 180.0), axis=1)
 
 
 def mean_on_mask(
-    signal_threshold: float,
     mask: ndarray[float],
     latitudes: ndarray[float],
     n_max: int,
+    signal_threshold: float,
     harmonics: Optional[ndarray[float]] = None,
     grid: Optional[ndarray[float]] = None,
 ) -> float:
@@ -189,10 +189,9 @@ def mean_on_mask(
     """
     if grid is None:
         grid: ndarray[float] = make_grid(harmonics=harmonics, n_max=n_max)
-    mask = mask * (abs(grid) < signal_threshold)
-    surface = surface_ponderation(mask=mask, latitudes=latitudes)
+    surface = surface_ponderation(mask=mask * (abs(grid) < signal_threshold), latitudes=latitudes)
     weighted_values = grid * surface
-    return round(a=sum(weighted_values.flatten()) / sum(surface.flatten()), decimals=MASK_DECIMALS)
+    return round(a=sum((weighted_values).flatten()) / sum(surface.flatten()), decimals=MASK_DECIMALS)
 
 
 def make_grid(
@@ -200,7 +199,7 @@ def make_grid(
     n_max: int,
 ) -> ndarray[float]:
     """ """
-    result: DHRealGrid = SHCoeffs.from_array(harmonics).expand(lmax=n_max, extend=True)
+    result: DHRealGrid = SHCoeffs.from_array(harmonics, lmax=n_max).expand(extend=True, lmax=n_max)
     return result.data
 
 

@@ -99,14 +99,15 @@ def generate_load_signal_components_figure(
                 (3 if difference else 2) * i_row + i_column + 1,
                 projection=Robinson(central_longitude=0),
             )
-            contour = natural_projection(
+            contour, mask = natural_projection(
                 ax=current_ax,
                 saturation_threshold=difference_saturation_threshold if column == "difference" else row_saturation_threshold,
                 latitudes=latitudes,
                 longitudes=longitudes,
                 harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components),
-                mask=ocean_land_buffered_mask if not continents else 1.0,
+                mask=1.0 if continents else ocean_land_buffered_mask,
                 n_max=load_signal_hyper_parameters.n_max,
+                signal_threshold=load_signal_hyper_parameters.signal_threshold,
             )
             ax += [current_ax]
             # Adds layout.
@@ -115,14 +116,14 @@ def generate_load_signal_components_figure(
                 + ": "
                 + str(
                     mean_on_mask(
-                        signal_threshold=inf,
-                        mask=ocean_land_buffered_mask,
+                        mask=mask,
                         grid=get_grid(
                             harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components),
                             n_max=load_signal_hyper_parameters.n_max,
                         ),
                         latitudes=latitudes,
                         n_max=load_signal_hyper_parameters.n_max,
+                        signal_threshold=float("inf"),
                     ),
                 )
             )

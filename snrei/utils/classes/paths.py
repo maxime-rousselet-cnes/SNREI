@@ -26,18 +26,14 @@ masks_data_path = data_path.joinpath("masks")
 
 # Models.
 models_base_path = data_path.joinpath("models")
-models_path: dict[ModelPart, Path] = {
-    model_part: models_base_path.joinpath(model_part.name) for model_part in ModelPart
-}
+models_path: dict[ModelPart, Path] = {model_part: models_base_path.joinpath(model_part.name) for model_part in ModelPart}
 
 # Parameters.
 parameters_path = data_path.joinpath("parameters")
 
 # Descriptions.
 descriptions_base_path = data_path.joinpath("descriptions")
-descriptions_path: dict[ModelPart, Path] = {
-    model_part: descriptions_base_path.joinpath(model_part.name) for model_part in ModelPart
-}
+descriptions_path: dict[ModelPart, Path] = {model_part: descriptions_base_path.joinpath(model_part.name) for model_part in ModelPart}
 anelasticity_descriptions_path = data_path.joinpath("descriptions").joinpath("anelasticity_descriptions")
 
 
@@ -45,7 +41,6 @@ anelasticity_descriptions_path = data_path.joinpath("descriptions").joinpath("an
 dates_path = results_path.joinpath("dates")
 frequencies_path = results_path.joinpath("frequencies")
 elastic_load_signal_trends_path = results_path.joinpath("elastic_load_signal_trends")
-computed_masks_path = results_path.joinpath("masks")
 
 # Love numbers
 Love_numbers_path = results_path.joinpath("Love_numbers")

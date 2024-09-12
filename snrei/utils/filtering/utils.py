@@ -36,7 +36,6 @@ def map_from_collection_SH_data(
 def leakage_correction(
     harmonic_load_signal: ndarray[float],  # (2, n_max + 1, n_max + 1) - shaped.
     ocean_land_mask: ndarray[float],  # (2 * (n_max + 1) + 1, 4 * (n_max + 1) + 1) - shaped.
-    ocean_land_buffered_mask: ndarray[float],
     latitudes: ndarray[float],
     n_max: int,
     ddk_filter_level: int,
@@ -49,15 +48,15 @@ def leakage_correction(
 
     # Oceanic true level.
     ocean_true_level: float = mean_on_mask(
-        signal_threshold=inf,
-        mask=ocean_land_buffered_mask,
+        mask=ocean_land_mask,
         latitudes=latitudes,
         n_max=n_max,
         grid=spatial_load_signal,
+        signal_threshold=signal_threshold,
     )
     # Iterates a leakage correction procedure as many times as asked for.
     for _ in range(iterations):
-        mask_non_oceanic_signal = ocean_land_mask * (abs(spatial_load_signal) > signal_threshold * abs(ocean_true_level)) + (1 - ocean_land_mask)
+        mask_non_oceanic_signal = ocean_land_mask * (abs(spatial_load_signal) > signal_threshold) + (1 - ocean_land_mask)
 
         # Leakage input.
         EWH_2_prime: ndarray[float] = ocean_true_level * (1 - mask_non_oceanic_signal) + spatial_load_signal * mask_non_oceanic_signal

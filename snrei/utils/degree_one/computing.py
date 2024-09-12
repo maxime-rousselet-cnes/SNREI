@@ -37,10 +37,12 @@ def frequencial_harmonic_component(
 
 def degree_one_inversion(
     anelastic_frequencial_harmonic_load_signal: ndarray[complex],
+    anelastic_harmonic_load_signal_trends: ndarray[float],
     Love_numbers: Result,
-    ocean_land_buffered_mask: ndarray[float],
+    ocean_land_mask: ndarray[float],
     latitudes: ndarray[float],
     n_max: int,
+    signal_threshold: float,
 ) -> tuple[ndarray[complex], ndarray[complex], ndarray[complex], ndarray[complex]]:
     """"""
     n_frequencies = anelastic_frequencial_harmonic_load_signal.shape[-1]
@@ -49,8 +51,9 @@ def degree_one_inversion(
         dtype=complex,
     )
     scale_factor = zeros(shape=(n_frequencies), dtype=complex)
-    ocean_mask_indices = ocean_land_buffered_mask.flatten().astype(dtype=bool)
-    least_square_weights = sqrt(surface_ponderation(mask=ocean_land_buffered_mask, latitudes=latitudes).flatten()[ocean_mask_indices])
+    mask = ocean_land_mask * (abs(make_grid(harmonics=anelastic_harmonic_load_signal_trends, n_max=n_max)) < signal_threshold)
+    ocean_mask_indices = mask.flatten().astype(dtype=bool)
+    least_square_weights = sqrt(surface_ponderation(mask=mask, latitudes=latitudes).flatten()[ocean_mask_indices])
 
     frequencial_harmonic_geoid = frequencial_harmonic_component(
         anelastic_frequencial_harmonic_load_signal=anelastic_frequencial_harmonic_load_signal,

@@ -107,7 +107,7 @@ def generate_load_signal_components_figure(
                 harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components),
                 mask=1.0 if continents else ocean_land_buffered_mask,
                 n_max=load_signal_hyper_parameters.n_max,
-                signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                signal_threshold=load_signal_hyper_parameters.mean_signal_threshold,
             )
             ax += [current_ax]
             # Adds layout.
@@ -123,7 +123,7 @@ def generate_load_signal_components_figure(
                         ),
                         latitudes=latitudes,
                         n_max=load_signal_hyper_parameters.n_max,
-                        signal_threshold=float("inf"),
+                        signal_threshold=load_signal_hyper_parameters.mean_signal_threshold,
                     ),
                 )
             )

@@ -120,6 +120,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
 
         t_0 = time()
 
+        load_signal_hyper_parameters.mean_signal_threshold = float(load_signal_hyper_parameters.mean_signal_threshold)
+        load_signal_hyper_parameters.mean_signal_threshold = float(load_signal_hyper_parameters.mean_signal_threshold_past)
+
         # Builds the signal.
         (
             load_signal_hyper_parameters.n_max,
@@ -385,7 +388,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         n_max=load_signal_hyper_parameters.n_max,
                         ddk_filter_level=load_signal_hyper_parameters.ddk_filter_level,
                         iterations=load_signal_hyper_parameters.leakage_correction_iterations,
-                        signal_threshold=load_signal_hyper_parameters.signal_threshold_past,
+                        signal_threshold=load_signal_hyper_parameters.mean_signal_threshold_past,
                     )
 
                     print("Leakage correction:", time() - t_2)
@@ -396,7 +399,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         latitudes=latitudes,
                         n_max=load_signal_hyper_parameters.n_max,
                         harmonics=harmonic_load_signal_step_3_past_trends,
-                        signal_threshold=load_signal_hyper_parameters.signal_threshold_past,
+                        signal_threshold=load_signal_hyper_parameters.mean_signal_threshold,
                     )
                     print("past trend: ", past_trend, " / ", target_past_trend)
                     print("Iteration process:", time() - t_1)
@@ -414,7 +417,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     latitudes=latitudes,
                     n_max=load_signal_hyper_parameters.n_max,
                     harmonics=harmonic_load_signal_initial_trends,
-                    signal_threshold=float("inf"),
+                    signal_threshold=load_signal_hyper_parameters.mean_signal_threshold,
                 )
 
                 # After correction of polar tide terms.
@@ -428,7 +431,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     latitudes=latitudes,
                     n_max=load_signal_hyper_parameters.n_max,
                     harmonics=harmonic_load_signal_step_0_trends,
-                    signal_threshold=float("inf"),
+                    signal_threshold=load_signal_hyper_parameters.mean_signal_threshold,
                 )
 
                 # After frequencial filering by Love number fractions.
@@ -437,7 +440,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     latitudes=latitudes,
                     n_max=load_signal_hyper_parameters.n_max,
                     harmonics=harmonic_load_signal_step_1_trends,
-                    signal_threshold=float("inf"),
+                    signal_threshold=load_signal_hyper_parameters.mean_signal_threshold,
                 )
 
                 # After degree one inversion.
@@ -451,7 +454,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     latitudes=latitudes,
                     n_max=load_signal_hyper_parameters.n_max,
                     harmonics=harmonic_load_signal_step_2_trends,
-                    signal_threshold=float("inf"),
+                    signal_threshold=load_signal_hyper_parameters.mean_signal_threshold,
                 )
 
                 # After leakage correction.
@@ -464,7 +467,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     n_max=load_signal_hyper_parameters.n_max,
                     ddk_filter_level=load_signal_hyper_parameters.ddk_filter_level,
                     iterations=load_signal_hyper_parameters.leakage_correction_iterations,
-                    signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                    signal_threshold=load_signal_hyper_parameters.mean_signal_threshold,
                 )
 
                 ocean_mean_step_3 = mean_on_mask(
@@ -472,7 +475,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     latitudes=latitudes,
                     n_max=load_signal_hyper_parameters.n_max,
                     harmonics=harmonic_load_signal_step_3_trends,
-                    signal_threshold=float("inf"),
+                    signal_threshold=load_signal_hyper_parameters.mean_signal_threshold,
                 )
 
                 # Inversion components.
@@ -495,7 +498,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     latitudes=latitudes,
                     n_max=load_signal_hyper_parameters.n_max,
                     harmonics=harmonic_geoid_trends,
-                    signal_threshold=float("inf"),
+                    signal_threshold=load_signal_hyper_parameters.mean_signal_threshold,
                 )
 
                 # Radial displacement.
@@ -509,7 +512,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     latitudes=latitudes,
                     n_max=load_signal_hyper_parameters.n_max,
                     harmonics=harmonic_radial_displacement_trends,
-                    signal_threshold=float("inf"),
+                    signal_threshold=load_signal_hyper_parameters.mean_signal_threshold,
                 )
 
                 # Computes residuals.
@@ -530,7 +533,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     latitudes=latitudes,
                     n_max=load_signal_hyper_parameters.n_max,
                     harmonics=harmonic_residual_trends,
-                    signal_threshold=float("inf"),
+                    signal_threshold=load_signal_hyper_parameters.mean_signal_threshold,
                 )
 
                 # Saves.

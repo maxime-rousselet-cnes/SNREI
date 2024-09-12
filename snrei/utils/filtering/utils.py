@@ -41,6 +41,7 @@ def leakage_correction(
     ddk_filter_level: int,
     iterations: int,
     signal_threshold: float,
+    mean_signal_threshold: float,
 ) -> ndarray[complex]:
     """"""
     # Gets the input in spatial domain.
@@ -52,7 +53,7 @@ def leakage_correction(
         latitudes=latitudes,
         n_max=n_max,
         grid=spatial_load_signal,
-        signal_threshold=signal_threshold,
+        signal_threshold=mean_signal_threshold,
     )
     # Iterates a leakage correction procedure as many times as asked for.
     for _ in range(iterations):

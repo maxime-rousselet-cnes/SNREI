@@ -15,7 +15,7 @@ if __name__ == "__main__":
             # "LIA": [False, True],
             # "opposite_load_on_continents": [False, True],
             # "load_spatial_behaviour_file": ["TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER_ICE6G-D.csv"],
-            "buffer_distance": [50, 100, 150, 200, 300, 500, 700, 850, 1000],
+            "buffer_distance": [50, 100, 150, 200, 300, 500, 700, 750, 800, 850, 1000],
         },
         options=[
             RunHyperParameters(

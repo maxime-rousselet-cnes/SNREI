@@ -203,6 +203,8 @@ class LoadSignalHyperParameters(HyperParameters):
     leakage_correction_iterations: int
     signal_threshold: float  # (mm/yr).
     signal_threshold_past: float  # (mm/yr).
+    mean_signal_threshold: float  # (mm/yr).
+    mean_signal_threshold_past: float  # (mm/yr).
     ddk_filter_level: int
     ocean_mask: Optional[str]
     continents: Optional[str]

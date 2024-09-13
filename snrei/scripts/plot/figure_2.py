@@ -149,16 +149,18 @@ def generate_figure_2(
         ax.plot(
             layer.evaluate(x=x, variable="mu_0") * anelasticity_description.elasticity_unit,
             (1.0 - x) * anelasticity_description.radius_unit / 1e3,
-            color=(0.5, 0.5, 0.5),
+            color=COLORS[0],
             label="$\mu_0$" if k_layer == anelasticity_description.below_CMB_layers else None,
             linewidth=2,
+            linestyle="--",
         )
         first_value_current_layer = layer.evaluate(x=layer.x_inf, variable="mu_0") * anelasticity_description.elasticity_unit
         ax.plot(
             [last_value_previous_layer, first_value_current_layer],
             [(1.0 - layer.x_inf) * anelasticity_description.radius_unit / 1e3] * 2,
-            color=(0.5, 0.5, 0.5),
+            color=COLORS[0],
             linewidth=2,
+            linestyle="--",
         )
         last_value_previous_layer = layer.evaluate(x=layer.x_sup, variable="mu_0") * anelasticity_description.elasticity_unit
 

@@ -57,12 +57,15 @@ def generate_load_signal_components_figure(
     """
 
     # Gets results.
+    id_list = [elastic_load_signal_id, anelastic_load_signal_id]
     trend_harmonic_components_per_column: dict[tuple[str, Optional[str]], dict[str, ndarray]] = {
         column: {
-            (row_name, row_components): load_complex_array_from_binary(name=load_signal_id, path=harmonic_load_signal_trends_path.joinpath(row_name))
+            (row_name, row_components): load_complex_array_from_binary(
+                name=load_signal_id, path=harmonic_load_signal_trends_path.joinpath(row_name)
+            ).real
             for row_name, row_components, _, _ in rows
         }
-        for column, load_signal_id in zip(["elastic", "anelastic"], [elastic_load_signal_id, anelastic_load_signal_id])
+        for column, load_signal_id in zip(["elastic", "anelastic"], id_list)
     }
     if difference:
         trend_harmonic_components_per_column["difference"] = {
@@ -99,13 +102,36 @@ def generate_load_signal_components_figure(
                 (3 if difference else 2) * i_row + i_column + 1,
                 projection=Robinson(central_longitude=0),
             )
+            from matplotlib.pyplot import imshow, show
+
             contour, mask = natural_projection(
                 ax=current_ax,
                 saturation_threshold=difference_saturation_threshold if column == "difference" else row_saturation_threshold,
                 latitudes=latitudes,
                 longitudes=longitudes,
                 harmonics=select_degrees(harmonics=trend_harmonic_components, row_name=row_name, row_components=row_components),
-                mask=1.0 if continents else ocean_land_buffered_mask,
+                mask=(
+                    1.0
+                    if continents
+                    else (
+                        ocean_land_buffered_mask
+                        if not ("residual" in row_name)
+                        else (
+                            ocean_land_buffered_mask
+                            * (
+                                load_signal_hyper_parameters.signal_threshold
+                                > abs(
+                                    get_grid(
+                                        harmonics=load_complex_array_from_binary(
+                                            name=id_list[i_column % 2], path=harmonic_load_signal_trends_path.joinpath("step_3")
+                                        ).real,
+                                        n_max=load_signal_hyper_parameters.n_max,
+                                    )
+                                )
+                            )
+                        )
+                    )
+                ),
                 n_max=load_signal_hyper_parameters.n_max,
                 signal_threshold=load_signal_hyper_parameters.mean_signal_threshold,
             )

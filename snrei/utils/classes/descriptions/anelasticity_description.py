@@ -1,6 +1,6 @@
 from typing import Optional
 
-from numpy import argsort, array, astype, inf, min, ndarray, round
+from numpy import array, inf, min, ndarray, round
 from scipy import interpolate
 
 from ...database import load_base_model

@@ -78,20 +78,22 @@ def natural_projection(
     Ensures that longitudes and data are wrapped correctly, and areas outside the mask are shaded in grey.
     """
 
+    spatial_result = map if map is not None else get_grid(harmonics=harmonics, n_max=n_max)
+    if mask is not None:
+        mask *= abs(spatial_result) < signal_threshold
+
     # Ensures longitudes are in the range [-180, 180].
     longitudes = where(longitudes > 180, longitudes - 360, longitudes)
 
     # Sorts the longitudes and corresponding data.
     sort_idx = flip(argsort(longitudes))
     longitudes = longitudes[sort_idx]
-    spatial_result = map if map is not None else get_grid(harmonics=harmonics, n_max=n_max)
     spatial_result = spatial_result[:, sort_idx]
 
     # Applies the mask: masks areas outside your region of interest.
     if mask is not None:
-        mask *= abs(spatial_result) < signal_threshold
-        mask = mask[:, sort_idx]
-        spatial_result = MaskedArray(spatial_result, mask=(mask == 0))
+        mask_sorted = mask[:, sort_idx]
+        spatial_result = MaskedArray(spatial_result, mask=(mask_sorted == 0))
 
     # Applies saturation threshold.
     limited_result = maximum(
@@ -111,11 +113,19 @@ def natural_projection(
     )
     contour.cmap.set_bad(color="grey")
     ax.coastlines()
-    gl = ax.gridlines(crs=PlateCarree(central_longitude=0), draw_labels=True, linewidth=2, color="gray", alpha=0.5, linestyle="--")
-    gl.yformatter = LATITUDE_FORMATTER
-    gl.xformatter = LONGITUDE_FORMATTER
+    gl = ax.gridlines(
+        crs=PlateCarree(central_longitude=0),
+        linewidth=2,
+        color="gray",
+        alpha=0.5,
+        linestyle="--",
+        yformatter=LATITUDE_FORMATTER,
+        xformatter=LONGITUDE_FORMATTER,
+    )
+    gl.bottom_labels = True
     gl.top_labels = False
-    gl.left_labels = False
     gl.xlines = False
+    gl.left_labels = True
+    gl.right_labels = False
 
     return contour, mask

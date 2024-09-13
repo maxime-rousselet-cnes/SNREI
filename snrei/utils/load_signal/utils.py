@@ -69,7 +69,7 @@ def build_elastic_load_signal_history(
     initial_load_signal: ndarray[float],
     load_signal_hyper_parameters: LoadSignalHyperParameters,
     elastic_past_trend: Optional[float] = None,  # (mm/yr).
-) -> tuple[ndarray[float], ndarray[float], ndarray[complex], float]:
+) -> tuple[ndarray[float], ndarray[float], ndarray[complex], float, float]:
     """
     Builds a unitless load signal history function suitable for Fourier analysis. It has zero mean value, antisymetry and no
     Gibbs effect.
@@ -91,6 +91,10 @@ def build_elastic_load_signal_history(
     past_trend = signal_trend(
         trend_dates=past_trend_dates,
         signal=initial_load_signal[past_trend_indices],
+    )[0]
+    recent_trend = signal_trend(
+        trend_dates=recent_trend_dates,
+        signal=initial_load_signal[recent_trend_indices],
     )[0]
     past_trend_ratio = (elastic_past_trend if not (elastic_past_trend is None) else past_trend) / past_trend
     load_signal = concatenate(
@@ -163,17 +167,16 @@ def build_elastic_load_signal_history(
     time_step = 2.0 * half_signal_period / n_signal
     frequencies = fftfreq(n=n_signal, d=time_step)
 
+    interpolated_time_signal = interpolate.splev(
+        x=signal_dates,
+        tck=interpolate.splrep(x=extended_dates, y=extended_time_serie, k=3),
+    )
     return (
         signal_dates,
         frequencies,
-        fft(
-            x=interpolate.splev(
-                x=signal_dates,
-                tck=interpolate.splrep(x=extended_dates, y=extended_time_serie, k=3),
-            )
-        )
-        / elastic_load_signal_recent_trend,  # Unitless signal.
+        fft(x=interpolated_time_signal) / elastic_load_signal_recent_trend,  # (yr) = (mm/(mm/yr)).
         past_trend,
+        recent_trend,
     )
 
 

@@ -135,11 +135,15 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             longitudes,
         ) = build_elastic_load_signal_components(load_signal_hyper_parameters=load_signal_hyper_parameters)
 
-        (signal_dates, signal_frequencies, _, target_past_trend) = build_elastic_load_signal_history(
+        (signal_dates, signal_frequencies, _, target_past_trend, recent_trend) = build_elastic_load_signal_history(
             initial_signal_dates=initial_signal_dates,
             initial_load_signal=initial_load_signal,
             load_signal_hyper_parameters=load_signal_hyper_parameters,
         )
+        trends_factor = target_past_trend / recent_trend
+        load_signal_hyper_parameters.signal_threshold_past = trends_factor * load_signal_hyper_parameters.signal_threshold
+        load_signal_hyper_parameters.mean_signal_threshold_past = trends_factor * load_signal_hyper_parameters.mean_signal_threshold
+        print(trends_factor)
 
         # Saves dates, frequencies, and load signal trends.
         elastic_load_signal_trends_id = generate_new_id(path=elastic_load_signal_trends_path)
@@ -301,7 +305,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     elastic_past_trend = elastic_past_trend * target_past_trend / past_trend
 
                     # Builds an elastic load history with given past trend.
-                    (signal_dates, _, elastic_unitless_load_signal, _) = build_elastic_load_signal_history(
+                    (signal_dates, _, elastic_unitless_load_signal, _, _) = build_elastic_load_signal_history(
                         initial_signal_dates=initial_signal_dates,
                         initial_load_signal=initial_load_signal,
                         load_signal_hyper_parameters=load_signal_hyper_parameters,
@@ -384,11 +388,13 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     harmonic_load_signal_step_3_past_trends = leakage_correction(  # Past trend leakage correction.
                         harmonic_load_signal=harmonic_load_signal_step_2_past_trends,
                         ocean_land_mask=ocean_land_mask,
+                        ocean_land_buffered_mask=ocean_land_buffered_mask,
                         latitudes=latitudes,
                         n_max=load_signal_hyper_parameters.n_max,
                         ddk_filter_level=load_signal_hyper_parameters.ddk_filter_level,
                         iterations=load_signal_hyper_parameters.leakage_correction_iterations,
-                        signal_threshold=load_signal_hyper_parameters.mean_signal_threshold_past,
+                        signal_threshold=load_signal_hyper_parameters.signal_threshold_past,
+                        mean_signal_threshold=load_signal_hyper_parameters.mean_signal_threshold_past,
                     )
 
                     print("Leakage correction:", time() - t_2)
@@ -399,7 +405,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         latitudes=latitudes,
                         n_max=load_signal_hyper_parameters.n_max,
                         harmonics=harmonic_load_signal_step_3_past_trends,
-                        signal_threshold=load_signal_hyper_parameters.mean_signal_threshold,
+                        signal_threshold=load_signal_hyper_parameters.mean_signal_threshold_past,
                     )
                     print("past trend: ", past_trend, " / ", target_past_trend)
                     print("Iteration process:", time() - t_1)
@@ -463,11 +469,13 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 harmonic_load_signal_step_3_trends = leakage_correction(  # Recent trend leakage correction.
                     harmonic_load_signal=harmonic_load_signal_step_2_trends,
                     ocean_land_mask=ocean_land_mask,
+                    ocean_land_buffered_mask=ocean_land_buffered_mask,
                     latitudes=latitudes,
                     n_max=load_signal_hyper_parameters.n_max,
                     ddk_filter_level=load_signal_hyper_parameters.ddk_filter_level,
                     iterations=load_signal_hyper_parameters.leakage_correction_iterations,
-                    signal_threshold=load_signal_hyper_parameters.mean_signal_threshold,
+                    signal_threshold=load_signal_hyper_parameters.signal_threshold,
+                    mean_signal_threshold=load_signal_hyper_parameters.mean_signal_threshold,
                 )
 
                 ocean_mean_step_3 = mean_on_mask(

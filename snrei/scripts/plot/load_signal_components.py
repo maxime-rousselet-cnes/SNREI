@@ -36,8 +36,8 @@ def select_degrees(harmonics: dict[str, ndarray[complex]], row_name: str, row_co
 def generate_load_signal_components_figure(
     load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
     rows: list[tuple[str, Optional[str], float]] = [
-        ("step_2", None, 50.0, 10.0),
-        ("step_3", None, 50.0, 10.0),
+        ("step_4", None, 50.0, 10.0),
+        ("step_5", None, 50.0, 10.0),
         # ("continental_leakage", None, 5.0),
         # ("oceanic_leakage", None, 5.0),
     ],  # Plot row names, components and their corresponding saturation thresholds

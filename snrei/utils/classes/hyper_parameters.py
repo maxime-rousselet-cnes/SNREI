@@ -158,15 +158,15 @@ class SaveParameters(HyperParameters):
     """
 
     # Initial.
-    initial: bool
-    # Anelastic correcting polatr tide coefficients.
-    step_0: bool
-    # Anelastic load signal computed after frequencial filtering by Love number fractions.
     step_1: bool
-    # Anelastic load signal computed after degree one inversion.
+    # Anelastic correcting polatr tide coefficients.
     step_2: bool
-    # Anelastic load signal computed after leakage corretion.
+    # Anelastic load signal computed after frequencial filtering by Love number fractions.
     step_3: bool
+    # Anelastic load signal computed after degree one inversion.
+    step_4: bool
+    # Anelastic load signal computed after leakage corretion.
+    step_5: bool
     # Three remaining components of degree one inversion equation: geoid height, radial displacement and residuals.
     inversion_components: bool
 

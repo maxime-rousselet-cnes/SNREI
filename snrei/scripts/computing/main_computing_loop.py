@@ -143,7 +143,6 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
         trends_factor = target_past_trend / recent_trend
         load_signal_hyper_parameters.signal_threshold_past = trends_factor * load_signal_hyper_parameters.signal_threshold
         load_signal_hyper_parameters.mean_signal_threshold_past = trends_factor * load_signal_hyper_parameters.mean_signal_threshold
-        print(trends_factor)
 
         # Saves dates, frequencies, and load signal trends.
         elastic_load_signal_trends_id = generate_new_id(path=elastic_load_signal_trends_path)

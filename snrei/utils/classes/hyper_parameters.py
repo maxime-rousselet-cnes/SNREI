@@ -180,9 +180,13 @@ class LoadSignalHyperParameters(HyperParameters):
     # Parameters describing the load signal.
     load_signal: str  # For now: "load_history" is managed only.
     pole_data: str  # (.csv) file path relative to data/pole_data.
+    mean_pole_convention: str  # IERS_2010, IERS_2018_update, etc...
+    pole_case: str  # Whether "lower", "mean" or "upper".
+    pole_secular_term_trend_end_date: int
+    filter_wobble: bool  # Whether to filter low-pass at the annual frequency.
     # Load history parameters.
     load_history: str  # (.csv) file path relative to data/GMSL_data.
-    case: str  # Whether "lower", "mean" or "upper".
+    load_history_case: str  # Whether "lower", "mean" or "upper".
     load_history_start_date: int  # Usually 1900 for Frederikse GMSL data.
     spline_time_years: int  # Time for the anti-symmetrization spline process in years.
     initial_plateau_time_years: int  # Time of the zero-value plateau before the signal history (yr).

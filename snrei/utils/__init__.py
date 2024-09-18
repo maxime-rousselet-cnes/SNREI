@@ -39,7 +39,7 @@ from .data import (
 )
 from .database import generate_degrees_list, load_base_model, load_complex_array_from_binary, save_base_model, save_complex_array_to_binary
 from .degree_one import degree_one_inversion
-from .filtering import leakage_correction
+from .filtering import collection_SH_data_from_map, leakage_correction, map_from_collection_SH_data
 from .load_signal import (
     anelastic_frequencial_harmonic_load_signal_computing,
     build_elastic_load_signal_components,
@@ -100,7 +100,9 @@ from .variations import create_all_load_signal_hyper_parameters_variations, crea
     save_base_model,
     save_complex_array_to_binary,
     degree_one_inversion,
+    collection_SH_data_from_map,
     leakage_correction,
+    map_from_collection_SH_data,
     anelastic_frequencial_harmonic_load_signal_computing,
     build_elastic_load_signal_components,
     build_elastic_load_signal_history,

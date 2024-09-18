@@ -1,3 +1,5 @@
+from numpy import arange
+
 from snrei import ModelPart, RunHyperParameters, clear_subs, compute_load_signal_trends_for_anelastic_Earth_models
 
 if __name__ == "__main__":
@@ -11,11 +13,12 @@ if __name__ == "__main__":
             # ModelPart.short_term_anelasticity: {"asymptotic_mu_ratio": {"MANTLE": [[0.1], [0.2]]}},
         },
         load_signal_parameters={
-            # "case": ["mean", "lower", "upper"],
+            # "load_history_case": ["mean", "lower", "upper"],
+            # "pole_case": ["mean", "lower", "upper"],
             # "LIA": [False, True],
             # "opposite_load_on_continents": [False, True],
             # "load_spatial_behaviour_file": ["TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER_ICE6G-D.csv"],
-            "buffer_distance": [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
+            "buffer_distance": arange(0, 1050, 50),
         },
         options=[
             RunHyperParameters(

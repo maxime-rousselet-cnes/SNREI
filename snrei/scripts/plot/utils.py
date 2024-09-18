@@ -52,16 +52,6 @@ def get_grid(harmonics: ndarray[float], n_max: int, decimals: int = 4) -> ndarra
     )
 
 
-def get_grid(harmonics: ndarray[float], n_max: int, decimals: int = 4) -> ndarray[float]:
-    """
-    Projects spherical harmonics on a (latitude x longitude) grid.
-    """
-    return round(
-        a=make_grid(harmonics=harmonics, n_max=n_max),
-        decimals=decimals,
-    )
-
-
 def natural_projection(
     ax: GeoAxes,
     saturation_threshold: float,

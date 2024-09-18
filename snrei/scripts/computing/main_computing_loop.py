@@ -327,10 +327,6 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                             Love_numbers=anelastic_Love_numbers,
                             signal_dates=signal_dates,
                             signal_frequencies=signal_frequencies,
-                            g=anelasticity_description.description_layers[-1].evaluate(x=1.0, variable="g_0")
-                            * anelasticity_description.radius_unit
-                            / anelasticity_description.period_unit**2,
-                            target_frequencies=signal_frequencies,
                         )
                         frequencial_harmonic_load_signal_step_2[0, 2, 1, :] -= C_2_1_PM
                         frequencial_harmonic_load_signal_step_2[1, 2, 1, :] -= S_2_1_PM
@@ -555,9 +551,16 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         "ocean_mean_step_5": ocean_mean_step_5,
                         "leakage_correction_iterations": load_signal_hyper_parameters.leakage_correction_iterations,
                         "buffer_distance": load_signal_hyper_parameters.buffer_distance,
+                        "mean_pole_convention": load_signal_hyper_parameters.mean_pole_convention,
+                        "pole_case": load_signal_hyper_parameters.pole_case,
                         "elastic_load_signal_trends_id": elastic_load_signal_trends_id,
                         "Love_numbers_ID": Love_numbers_id,
                         "elastic_past_trend": past_trend,
+                        "LIA": load_signal_hyper_parameters.LIA,
+                        "case": load_signal_hyper_parameters.load_history_case,
+                        "load_spatial_behaviour_file": load_signal_hyper_parameters.load_spatial_behaviour_file,
+                        "opposite_load_on_continents": load_signal_hyper_parameters.opposite_load_on_continents,
+                        "filter_wobble": load_signal_hyper_parameters.filter_wobble,
                         "signal_threshold": load_signal_hyper_parameters.signal_threshold,
                         "signal_threshold_past": load_signal_hyper_parameters.signal_threshold_past,
                         "scale_factor_component": scale_factor_component,  # (D).

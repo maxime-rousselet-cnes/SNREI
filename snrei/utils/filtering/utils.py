@@ -1,7 +1,4 @@
-from multiprocessing import Pool
-
-from geopandas import GeoDataFrame
-from numpy import abs, arange, array, inf, meshgrid, ndarray
+from numpy import abs, arange, array, meshgrid, ndarray
 from pandas import DataFrame
 from pyGFOToolbox.processing.filter.filter_ddk import _pool_apply_DDK_filter
 
@@ -65,7 +62,7 @@ def leakage_correction(
         EWH_2_third: ndarray[float] = ocean_true_level * (1 - mask_non_oceanic_signal) + spatial_load_signal * (1 - ocean_land_mask)
 
         # Computes continental leakage on oceans.
-        EWH_2_second: ndarray[complex] = map_from_collection_SH_data(
+        EWH_2_second: ndarray[float] = map_from_collection_SH_data(
             collection_data=_pool_apply_DDK_filter(
                 grace_monthly_sh=collection_SH_data_from_map(
                     spatial_load_signal=EWH_2_prime,

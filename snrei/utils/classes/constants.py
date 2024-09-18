@@ -6,10 +6,8 @@ from pydantic import BaseModel
 from .hyper_parameters import RunHyperParameters
 from .paths import ModelPart
 
-MILLI_ARC_SECOND_TO_RADIANS = 2 * pi / (1000 * 60 * 60 * 360)
-
-# Earth mean rotation rate (rad.s⁻1).
-OMEGA = 7.2921150e-5
+ARC_SECOND_TO_RADIANS = 2 * pi / (60 * 60 * 360)
+MILLI_ARC_SECOND_TO_RADIANS = ARC_SECOND_TO_RADIANS / 1000
 
 # Universal Gravitationnal constant (m^3.kg^-1.s^-2).
 G = 6.67430e-11

@@ -200,7 +200,7 @@ def build_elastic_load_signal_components(
 
     # Builds the signal's temporal component.
     dates, temporal_component = extract_temporal_load_signal(
-        name=load_signal_hyper_parameters.case,
+        name=load_signal_hyper_parameters.load_history_case,
         filename=load_signal_hyper_parameters.load_history,
     )
 

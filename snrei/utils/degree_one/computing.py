@@ -1,6 +1,6 @@
 from multiprocessing import Pool
 
-from numpy import array, concatenate, multiply, ndarray, ones, sqrt, zeros
+from numpy import array, concatenate, multiply, ndarray, ones, zeros
 from scipy.linalg import lstsq
 
 from ...functions import make_grid, surface_ponderation
@@ -53,7 +53,7 @@ def degree_one_inversion(
     scale_factor = zeros(shape=(n_frequencies), dtype=complex)
     mask = ocean_land_mask * (abs(make_grid(harmonics=anelastic_harmonic_load_signal_trends, n_max=n_max)) < signal_threshold)
     ocean_mask_indices = mask.flatten().astype(dtype=bool)
-    least_square_weights = sqrt(surface_ponderation(mask=mask, latitudes=latitudes).flatten()[ocean_mask_indices])
+    least_square_weights = surface_ponderation(mask=mask, latitudes=latitudes).flatten()[ocean_mask_indices]
 
     frequencial_harmonic_geoid = frequencial_harmonic_component(
         anelastic_frequencial_harmonic_load_signal=anelastic_frequencial_harmonic_load_signal,

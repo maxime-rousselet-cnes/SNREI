@@ -1,3 +1,3 @@
-from .utils import leakage_correction
+from .utils import collection_SH_data_from_map, leakage_correction, map_from_collection_SH_data
 
-[leakage_correction]
+[leakage_correction, collection_SH_data_from_map, map_from_collection_SH_data]

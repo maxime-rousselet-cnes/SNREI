@@ -7,7 +7,15 @@ from .scripts import (
     generate_load_signal_components_figure,
     generate_Love_numbers_plot,
 )
-from .utils import ModelPart, RunHyperParameters, extract_GRACE_data, extract_temporal_load_signal, load_load_signal_hyper_parameters
+from .utils import (
+    ModelPart,
+    RunHyperParameters,
+    collection_SH_data_from_map,
+    extract_GRACE_data,
+    extract_temporal_load_signal,
+    load_load_signal_hyper_parameters,
+    map_from_collection_SH_data,
+)
 
 [
     clear_subs,
@@ -19,7 +27,9 @@ from .utils import ModelPart, RunHyperParameters, extract_GRACE_data, extract_te
     generate_Love_numbers_plot,
     ModelPart,
     RunHyperParameters,
+    collection_SH_data_from_map,
     extract_GRACE_data,
     extract_temporal_load_signal,
     load_load_signal_hyper_parameters,
+    map_from_collection_SH_data,
 ]

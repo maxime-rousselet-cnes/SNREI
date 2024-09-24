@@ -26,5 +26,15 @@ if __name__ == "__main__":
                 use_short_term_anelasticity=True,
                 use_bounded_attenuation_functions=True,
             ),
+            RunHyperParameters(
+                use_long_term_anelasticity=False,
+                use_short_term_anelasticity=False,
+                use_bounded_attenuation_functions=True,
+            ),
+            RunHyperParameters(
+                use_long_term_anelasticity=True,
+                use_short_term_anelasticity=True,
+                use_bounded_attenuation_functions=False,
+            ),
         ],
     )

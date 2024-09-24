@@ -3,15 +3,15 @@
     "pole_data": "pole",
     "mean_pole_convention":  "IERS_2018_update",
     "pole_case": "mean",
-    "pole_secular_term_trend_end_date":1977,
-    "filter_wobble": false,
+    "pole_secular_term_trend_end_date":1978,
+    "filter_wobble": true,
     "load_history": "Frederikse/global_basin_timeseries.csv",
     "load_history_start_date": 1900,
     "load_history_case": "mean",
     "spline_time_years": 50,
     "initial_plateau_time_years": 2000,
     "anti_Gibbs_effect_factor": 0,
-    "LIA": true,
+    "LIA": false,
     "LIA_end_date": 1400,
     "LIA_time_years": 100,
     "LIA_amplitude_effect": 0.25,
@@ -37,5 +37,6 @@
     "save_parameters": {
         "harmonics": "load_signal_harmonic_trends_save_parameters",
         "base_formats": "load_signal_base_format_trends_save_parameters"
-    }
+    },
+    "compute_residuals": false
 }

@@ -9,14 +9,49 @@ from .paths import ModelPart
 ARC_SECOND_TO_RADIANS = 2 * pi / (60 * 60 * 360)
 MILLI_ARC_SECOND_TO_RADIANS = ARC_SECOND_TO_RADIANS / 1000
 
-# Universal Gravitationnal constant (m^3.kg^-1.s^-2).
-G = 6.67430e-11
-
 # Earth mean radius (m).
 EARTH_RADIUS = 6.371e6
 
 # Ratio betwenn surface water density and mean Earth density.
 DENSITY_RATIO = 997.0 / 5513.0
+
+OMEGA = 2.0 * pi / 86164.0  # (Rad.s^-1)
+MEAN_G = 9.8  # (m.s^-2).
+PHI_CONSTANT = OMEGA**2 * EARTH_RADIUS / MEAN_G / 15**0.5  # (Unitless).
+MEAN_POLE_COEFFICIENTS = {
+    "IERS_2018_update": {"m_1": [55.0, 1.677], "m_2": [320.5, 3.460]},  # (mas/yr^index).
+}
+MEAN_POLE_T_0 = {
+    "IERS_2018_update": 2000.0,  # (yr).
+}
+STOKES_TO_EWH_CONSTANT = 5.0 / 3.0 / DENSITY_RATIO * EARTH_RADIUS
+
+M_1_GIA_TREND = 0.62  # (mas/yr).
+M_2_GIA_TREND = -3.48  # (mas/yr).
+K_2_BASE = 0.3077 + 0.0036j
+K_2_PRIME_BASE = 0.30523
+
+M_1_TREND = MEAN_POLE_COEFFICIENTS["IERS_2018_update"]["m_1"][1]
+M_2_TREND = MEAN_POLE_COEFFICIENTS["IERS_2018_update"]["m_2"][1]
+
+C_2_1_PT_SE_ELASTIC_CORRECTION = (
+    -STOKES_TO_EWH_CONSTANT
+    / (K_2_PRIME_BASE + 1.0)
+    * PHI_CONSTANT
+    * MILLI_ARC_SECOND_TO_RADIANS
+    * (K_2_BASE.real * M_1_TREND + K_2_BASE.imag * M_2_TREND)
+)
+S_2_1_PT_SE_ELASTIC_CORRECTION = (
+    -STOKES_TO_EWH_CONSTANT
+    / (K_2_PRIME_BASE + 1.0)
+    * PHI_CONSTANT
+    * MILLI_ARC_SECOND_TO_RADIANS
+    * (K_2_BASE.real * M_1_TREND - K_2_BASE.imag * M_2_TREND)
+)
+
+# Universal Gravitationnal constant (m^3.kg^-1.s^-2).
+G = 6.67430e-11
+
 # s.y^-1
 SECONDS_PER_YEAR = 365.25 * 86400
 

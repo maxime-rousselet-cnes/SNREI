@@ -28,7 +28,7 @@ from pyshtools import SHCoeffs
 from pyshtools.shclasses import DHRealGrid
 from scipy import interpolate
 
-MASK_DECIMALS = 3
+MASK_DECIMALS = 6
 
 
 def precise_curvature(

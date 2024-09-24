@@ -1,5 +1,7 @@
 from .classes import (
+    C_2_1_PT_SE_ELASTIC_CORRECTION,
     ELASTIC_RUN_HYPER_PARAMETERS,
+    S_2_1_PT_SE_ELASTIC_CORRECTION,
     SECONDS_PER_YEAR,
     AnelasticityDescription,
     BoundaryCondition,
@@ -59,7 +61,9 @@ from .seismic_fit import remove_earthquakes
 from .variations import create_all_load_signal_hyper_parameters_variations, create_all_model_variations, find_minimal_computing_options
 
 [
+    C_2_1_PT_SE_ELASTIC_CORRECTION,
     ELASTIC_RUN_HYPER_PARAMETERS,
+    S_2_1_PT_SE_ELASTIC_CORRECTION,
     SECONDS_PER_YEAR,
     AnelasticityDescription,
     BoundaryCondition,

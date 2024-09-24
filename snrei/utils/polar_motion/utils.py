@@ -6,30 +6,24 @@ from scipy.fft import fft, ifft
 
 from ...functions import signal_trend
 from ..classes import (
-    DENSITY_RATIO,
-    EARTH_RADIUS,
     MILLI_ARC_SECOND_TO_RADIANS,
+    PHI_CONSTANT,
+    STOKES_TO_EWH_CONSTANT,
     BoundaryCondition,
     Direction,
     LoadSignalHyperParameters,
     Result,
+    load_load_signal_hyper_parameters,
     pole_data_path,
 )
 from ..load_signal import get_trend_dates
 
-mean_pole_coeffs = {
-    "IERS_2018_update": {"m_1": [55.0, 1.677], "m_2": [320.5, 3.460]},  # (mas/yr^index).
-}
-mean_pole_t_0 = {
-    "IERS_2018_update": 2000.0,  # (yr).
-}
 
-
-def polar_motion_correction(
-    load_signal_hyper_parameters: LoadSignalHyperParameters, signal_dates: ndarray[float], Love_numbers: Result, signal_frequencies: ndarray[float]
-):
-    """"""
-    load_signal_hyper_parameters.LIA_amplitude_effect = 0.0
+def get_polar_motion_time_series(
+    load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
+    i: int = 1,
+) -> tuple[ndarray[float], ndarray[float]]:
+    """ """
 
     file = open(pole_data_path.joinpath(load_signal_hyper_parameters.pole_data + ".txt"), "r")
     lines = file.readlines()
@@ -40,60 +34,48 @@ def polar_motion_correction(
         dates += [float(items[0])]
         m_1 += [
             (
-                float(items[1])
+                float(items[i])
                 + (
                     0.0
                     if load_signal_hyper_parameters.pole_case == "mean"
-                    else (-float(items[2]) / 2.0 if load_signal_hyper_parameters.pole_case == "lower" else float(items[2]) / 2.0)
+                    else (-float(items[i + 1]) / 2.0 if load_signal_hyper_parameters.pole_case == "lower" else float(items[i + 1]) / 2.0)
                 )
             )
-            * MILLI_ARC_SECOND_TO_RADIANS
-        ]  # (Unitless).
+        ]
         m_2 += [
             (
-                float(items[3])
+                float(items[i + 2])
                 + (
                     0.0
                     if load_signal_hyper_parameters.pole_case == "mean"
-                    else (-float(items[4]) / 2.0 if load_signal_hyper_parameters.pole_case == "lower" else float(items[4]) / 2.0)
+                    else (-float(items[i + 3]) / 2.0 if load_signal_hyper_parameters.pole_case == "lower" else float(items[i + 1]) / 2.0)
                 )
             )
-            * MILLI_ARC_SECOND_TO_RADIANS
-        ]  # (Unitless).
+        ]
 
-    m_1 = array(object=m_1, dtype=float)
-    m_2 = array(object=m_2, dtype=float)
-    dates = array(object=dates, dtype=float)
+    return array(object=dates, dtype=float), array(object=m_1, dtype=float), array(object=m_2, dtype=float)
 
-    mean_pole_m_1 = (
-        sum(
-            [
-                coeff * (dates - mean_pole_t_0[load_signal_hyper_parameters.mean_pole_convention]) ** index
-                for index, coeff in enumerate(mean_pole_coeffs[load_signal_hyper_parameters.mean_pole_convention]["m_1"])
-            ]
-        )
-        * MILLI_ARC_SECOND_TO_RADIANS
-    )
-    mean_pole_m_2 = (
-        sum(
-            [
-                coeff * (dates - mean_pole_t_0[load_signal_hyper_parameters.mean_pole_convention]) ** index
-                for index, coeff in enumerate(mean_pole_coeffs[load_signal_hyper_parameters.mean_pole_convention]["m_2"])
-            ]
-        )
-        * MILLI_ARC_SECOND_TO_RADIANS
-    )
+
+def polar_motion_correction(
+    load_signal_hyper_parameters: LoadSignalHyperParameters,
+    signal_dates: ndarray[float],
+    Love_numbers: Result,
+    elastic_Love_numbers: Result,
+    signal_frequencies: ndarray[float],
+):
+    """"""
+    dates, m_1, m_2 = get_polar_motion_time_series(load_signal_hyper_parameters=load_signal_hyper_parameters)
 
     m_1_signal = build_polar_tide_history(
         initial_signal_dates=dates,
-        initial_pole_signal=m_1 + mean_pole_m_1,
+        initial_pole_signal=MILLI_ARC_SECOND_TO_RADIANS * m_1,
         signal_dates=signal_dates,
         load_signal_hyper_parameters=load_signal_hyper_parameters,
     )
 
     m_2_signal = build_polar_tide_history(
         initial_signal_dates=dates,
-        initial_pole_signal=m_2 + mean_pole_m_2,
+        initial_pole_signal=MILLI_ARC_SECOND_TO_RADIANS * m_2,
         signal_dates=signal_dates,
         load_signal_hyper_parameters=load_signal_hyper_parameters,
     )
@@ -107,12 +89,14 @@ def polar_motion_correction(
         frequencial_m2[abs(signal_frequencies) > load_signal_hyper_parameters.wobble_filtering_frequency] = 0.0
 
     # Gets element in position 1 for degree 2.
-    Phi_SE_PT_complex: ndarray[complex] = (Love_numbers.values[Direction.potential][BoundaryCondition.potential][1] - 1.0) * (
+    Phi_SE_PT_complex: ndarray[complex] = -(
+        Love_numbers.values[Direction.potential][BoundaryCondition.potential][1] - 1
+    ) * (  # Because 'Love_numbers' saves 1 + k.
         frequencial_m1 - 1.0j * frequencial_m2
     )
 
     # C_PT_SE_2_1, S_PT_SE_2_1.
-    Stokes_to_EWH_factor = 5.0 / 3.0 / DENSITY_RATIO * EARTH_RADIUS / (Love_numbers.values[Direction.potential][BoundaryCondition.load][1])
+    Stokes_to_EWH_factor = STOKES_TO_EWH_CONSTANT / (Love_numbers.values[Direction.potential][BoundaryCondition.load][1])  # Divides by 1 + k'.
 
     return (
         Stokes_to_EWH_factor * fft(ifft(Phi_SE_PT_complex).real),
@@ -127,23 +111,17 @@ def build_polar_tide_history(
     load_signal_hyper_parameters: LoadSignalHyperParameters,
 ) -> ndarray[float]:
     """ """
-
-    # Gets past trend for mean motion correction.
-    past_trend_indices, past_trend_dates = get_trend_dates(
-        signal_dates=initial_signal_dates,
-        load_signal_hyper_parameters=load_signal_hyper_parameters,
-        recent_trend=False,
-        shift=False,
-    )
-
+    dt = initial_signal_dates[1] - initial_signal_dates[0]
     # Gets mean motion correction.
     elastic_past_trend, _ = signal_trend(
-        trend_dates=past_trend_dates[past_trend_dates < load_signal_hyper_parameters.pole_secular_term_trend_end_date],
-        signal=initial_pole_signal[past_trend_indices][past_trend_dates < load_signal_hyper_parameters.pole_secular_term_trend_end_date],
+        trend_dates=initial_signal_dates[initial_signal_dates < load_signal_hyper_parameters.pole_secular_term_trend_end_date],
+        signal=initial_pole_signal[initial_signal_dates < load_signal_hyper_parameters.pole_secular_term_trend_end_date],
     )
 
     # Applies mean motion correction.
     initial_pole_signal -= elastic_past_trend * initial_signal_dates
+
+    print(elastic_past_trend)
 
     # Starts at zero.
     initial_pole_signal -= initial_pole_signal[0]
@@ -162,7 +140,6 @@ def build_polar_tide_history(
         signal=initial_pole_signal[recent_trend_indices],
     )
 
-    dt = initial_signal_dates[1] - initial_signal_dates[0]
     extend_part_dates = arange(start=initial_signal_dates[-1] + dt, stop=load_signal_hyper_parameters.last_year_for_trend + dt, step=dt)
     extend_part = elastic_recent_trend * extend_part_dates + elastic_additive_constant
 
@@ -174,16 +151,19 @@ def build_polar_tide_history(
             signal=initial_pole_signal,
         )
         # zero plateau after LIA.
-        initial_pole_signal = concatenate(
-            (
-                linspace(
-                    start=full_trend * load_signal_hyper_parameters.LIA_amplitude_effect,
-                    stop=0,
-                    num=int(load_signal_hyper_parameters.LIA_time_years / dt),
-                ),
-                zeros(shape=(int((initial_signal_dates[0] - load_signal_hyper_parameters.LIA_end_date) / dt))),
-                initial_pole_signal,
+        initial_pole_signal = (
+            concatenate(
+                (
+                    linspace(
+                        start=full_trend * load_signal_hyper_parameters.LIA_amplitude_effect,
+                        stop=0,
+                        num=int(load_signal_hyper_parameters.LIA_time_years / dt),
+                    ),
+                    zeros(shape=(int((initial_signal_dates[0] - load_signal_hyper_parameters.LIA_end_date) / dt))),
+                    initial_pole_signal,
+                )
             )
+            - full_trend * load_signal_hyper_parameters.LIA_amplitude_effect
         )
 
     # Creates cubic spline for antisymetry.

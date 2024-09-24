@@ -70,9 +70,7 @@ class Model:
         """
         save_base_model(obj=self.__dict__, name=name, path=path)
 
-    def build_description_layers_list(
-        self, radius_unit: float, spline_number: int, real_crust: bool
-    ) -> list[DescriptionLayer]:
+    def build_description_layers_list(self, radius_unit: float, spline_number: int, real_crust: bool) -> list[DescriptionLayer]:
         """
         Constructs the layers of an Earth description given model polynomials.
         """
@@ -82,10 +80,7 @@ class Model:
             self.r_limits[1:],
             self.layer_names,
             [
-                {
-                    variable_name: variable_polynomials[i]
-                    for variable_name, variable_polynomials in self.polynomials.items()
-                }
+                {variable_name: variable_polynomials[i] for variable_name, variable_polynomials in self.polynomials.items()}
                 for i in range(len(self.layer_names))
             ],
         ):
@@ -151,12 +146,7 @@ class Model:
                 x=x,
                 y=sum(
                     [
-                        (
-                            crust_value
-                            if "CRUST_2" in layer_name and not real_crust and i == 0 and crust_value != "None"
-                            else coefficient
-                        )
-                        * x**i
+                        (crust_value if "CRUST_2" in layer_name and not real_crust and i == 0 and crust_value != "None" else coefficient) * x**i
                         for i, coefficient in enumerate(polynomial)
                     ],
                     axis=0,

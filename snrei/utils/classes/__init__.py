@@ -1,12 +1,16 @@
 from .constants import (
     ASYMPTOTIC_MU_RATIO_DECIMALS,
+    C_2_1_PT_SE_ELASTIC_CORRECTION,
     DENSITY_RATIO,
     EARTH_RADIUS,
     ELASTIC_RUN_HYPER_PARAMETERS,
     GRACE_DATA_UNIT_FACTOR,
     MILLI_ARC_SECOND_TO_RADIANS,
+    PHI_CONSTANT,
     RECTANGLES,
+    S_2_1_PT_SE_ELASTIC_CORRECTION,
     SECONDS_PER_YEAR,
+    STOKES_TO_EWH_CONSTANT,
 )
 from .description_layer import DescriptionLayer
 from .descriptions import AnelasticityDescription, Integration
@@ -42,13 +46,17 @@ from .separators import LAYERS_SEPARATOR, VALUES_SEPARATOR
 
 [
     ASYMPTOTIC_MU_RATIO_DECIMALS,
+    C_2_1_PT_SE_ELASTIC_CORRECTION,
     DENSITY_RATIO,
     EARTH_RADIUS,
     ELASTIC_RUN_HYPER_PARAMETERS,
     GRACE_DATA_UNIT_FACTOR,
     MILLI_ARC_SECOND_TO_RADIANS,
+    PHI_CONSTANT,
     RECTANGLES,
+    S_2_1_PT_SE_ELASTIC_CORRECTION,
     SECONDS_PER_YEAR,
+    STOKES_TO_EWH_CONSTANT,
     DescriptionLayer,
     AnelasticityDescription,
     Integration,

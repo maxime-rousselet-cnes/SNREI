@@ -4,9 +4,11 @@ from time import time
 
 from numpy import array, ndarray, tensordot
 
-from ...functions import mean_on_mask
+from ...functions import make_grid, mean_on_mask
 from ...utils import (
+    C_2_1_PT_SE_ELASTIC_CORRECTION,
     ELASTIC_RUN_HYPER_PARAMETERS,
+    S_2_1_PT_SE_ELASTIC_CORRECTION,
     SECONDS_PER_YEAR,
     AnelasticityDescription,
     LoadSignalHyperParameters,
@@ -134,6 +136,10 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             latitudes,
             longitudes,
         ) = build_elastic_load_signal_components(load_signal_hyper_parameters=load_signal_hyper_parameters)
+
+        # "RIES" correction back.
+        harmonic_elastic_load_signal_spatial_component[0, 2, 1] += C_2_1_PT_SE_ELASTIC_CORRECTION
+        harmonic_elastic_load_signal_spatial_component[1, 2, 1] += S_2_1_PT_SE_ELASTIC_CORRECTION
 
         (signal_dates, signal_frequencies, _, target_past_trend, recent_trend) = build_elastic_load_signal_history(
             initial_signal_dates=initial_signal_dates,
@@ -321,10 +327,11 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     frequencial_harmonic_load_signal_step_2 = frequencial_harmonic_load_signal_step_1.copy()
 
                     # Performs polar tide corrections.
-                    if load_signal_hyper_parameters.polar_tide_correction:
+                    if load_signal_hyper_parameters.polar_tide_correction and run_hyper_parameters != ELASTIC_RUN_HYPER_PARAMETERS:
                         C_2_1_PM, S_2_1_PM = polar_motion_correction(
                             load_signal_hyper_parameters=load_signal_hyper_parameters,
                             Love_numbers=anelastic_Love_numbers,
+                            elastic_Love_numbers=elastic_Love_numbers,
                             signal_dates=signal_dates,
                             signal_frequencies=signal_frequencies,
                         )
@@ -333,7 +340,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
 
                     # Performs product between Love number fraction and elastic load signal in frequencial harmonic domain.
                     frequencial_harmonic_load_signal_step_3 = (
-                        frequencial_harmonic_load_signal_step_2
+                        frequencial_harmonic_load_signal_step_2.copy()
                         if run_hyper_parameters == ELASTIC_RUN_HYPER_PARAMETERS
                         else anelastic_frequencial_harmonic_load_signal_computing(
                             elastic_Love_numbers=elastic_Love_numbers,
@@ -358,6 +365,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         frequencial_scale_factor,
                         frequencial_harmonic_geoid,
                         frequencial_harmonic_radial_displacement,
+                        frequencial_harmonic_residuals,
                     ) = degree_one_inversion(
                         anelastic_frequencial_harmonic_load_signal=frequencial_harmonic_load_signal_step_3,
                         anelastic_harmonic_load_signal_trends=harmonic_load_signal_step_3_trends,
@@ -365,7 +373,9 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         ocean_land_mask=ocean_land_mask,
                         signal_threshold=load_signal_hyper_parameters.signal_threshold,
                         latitudes=latitudes,
+                        longitudes=longitudes,
                         n_max=load_signal_hyper_parameters.n_max,
+                        compute_residuals=load_signal_hyper_parameters.compute_residuals,
                     )
 
                     print("Degree one inversion:", time() - t_2)
@@ -519,20 +529,17 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 )
 
                 # Computes residuals.
-                harmonic_residual_trends = (
-                    harmonic_load_signal_step_4_trends  # L
-                    + scale_factor_component
-                    * map_sampling(
-                        map=ocean_land_buffered_mask,
-                        n_max=load_signal_hyper_parameters.n_max,
-                        harmonic_domain=True,
-                    )[
-                        0
-                    ]  # + D
-                    - (harmonic_geoid_trends - harmonic_radial_displacement_trends)  # - (G - R)
+                harmonic_residual_trends = compute_harmonic_signal_trends(
+                    signal_dates=signal_dates,
+                    load_signal_hyper_parameters=load_signal_hyper_parameters,
+                    frequencial_harmonic_signal=frequencial_harmonic_residuals,
                 )
                 ocean_mean_residuals = mean_on_mask(
-                    mask=ocean_land_buffered_mask,
+                    mask=ocean_land_buffered_mask
+                    * (
+                        abs(make_grid(harmonics=harmonic_load_signal_step_3_trends, n_max=load_signal_hyper_parameters.n_max))
+                        < load_signal_hyper_parameters.signal_threshold
+                    ),
                     latitudes=latitudes,
                     n_max=load_signal_hyper_parameters.n_max,
                     harmonics=harmonic_residual_trends,
@@ -551,6 +558,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         "ocean_mean_step_5": ocean_mean_step_5,
                         "leakage_correction_iterations": load_signal_hyper_parameters.leakage_correction_iterations,
                         "buffer_distance": load_signal_hyper_parameters.buffer_distance,
+                        "polar_tide_correction": load_signal_hyper_parameters.polar_tide_correction,
                         "mean_pole_convention": load_signal_hyper_parameters.mean_pole_convention,
                         "pole_case": load_signal_hyper_parameters.pole_case,
                         "elastic_load_signal_trends_id": elastic_load_signal_trends_id,

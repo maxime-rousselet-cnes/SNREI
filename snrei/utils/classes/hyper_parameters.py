@@ -222,6 +222,8 @@ class LoadSignalHyperParameters(HyperParameters):
     # Load signal save parameters.
     save_parameters: dict[str, SaveParameters | str]
 
+    compute_residuals: bool
+
 
 def load_load_signal_hyper_parameters(
     name: str = "load_signal_hyper_parameters",

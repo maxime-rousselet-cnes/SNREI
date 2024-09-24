@@ -55,11 +55,8 @@ def apply_optional_filter(grid: ndarray[float], ddk_level: Optional[int], n_max:
 
 
 def generate_load_signal_components_figure(
+    rows: list[tuple[str, Optional[str], float, float, float, Optional[int]]],
     load_signal_hyper_parameters: LoadSignalHyperParameters = load_load_signal_hyper_parameters(),
-    rows: list[tuple[str, Optional[str], float, float, Optional[int]]] = [
-        ("step_4", None, 50.0, 10.0, None),
-        ("step_5", None, 50.0, 10.0, None),
-    ],
     elastic_load_signal_id: str = "0",
     anelastic_load_signal_id: str = "2",
     difference: bool = True,
@@ -82,7 +79,7 @@ def generate_load_signal_components_figure(
             (row_name, row_components, ddk_level): load_complex_array_from_binary(
                 name=load_signal_id, path=harmonic_load_signal_trends_path.joinpath(row_name)
             ).real
-            for row_name, row_components, _, _, ddk_level in rows
+            for row_name, row_components, _, _, _, ddk_level in rows
         }
         for column, load_signal_id in zip(["elastic", "anelastic"], id_list)
     }
@@ -90,7 +87,7 @@ def generate_load_signal_components_figure(
         trend_harmonic_components_per_column["difference"] = {
             (row_name, row_components, ddk_level): trend_harmonic_components_per_column["anelastic"][row_name, row_components, ddk_level]
             - trend_harmonic_components_per_column["elastic"][row_name, row_components, ddk_level]
-            for row_name, row_components, _, _, ddk_level in rows
+            for row_name, row_components, _, _, _, ddk_level in rows
         }
     (
         load_signal_hyper_parameters.n_max,
@@ -108,12 +105,22 @@ def generate_load_signal_components_figure(
     row_number = len(rows)
 
     # Loops on all plots to generate.
-    for i_row, (row_name, row_components, row_saturation_threshold, difference_saturation_threshold, ddk_level) in enumerate(rows):
-
-        ax: list[GeoAxes] = []
+    for i_row, (
+        row_name,
+        row_components,
+        elastic_saturation_threshold,
+        anelastic_saturation_threshold,
+        difference_saturation_threshold,
+        ddk_level,
+    ) in enumerate(rows):
 
         # Elastic and anelastic results...
-        for i_column, (column, trend_harmonic_components) in enumerate(trend_harmonic_components_per_column.items()):
+        for i_column, ((column, trend_harmonic_components), threshold) in enumerate(
+            zip(
+                trend_harmonic_components_per_column.items(),
+                [elastic_saturation_threshold, anelastic_saturation_threshold, difference_saturation_threshold],
+            )
+        ):
             # Generates plot.
             current_ax: GeoAxes = fig.add_subplot(
                 row_number,
@@ -154,7 +161,7 @@ def generate_load_signal_components_figure(
             )
             contour, mask = natural_projection(
                 ax=current_ax,
-                saturation_threshold=difference_saturation_threshold if column == "difference" else row_saturation_threshold,
+                saturation_threshold=threshold,
                 latitudes=latitudes,
                 longitudes=longitudes,
                 harmonics=harmonics,
@@ -162,7 +169,6 @@ def generate_load_signal_components_figure(
                 n_max=load_signal_hyper_parameters.n_max,
                 signal_threshold=load_signal_hyper_parameters.mean_signal_threshold,
             )
-            ax += [current_ax]
             # Adds layout.
             current_ax.set_title(
                 column
@@ -180,11 +186,7 @@ def generate_load_signal_components_figure(
             if not continents:
                 current_ax.add_feature(NaturalEarthFeature("physical", "land", "50m", edgecolor="face", facecolor="grey"))
             # Eventually memorizes the contour for scale.
-            if column == "anelastic":
-                cbar = fig.colorbar(contour, ax=ax, orientation="vertical", shrink=0.9, extend="both")
-                cbar.set_label(label=row_name + ": " + str(row_components) + " (mm/yr) " + str(ddk_level))
-            elif column == "difference":
-                cbar = fig.colorbar(contour, ax=current_ax, orientation="vertical", shrink=0.8, extend="both")
-                cbar.set_label(label="(mm/yr)")
+            cbar = fig.colorbar(contour, ax=current_ax, orientation="vertical", shrink=0.9, extend="both")
+            cbar.set_label(label=row_name + ": " + str(row_components) + " (mm/yr) " + str(ddk_level))
 
     show()

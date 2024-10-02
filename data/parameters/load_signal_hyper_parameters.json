@@ -5,6 +5,7 @@
     "pole_case": "mean",
     "pole_secular_term_trend_end_date":1978,
     "filter_wobble": true,
+    "phi_constant": true,
     "load_history": "Frederikse/global_basin_timeseries.csv",
     "load_history_start_date": 1900,
     "load_history_case": "mean",

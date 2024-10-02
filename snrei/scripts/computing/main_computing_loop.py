@@ -327,11 +327,10 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     frequencial_harmonic_load_signal_step_2 = frequencial_harmonic_load_signal_step_1.copy()
 
                     # Performs polar tide corrections.
-                    if load_signal_hyper_parameters.polar_tide_correction and run_hyper_parameters != ELASTIC_RUN_HYPER_PARAMETERS:
+                    if load_signal_hyper_parameters.polar_tide_correction:  # and run_hyper_parameters != ELASTIC_RUN_HYPER_PARAMETERS:
                         C_2_1_PM, S_2_1_PM = polar_motion_correction(
                             load_signal_hyper_parameters=load_signal_hyper_parameters,
                             Love_numbers=anelastic_Love_numbers,
-                            elastic_Love_numbers=elastic_Love_numbers,
                             signal_dates=signal_dates,
                             signal_frequencies=signal_frequencies,
                         )
@@ -558,6 +557,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         "ocean_mean_step_5": ocean_mean_step_5,
                         "leakage_correction_iterations": load_signal_hyper_parameters.leakage_correction_iterations,
                         "buffer_distance": load_signal_hyper_parameters.buffer_distance,
+                        "phi_constant": load_signal_hyper_parameters.phi_constant,
                         "polar_tide_correction": load_signal_hyper_parameters.polar_tide_correction,
                         "mean_pole_convention": load_signal_hyper_parameters.mean_pole_convention,
                         "pole_case": load_signal_hyper_parameters.pole_case,

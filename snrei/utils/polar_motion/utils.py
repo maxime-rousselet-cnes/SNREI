@@ -130,6 +130,14 @@ def build_polar_tide_history(
     # Updates from IERS correction.
     initial_pole_signal -= mean_trend * (initial_signal_dates - MEAN_POLE_T_0[load_signal_hyper_parameters.mean_pole_convention])
 
+    # Removes the secular trend.
+    elastic_secular_trend, _ = signal_trend(
+        trend_dates=initial_signal_dates[initial_signal_dates < load_signal_hyper_parameters.pole_secular_term_trend_end_date],
+        signal=initial_pole_signal[initial_signal_dates < load_signal_hyper_parameters.pole_secular_term_trend_end_date],
+    )
+
+    initial_signal_dates -= elastic_recent_trend * initial_signal_dates
+
     # Linearly extends the signal for last years.
     elastic_recent_trend, elastic_additive_constant = signal_trend(
         trend_dates=recent_trend_dates,

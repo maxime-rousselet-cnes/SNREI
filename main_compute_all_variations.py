@@ -19,9 +19,7 @@ if __name__ == "__main__":
             # "opposite_load_on_continents": [False, True],
             # "load_spatial_behaviour_file": ["TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER_ICE6G-D.csv"],
             # "buffer_distance": arange(0, 1050, 50),
-            "polar_tide_correction": [True, False],
-            "remove_pole_secular_trend": [True, False],
-            "phi_constant": [True, False],
+            "pole_secular_term_trend_end_date": [1962, 1968, 1978, 2000, 2010],
         },
         options=[
             RunHyperParameters(

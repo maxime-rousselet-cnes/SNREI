@@ -559,6 +559,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         "buffer_distance": load_signal_hyper_parameters.buffer_distance,
                         "phi_constant": load_signal_hyper_parameters.phi_constant,
                         "polar_tide_correction": load_signal_hyper_parameters.polar_tide_correction,
+                        "remove_pole_secular_trend": load_signal_hyper_parameters.remove_pole_secular_trend,
                         "mean_pole_convention": load_signal_hyper_parameters.mean_pole_convention,
                         "pole_case": load_signal_hyper_parameters.pole_case,
                         "elastic_load_signal_trends_id": elastic_load_signal_trends_id,

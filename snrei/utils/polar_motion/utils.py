@@ -33,7 +33,7 @@ def get_polar_motion_time_series(
         dates += [items[0]]
         m_1 += [
             (
-                float(items[i])
+                items[i]
                 + (
                     0.0
                     if load_signal_hyper_parameters.pole_case == "mean"
@@ -43,7 +43,7 @@ def get_polar_motion_time_series(
         ]
         m_2 += [
             (
-                float(items[i + 2])
+                items[i + 2]
                 + (
                     0.0
                     if load_signal_hyper_parameters.pole_case == "mean"
@@ -82,7 +82,7 @@ def polar_motion_correction(
         initial_pole_signal=-MILLI_ARC_SECOND_TO_RADIANS * m_2,
         signal_dates=signal_dates,
         load_signal_hyper_parameters=load_signal_hyper_parameters,
-        mean_trend=-MEAN_POLE_COEFFICIENTS[load_signal_hyper_parameters.mean_pole_convention]["m_2"][1],
+        mean_trend=-MEAN_POLE_COEFFICIENTS[load_signal_hyper_parameters.mean_pole_convention]["m_2"][1] * MILLI_ARC_SECOND_TO_RADIANS,
     )
 
     frequencial_m1: ndarray[complex] = fft(m_1_signal)
@@ -136,7 +136,10 @@ def build_polar_tide_history(
         signal=initial_pole_signal[initial_signal_dates < load_signal_hyper_parameters.pole_secular_term_trend_end_date],
     )
 
-    initial_signal_dates -= elastic_secular_trend * initial_signal_dates
+    if load_signal_hyper_parameters.remove_pole_secular_trend:
+        initial_pole_signal -= elastic_secular_trend * initial_signal_dates
+
+    initial_pole_signal -= initial_pole_signal[0]
 
     # Linearly extends the signal for last years.
     elastic_recent_trend, elastic_additive_constant = signal_trend(

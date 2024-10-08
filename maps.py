@@ -5,6 +5,7 @@ load_signal_hyper_parameters = load_load_signal_hyper_parameters()
 elastic_load_signal_id = "0"
 anelastic_load_signal_id = "2"
 
+
 generate_load_signal_components_figure(
     load_signal_hyper_parameters=load_signal_hyper_parameters,
     elastic_load_signal_id=elastic_load_signal_id,

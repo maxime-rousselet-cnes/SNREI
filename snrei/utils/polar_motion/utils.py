@@ -74,7 +74,7 @@ def polar_motion_correction(
         initial_pole_signal=MILLI_ARC_SECOND_TO_RADIANS * m_1,
         signal_dates=signal_dates,
         load_signal_hyper_parameters=load_signal_hyper_parameters,
-        mean_trend=MEAN_POLE_COEFFICIENTS[load_signal_hyper_parameters.mean_pole_convention]["m_1"][1],
+        mean_trend=MEAN_POLE_COEFFICIENTS[load_signal_hyper_parameters.mean_pole_convention]["m_1"][1] * MILLI_ARC_SECOND_TO_RADIANS,
     )
 
     m_2_signal = build_polar_tide_history(
@@ -95,7 +95,7 @@ def polar_motion_correction(
 
     # Gets element in position 1 for degree 2.
     Phi_SE_PT_complex: ndarray[complex] = (
-        -(PHI_CONSTANT if load_signal_hyper_parameters.phi_constant else 1.0)
+        (PHI_CONSTANT if load_signal_hyper_parameters.phi_constant else 1.0)
         * (Love_numbers.values[Direction.potential][BoundaryCondition.potential][1] - 1)
         * (frequencial_m1 - 1.0j * frequencial_m2)  # Because 'Love_numbers' saves 1 + k.
     )

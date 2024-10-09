@@ -7,8 +7,7 @@ from ...database import load_base_model, save_base_model
 from ..constants import DEFAULT_MODELS, DEFAULT_SPLINE_NUMBER, EARTH_RADIUS
 from ..description_layer import DescriptionLayer
 from ..model import Model
-from ..paths import (ModelPart, anelasticity_descriptions_path,
-                     descriptions_path)
+from ..paths import ModelPart, anelasticity_descriptions_path, descriptions_path
 
 
 class Description:
@@ -83,11 +82,7 @@ class Description:
 
         # Gets raw description.
         description_dict: dict = load_base_model(name=self.id, path=self.get_path())
-        self.model_part = (
-            anelasticity_descriptions_path
-            if description_dict["model_part"] is None
-            else ModelPart(description_dict["model_part"])
-        )
+        self.model_part = anelasticity_descriptions_path if description_dict["model_part"] is None else ModelPart(description_dict["model_part"])
 
         # Formats attributes.
         for key, value in description_dict.items():
@@ -108,7 +103,7 @@ class Description:
                         0,
                     )
                 else:
-                    spline= (
+                    spline = (
                         array(object=self.description_layers[i_layer].splines[variable_name][0]),
                         array(object=self.description_layers[i_layer].splines[variable_name][1]),
                         self.description_layers[i_layer].splines[variable_name][2],

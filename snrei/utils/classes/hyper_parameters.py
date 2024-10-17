@@ -225,6 +225,7 @@ class LoadSignalHyperParameters(HyperParameters):
     save_parameters: dict[str, SaveParameters | str]
 
     compute_residuals: bool
+    invert_for_J2: bool
 
 
 def load_load_signal_hyper_parameters(

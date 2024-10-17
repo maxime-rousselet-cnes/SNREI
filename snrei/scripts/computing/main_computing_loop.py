@@ -358,9 +358,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     )
 
                     # Derives degree one correction.
-                    frequencial_harmonic_load_signal_step_4 = deepcopy(frequencial_harmonic_load_signal_step_3)
                     (
-                        frequencial_harmonic_load_signal_step_4[:, 1, :2, :],
+                        frequencial_harmonic_load_signal_step_4,
                         frequencial_scale_factor,
                         frequencial_harmonic_geoid,
                         frequencial_harmonic_radial_displacement,
@@ -375,6 +374,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         longitudes=longitudes,
                         n_max=load_signal_hyper_parameters.n_max,
                         compute_residuals=load_signal_hyper_parameters.compute_residuals,
+                        invert_for_J2=load_signal_hyper_parameters.invert_for_J2,
                     )
 
                     print("Degree one inversion:", time() - t_2)
@@ -555,6 +555,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         "ocean_mean_step_3": ocean_mean_step_3,
                         "ocean_mean_step_4": ocean_mean_step_4,  # (L).
                         "ocean_mean_step_5": ocean_mean_step_5,
+                        "invert_for_J2": load_signal_hyper_parameters.invert_for_J2,
                         "pole_secular_term_trend_end_date": load_signal_hyper_parameters.pole_secular_term_trend_end_date,
                         "leakage_correction_iterations": load_signal_hyper_parameters.leakage_correction_iterations,
                         "buffer_distance": load_signal_hyper_parameters.buffer_distance,

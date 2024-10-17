@@ -40,5 +40,6 @@
         "harmonics": "load_signal_harmonic_trends_save_parameters",
         "base_formats": "load_signal_base_format_trends_save_parameters"
     },
-    "compute_residuals": true
+    "compute_residuals": true,
+    "invert_for_J2": false
 }

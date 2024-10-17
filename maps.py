@@ -11,8 +11,8 @@ generate_load_signal_components_figure(
     elastic_load_signal_id=elastic_load_signal_id,
     anelastic_load_signal_id=anelastic_load_signal_id,
     rows=[
-        ("residual", None, 2e-4, 2e-1, 2e-1, None),
-        ("residual", None, 2e-4, 2e-1, 2e-1, 2),
+        ("residual", None, 2e-4, 2e-4, 2e-5, None),
+        ("residual", None, 2e-4, 2e-4, 2e-5, 2),
     ],
 )
 

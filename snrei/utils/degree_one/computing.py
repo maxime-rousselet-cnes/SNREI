@@ -170,12 +170,14 @@ def degree_one_inversion(
         )
         frequencial_harmonic_geoid[:, 1, :2, frequencial_index] = (
             DENSITY_RATIO
-            * Love_numbers.values[Direction.potential][BoundaryCondition.load][0][frequencial_index if n_frequencies > 1 else 0]
+            * Love_numbers.values[Direction.potential][BoundaryCondition.load][0][
+                frequencial_index if len(Love_numbers.axes["frequencies"]) > 1 else 0
+            ]
             * anelastic_frequencial_harmonic_load_signal[:, 1, :2, frequencial_index]
         )
         frequencial_harmonic_radial_displacement[:, 1, :2, frequencial_index] = (
             DENSITY_RATIO
-            * Love_numbers.values[Direction.radial][BoundaryCondition.load][0][frequencial_index if n_frequencies > 1 else 0]
+            * Love_numbers.values[Direction.radial][BoundaryCondition.load][0][frequencial_index if len(Love_numbers.axes["frequencies"]) > 1 else 0]
             * anelastic_frequencial_harmonic_load_signal[:, 1, :2, frequencial_index]
         )
         scale_factor[frequencial_index] = D

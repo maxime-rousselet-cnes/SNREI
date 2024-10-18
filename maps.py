@@ -2,17 +2,29 @@ from snrei import generate_load_signal_components_figure, load_load_signal_hyper
 
 load_signal_hyper_parameters = load_load_signal_hyper_parameters()
 
-elastic_load_signal_id = "0"
-anelastic_load_signal_id = "2"
-
+elastic_load_signal_id = "2"
+anelastic_load_signal_id = "6"
 
 generate_load_signal_components_figure(
     load_signal_hyper_parameters=load_signal_hyper_parameters,
     elastic_load_signal_id=elastic_load_signal_id,
     anelastic_load_signal_id=anelastic_load_signal_id,
     rows=[
-        ("residual", None, 2e-4, 2e-4, 2e-5, None),
-        ("residual", None, 2e-4, 2e-4, 2e-5, 2),
+        ("residual", None, 2e-1, 2e-1, 2e-1, None),
+        ("residual", None, 2e-1, 2e-1, 2e-1, 2),
+    ],
+)
+
+elastic_load_signal_id = "0"
+anelastic_load_signal_id = "4"
+
+generate_load_signal_components_figure(
+    load_signal_hyper_parameters=load_signal_hyper_parameters,
+    elastic_load_signal_id=elastic_load_signal_id,
+    anelastic_load_signal_id=anelastic_load_signal_id,
+    rows=[
+        ("residual", None, 2e-1, 2e-1, 2e-1, None),
+        ("residual", None, 2e-1, 2e-1, 2e-1, 2),
     ],
 )
 

@@ -29,7 +29,7 @@ def get_polar_motion_time_series(
     lines = file.readlines()
     dates, m_1, m_2 = [], [], []
     for line in lines[1:]:
-        items = [float(i) for i in [string for string in line.split(" ") if not (string in ["", "\n"])]]
+        items = [float(k) for k in [string for string in line.split(" ") if not (string in ["", "\n"])]]
         dates += [items[0]]
         m_1 += [
             (
@@ -63,7 +63,8 @@ def convolve(a: ndarray[float], v: ndarray[float]) -> ndarray[float]:
 def polar_motion_correction(
     load_signal_hyper_parameters: LoadSignalHyperParameters,
     signal_dates: ndarray[float],
-    Love_numbers: Result,
+    elastic_Love_numbers: Result,
+    anelastic_Love_numbers: Result,
     signal_frequencies: ndarray[float],
 ):
     """"""
@@ -95,17 +96,23 @@ def polar_motion_correction(
 
     # Gets element in position 1 for degree 2.
     Phi_SE_PT_complex: ndarray[complex] = (
-        -(PHI_CONSTANT if load_signal_hyper_parameters.phi_constant else 1.0)
-        * (Love_numbers.values[Direction.potential][BoundaryCondition.potential][1] - 1)
+        (PHI_CONSTANT if load_signal_hyper_parameters.phi_constant else 1.0)
+        * (
+            (anelastic_Love_numbers.values[Direction.potential][BoundaryCondition.potential][1] - 1)
+            - (elastic_Love_numbers.values[Direction.potential][BoundaryCondition.potential][1] - 1)
+        )
         * (frequencial_m1 - 1.0j * frequencial_m2)  # Because 'Love_numbers' saves 1 + k.
     )
 
     # C_PT_SE_2_1, S_PT_SE_2_1.
-    Stokes_to_EWH_factor = STOKES_TO_EWH_CONSTANT / (Love_numbers.values[Direction.potential][BoundaryCondition.load][1])  # Divides by 1 + k'.
+    Stokes_to_EWH_factor = STOKES_TO_EWH_CONSTANT / (
+        anelastic_Love_numbers.values[Direction.potential][BoundaryCondition.load][1]
+    )  # Divides by 1 + k'.
+    correction: ndarray[complex] = Stokes_to_EWH_factor * Phi_SE_PT_complex
 
     return (
-        Stokes_to_EWH_factor * fft(ifft(Phi_SE_PT_complex).real),
-        -Stokes_to_EWH_factor * fft(ifft(Phi_SE_PT_complex).imag),
+        fft(ifft(correction).real),
+        fft(ifft(correction).imag),
     )
 
 

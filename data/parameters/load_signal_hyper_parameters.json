@@ -4,7 +4,7 @@
     "mean_pole_convention": "IERS_2018_update",
     "pole_case": "mean",
     "pole_secular_term_trend_end_date":1978,
-    "filter_wobble": true,
+    "filter_wobble": false,
     "phi_constant": true,
     "remove_pole_secular_trend": true,
     "load_history": "Frederikse/global_basin_timeseries.csv",

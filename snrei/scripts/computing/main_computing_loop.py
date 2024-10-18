@@ -330,7 +330,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     if load_signal_hyper_parameters.polar_tide_correction:  # and run_hyper_parameters != ELASTIC_RUN_HYPER_PARAMETERS:
                         C_2_1_PM, S_2_1_PM = polar_motion_correction(
                             load_signal_hyper_parameters=load_signal_hyper_parameters,
-                            Love_numbers=anelastic_Love_numbers,
+                            elastic_Love_numbers=elastic_Love_numbers,
+                            anelastic_Love_numbers=anelastic_Love_numbers,
                             signal_dates=signal_dates,
                             signal_frequencies=signal_frequencies,
                         )

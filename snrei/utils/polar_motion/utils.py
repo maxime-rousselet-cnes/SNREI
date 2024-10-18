@@ -112,7 +112,7 @@ def polar_motion_correction(
 
     return (
         fft(ifft(correction).real),
-        fft(ifft(correction).imag),
+        -fft(ifft(correction).imag),
     )
 
 

@@ -63,7 +63,6 @@ def convolve(a: ndarray[float], v: ndarray[float]) -> ndarray[float]:
 def polar_motion_correction(
     load_signal_hyper_parameters: LoadSignalHyperParameters,
     signal_dates: ndarray[float],
-    elastic_Love_numbers: Result,
     anelastic_Love_numbers: Result,
     signal_frequencies: ndarray[float],
 ):
@@ -97,10 +96,7 @@ def polar_motion_correction(
     # Gets element in position 1 for degree 2.
     Phi_SE_PT_complex: ndarray[complex] = (
         (PHI_CONSTANT if load_signal_hyper_parameters.phi_constant else 1.0)
-        * (
-            (anelastic_Love_numbers.values[Direction.potential][BoundaryCondition.potential][1] - 1)
-            - (elastic_Love_numbers.values[Direction.potential][BoundaryCondition.potential][1] - 1)
-        )
+        * (anelastic_Love_numbers.values[Direction.potential][BoundaryCondition.potential][1] - 1)
         * (frequencial_m1 - 1.0j * frequencial_m2)  # Because 'Love_numbers' saves 1 + k.
     )
 

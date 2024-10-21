@@ -47,7 +47,7 @@ S_2_1_PT_SE_ELASTIC_CORRECTION = (
     / (K_2_PRIME_BASE + 1.0)
     * PHI_CONSTANT
     * MILLI_ARC_SECOND_TO_RADIANS
-    * (K_2_BASE.real * M_1_TREND - K_2_BASE.imag * M_2_TREND)
+    * (K_2_BASE.real * M_2_TREND - K_2_BASE.imag * M_1_TREND)
 )
 
 # Universal Gravitationnal constant (m^3.kg^-1.s^-2).

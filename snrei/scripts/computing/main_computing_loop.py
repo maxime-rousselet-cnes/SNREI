@@ -38,6 +38,7 @@ from ...utils import (
     harmonic_load_signal_trends_path,
     interpolate_anelastic_Love_numbers,
     interpolate_elastic_Love_numbers,
+    is_in_table,
     leakage_correction,
     load_base_model,
     load_Love_numbers_hyper_parameters,
@@ -213,41 +214,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
 
             Love_numbers_hyper_parameters.run_hyper_parameters = run_hyper_parameters
 
-            t_0 = time()
-
-            # Computes Love numbers.
-            log_frequencies, Love_numbers_array = Love_numbers_computing(
-                max_tol=Love_numbers_hyper_parameters.max_tol,
-                decimals=Love_numbers_hyper_parameters.decimals,
-                y_system_hyper_parameters=Love_numbers_hyper_parameters.y_system_hyper_parameters,
-                run_hyper_parameters=run_hyper_parameters,
-                degrees=degrees,
-                log_frequency_initial_values=generate_log_frequency_initial_values(
-                    period_min_year=Love_numbers_hyper_parameters.period_min_year,
-                    period_max_year=Love_numbers_hyper_parameters.period_max_year,
-                    n_frequency_0=Love_numbers_hyper_parameters.n_frequency_0,
-                    frequency_unit=anelasticity_description.frequency_unit,
-                ),
-                anelasticity_description=anelasticity_description,
-            )
-
-            # Saves.
-            Love_numbers_result = Result(
-                hyper_parameters=Love_numbers_hyper_parameters,
-                axes={
-                    "degrees": array(object=degrees),
-                    "frequencies": anelasticity_description.frequency_unit * 10.0**log_frequencies * SECONDS_PER_YEAR,
-                },  # (yr^-1)
-            )
-            Love_numbers_result.update_values_from_array(
-                result_array=Love_numbers_array,
-            )
-            Love_numbers_id = generate_new_id(path=Love_numbers_path)
-            Love_numbers_result.save(name=Love_numbers_id, path=Love_numbers_path)
-            add_result_to_table(
-                table_name="Love_numbers",
-                result_caracteristics={
-                    "ID": Love_numbers_id,
+            result_caracteristics = (
+                {
                     "elasticity_model": elasticity_model_name,
                     "long_term_anelasticity_model": long_term_anelasticity_model_name,
                     "short_term_anelasticity_model": short_term_anelasticity_model_name,
@@ -257,9 +225,47 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 }
                 | {key: value for key, value in Love_numbers_hyper_parameters.y_system_hyper_parameters.__dict__.items() if type(value) is bool}
                 | run_hyper_parameters.__dict__,
-            )
+            )[0]
 
-            print("Computing Love numbers:", time() - t_0)
+            if not is_in_table(table_name="Love_numbers", result_caracteristics=result_caracteristics):
+
+                t_0 = time()
+
+                # Computes Love numbers.
+                log_frequencies, Love_numbers_array = Love_numbers_computing(
+                    max_tol=Love_numbers_hyper_parameters.max_tol,
+                    decimals=Love_numbers_hyper_parameters.decimals,
+                    y_system_hyper_parameters=Love_numbers_hyper_parameters.y_system_hyper_parameters,
+                    run_hyper_parameters=run_hyper_parameters,
+                    degrees=degrees,
+                    log_frequency_initial_values=generate_log_frequency_initial_values(
+                        period_min_year=Love_numbers_hyper_parameters.period_min_year,
+                        period_max_year=Love_numbers_hyper_parameters.period_max_year,
+                        n_frequency_0=Love_numbers_hyper_parameters.n_frequency_0,
+                        frequency_unit=anelasticity_description.frequency_unit,
+                    ),
+                    anelasticity_description=anelasticity_description,
+                )
+
+                # Saves.
+                Love_numbers_result = Result(
+                    hyper_parameters=Love_numbers_hyper_parameters,
+                    axes={
+                        "degrees": array(object=degrees),
+                        "frequencies": anelasticity_description.frequency_unit * 10.0**log_frequencies * SECONDS_PER_YEAR,
+                    },  # (yr^-1)
+                )
+                Love_numbers_result.update_values_from_array(
+                    result_array=Love_numbers_array,
+                )
+                Love_numbers_id = generate_new_id(path=Love_numbers_path)
+                Love_numbers_result.save(name=Love_numbers_id, path=Love_numbers_path)
+                add_result_to_table(
+                    table_name="Love_numbers",
+                    result_caracteristics=result_caracteristics | {"ID": Love_numbers_id},
+                )
+
+                print("Computing Love numbers:", time() - t_0)
 
             # III - Loops on elastic load signals to compute anelastic load signals.
             for elastic_load_signal_trends_id, (
@@ -330,7 +336,6 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     if load_signal_hyper_parameters.polar_tide_correction:  # and run_hyper_parameters != ELASTIC_RUN_HYPER_PARAMETERS:
                         C_2_1_PM, S_2_1_PM = polar_motion_correction(
                             load_signal_hyper_parameters=load_signal_hyper_parameters,
-                            elastic_Love_numbers=elastic_Love_numbers,
                             anelastic_Love_numbers=anelastic_Love_numbers,
                             signal_dates=signal_dates,
                             signal_frequencies=signal_frequencies,
@@ -551,6 +556,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                     table_name="harmonic_load_signal_trends",
                     result_caracteristics={
                         "ID": harmonic_load_signal_id,
+                        "ocean_mean_radial_residuals": ocean_mean_residuals,  # (L + D - (G - R)).
                         "ocean_mean_step_1": ocean_mean_step_1,
                         "ocean_mean_step_2": ocean_mean_step_2,
                         "ocean_mean_step_3": ocean_mean_step_3,
@@ -578,7 +584,6 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         "scale_factor_component": scale_factor_component,  # (D).
                         "ocean_mean_geoid_component": ocean_mean_geoid_component,  # (G).
                         "ocean_mean_radial_displacement_component": ocean_mean_radial_displacement_component,  # (R).
-                        "ocean_mean_radial_residuals": ocean_mean_residuals,  # (L + D - (G - R)).
                         "short-term": run_hyper_parameters.use_short_term_anelasticity,
                         "long-term": run_hyper_parameters.use_long_term_anelasticity,
                         "elasticity_model": elasticity_model_name,

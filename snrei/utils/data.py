@@ -6,7 +6,7 @@ from typing import Optional
 import netCDF4
 from geopandas import GeoDataFrame, read_file
 from numpy import argsort, array, flip, meshgrid, ndarray, unique, zeros
-from pandas import read_csv
+from pandas import Series, read_csv
 from pyshtools import SHGrid
 
 from ..functions import LAT_LON_PROJECTION, make_grid, signal_trend
@@ -264,6 +264,18 @@ def extract_all_GRACE_data(path: Path = GRACE_data_path, solution_name: str = "M
         lon,
         array(object=[times[index] for index in indices]),
     )
+
+
+def is_in_table(table_name: str, result_caracteristics: dict) -> bool:
+    """"""
+    file = tables_path.joinpath(table_name + ".csv")
+    if file.exists():
+        df = read_csv(file)
+        matches = df[list(result_caracteristics.keys())].eq(Series(result_caracteristics)).all(axis=1)
+        matching_rows = df[matches]
+        return len(matching_rows) > 0
+    else:
+        return False
 
 
 def add_result_to_table(table_name: str, result_caracteristics: dict[str, str | bool | float]) -> None:

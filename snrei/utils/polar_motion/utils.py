@@ -1,9 +1,11 @@
-from numpy import arange, array, concatenate, flip, linspace, ndarray, zeros
+from numpy import arange, array, concatenate, flip, linspace, ndarray, ones, zeros
 from scipy import interpolate
 from scipy.fft import fft, ifft
 
 from ...functions import signal_trend
 from ..classes import (
+    M_1_GIA_TREND,
+    M_2_GIA_TREND,
     MEAN_POLE_COEFFICIENTS,
     MEAN_POLE_T_0,
     MILLI_ARC_SECOND_TO_RADIANS,
@@ -85,17 +87,39 @@ def polar_motion_correction(
         mean_trend=-MEAN_POLE_COEFFICIENTS[load_signal_hyper_parameters.mean_pole_convention]["m_2"][1] * MILLI_ARC_SECOND_TO_RADIANS,
     )
 
+    # Filtering the Annual and Chandler wobbles.
+    if load_signal_hyper_parameters.filter_wobble:
+        kernel = (
+            ones(shape=(2 * load_signal_hyper_parameters.wobble_filtering_kernel_length + 1))
+            / load_signal_hyper_parameters.wobble_filtering_kernel_length
+        )
+        m_1_signal = array(
+            object=concatenate(
+                (
+                    [0] * (load_signal_hyper_parameters.wobble_filtering_kernel_length),
+                    convolve(a=m_1_signal, v=kernel),
+                    [0] * (load_signal_hyper_parameters.wobble_filtering_kernel_length),
+                )
+            ),
+            dtype=float,
+        )
+        m_2_signal = array(
+            object=concatenate(
+                (
+                    [0] * (load_signal_hyper_parameters.wobble_filtering_kernel_length),
+                    convolve(a=m_2_signal, v=kernel),
+                    [0] * (load_signal_hyper_parameters.wobble_filtering_kernel_length),
+                )
+            ),
+            dtype=float,
+        )
+
     frequencial_m1: ndarray[complex] = fft(m_1_signal)
     frequencial_m2: ndarray[complex] = fft(m_2_signal)
 
-    # Filtering the Annual and Chandler wobbles.
-    if load_signal_hyper_parameters.filter_wobble:
-        frequencial_m1[abs(signal_frequencies) > load_signal_hyper_parameters.wobble_filtering_frequency] = 0.0
-        frequencial_m2[abs(signal_frequencies) > load_signal_hyper_parameters.wobble_filtering_frequency] = 0.0
-
     # Gets element in position 1 for degree 2.
     Phi_SE_PT_complex: ndarray[complex] = (
-        (PHI_CONSTANT if load_signal_hyper_parameters.phi_constant else 1.0)
+        -(PHI_CONSTANT if load_signal_hyper_parameters.phi_constant else 1.0)
         * (anelastic_Love_numbers.values[Direction.potential][BoundaryCondition.potential][1] - 1)
         * (frequencial_m1 - 1.0j * frequencial_m2)  # Because 'Love_numbers' saves 1 + k.
     )
@@ -108,7 +132,7 @@ def polar_motion_correction(
 
     return (
         fft(ifft(correction).real),
-        fft(ifft(correction).imag),
+        -fft(ifft(correction).imag),
     )
 
 

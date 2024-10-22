@@ -266,16 +266,19 @@ def extract_all_GRACE_data(path: Path = GRACE_data_path, solution_name: str = "M
     )
 
 
-def is_in_table(table_name: str, result_caracteristics: dict) -> bool:
+def is_in_table(table_name: str, result_caracteristics: dict) -> int:
     """"""
     file = tables_path.joinpath(table_name + ".csv")
     if file.exists():
         df = read_csv(file)
         matches = df[list(result_caracteristics.keys())].eq(Series(result_caracteristics)).all(axis=1)
         matching_rows = df[matches]
-        return len(matching_rows) > 0
+        if len(matching_rows) == 0:
+            return -1
+        else:
+            return list(matching_rows["ID"])[0]
     else:
-        return False
+        return -1
 
 
 def add_result_to_table(table_name: str, result_caracteristics: dict[str, str | bool | float]) -> None:

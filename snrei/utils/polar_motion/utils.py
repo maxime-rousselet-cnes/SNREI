@@ -95,7 +95,7 @@ def polar_motion_correction(
 
     # Gets element in position 1 for degree 2.
     Phi_SE_PT_complex: ndarray[complex] = (
-        -(PHI_CONSTANT if load_signal_hyper_parameters.phi_constant else 1.0)
+        (PHI_CONSTANT if load_signal_hyper_parameters.phi_constant else 1.0)
         * (anelastic_Love_numbers.values[Direction.potential][BoundaryCondition.potential][1] - 1)
         * (frequencial_m1 - 1.0j * frequencial_m2)  # Because 'Love_numbers' saves 1 + k.
     )
@@ -108,7 +108,7 @@ def polar_motion_correction(
 
     return (
         fft(ifft(correction).real),
-        -fft(ifft(correction).imag),
+        fft(ifft(correction).imag),
     )
 
 
@@ -131,12 +131,17 @@ def build_polar_tide_history(
     )
 
     # Updates from IERS correction.
-    initial_pole_signal -= mean_trend * (initial_signal_dates - MEAN_POLE_T_0[load_signal_hyper_parameters.mean_pole_convention])
+    if load_signal_hyper_parameters.remove_mean_pole:
+        initial_pole_signal -= mean_trend * (initial_signal_dates - MEAN_POLE_T_0[load_signal_hyper_parameters.mean_pole_convention])
 
     # Removes the secular trend.
     elastic_secular_trend, _ = signal_trend(
-        trend_dates=initial_signal_dates[initial_signal_dates < load_signal_hyper_parameters.pole_secular_term_trend_end_date],
-        signal=initial_pole_signal[initial_signal_dates < load_signal_hyper_parameters.pole_secular_term_trend_end_date],
+        trend_dates=initial_signal_dates[initial_signal_dates < load_signal_hyper_parameters.pole_secular_term_trend_end_date][
+            initial_signal_dates > load_signal_hyper_parameters.pole_secular_term_trend_start_date
+        ],
+        signal=initial_pole_signal[initial_signal_dates < load_signal_hyper_parameters.pole_secular_term_trend_end_date][
+            initial_signal_dates > load_signal_hyper_parameters.pole_secular_term_trend_start_date
+        ],
     )
 
     if load_signal_hyper_parameters.remove_pole_secular_trend:

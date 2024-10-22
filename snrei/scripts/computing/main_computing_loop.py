@@ -138,7 +138,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
             longitudes,
         ) = build_elastic_load_signal_components(load_signal_hyper_parameters=load_signal_hyper_parameters)
 
-        # "RIES" correction back.
+        # "Ries" correction back.
         harmonic_elastic_load_signal_spatial_component[0, 2, 1] += C_2_1_PT_SE_ELASTIC_CORRECTION
         harmonic_elastic_load_signal_spatial_component[1, 2, 1] += S_2_1_PT_SE_ELASTIC_CORRECTION
 
@@ -227,7 +227,8 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                 | run_hyper_parameters.__dict__,
             )[0]
 
-            if not is_in_table(table_name="Love_numbers", result_caracteristics=result_caracteristics):
+            Love_numbers_id = is_in_table(table_name="Love_numbers", result_caracteristics=result_caracteristics)
+            if Love_numbers_id == -1:
 
                 t_0 = time()
 
@@ -563,6 +564,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         "ocean_mean_step_4": ocean_mean_step_4,  # (L).
                         "ocean_mean_step_5": ocean_mean_step_5,
                         "invert_for_J2": load_signal_hyper_parameters.invert_for_J2,
+                        "pole_secular_term_trend_start_date": load_signal_hyper_parameters.pole_secular_term_trend_start_date,
                         "pole_secular_term_trend_end_date": load_signal_hyper_parameters.pole_secular_term_trend_end_date,
                         "leakage_correction_iterations": load_signal_hyper_parameters.leakage_correction_iterations,
                         "buffer_distance": load_signal_hyper_parameters.buffer_distance,

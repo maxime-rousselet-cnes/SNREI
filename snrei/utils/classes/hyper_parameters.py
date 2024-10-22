@@ -183,9 +183,11 @@ class LoadSignalHyperParameters(HyperParameters):
     mean_pole_convention: str  # IERS_2010, IERS_2018_update, etc...
     pole_case: str  # Whether "lower", "mean" or "upper".
     pole_secular_term_trend_end_date: int
+    pole_secular_term_trend_start_date: int
     filter_wobble: bool  # Whether to filter low-pass at the annual frequency.
     phi_constant: bool
     remove_pole_secular_trend: bool
+    remove_mean_pole: bool
     # Load history parameters.
     load_history: str  # (.csv) file path relative to data/GMSL_data.
     load_history_case: str  # Whether "lower", "mean" or "upper".

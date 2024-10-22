@@ -13,13 +13,14 @@ if __name__ == "__main__":
             # ModelPart.short_term_anelasticity: {"asymptotic_mu_ratio": {"MANTLE": [[0.1], [0.2]]}},
         },
         load_signal_parameters={
+            "pole_secular_term_trend_start_date": [1900, 1977],
+            "pole_secular_term_trend_end_date": [1978, 2000, 2010],
             # "load_history_case": ["mean", "lower", "upper"],
             # "pole_case": ["mean", "lower", "upper"],
             # "LIA": [False, True],
             # "opposite_load_on_continents": [False, True],
             # "load_spatial_behaviour_file": ["TREND_GRACE(-FO)_MSSA_2003_2022_NoGIA_PELTIER_ICE6G-D.csv"],
             # "buffer_distance": arange(0, 1050, 50),
-            "invert_for_J2": [False, True],
         },
         options=[
             RunHyperParameters(

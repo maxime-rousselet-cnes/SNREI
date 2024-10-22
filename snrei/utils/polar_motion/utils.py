@@ -136,11 +136,13 @@ def build_polar_tide_history(
 
     # Removes the secular trend.
     elastic_secular_trend, _ = signal_trend(
-        trend_dates=initial_signal_dates[initial_signal_dates < load_signal_hyper_parameters.pole_secular_term_trend_end_date][
-            initial_signal_dates > load_signal_hyper_parameters.pole_secular_term_trend_start_date
+        trend_dates=initial_signal_dates[
+            (initial_signal_dates < load_signal_hyper_parameters.pole_secular_term_trend_end_date)
+            * (initial_signal_dates > load_signal_hyper_parameters.pole_secular_term_trend_start_date)
         ],
-        signal=initial_pole_signal[initial_signal_dates < load_signal_hyper_parameters.pole_secular_term_trend_end_date][
-            initial_signal_dates > load_signal_hyper_parameters.pole_secular_term_trend_start_date
+        signal=initial_pole_signal[
+            (initial_signal_dates < load_signal_hyper_parameters.pole_secular_term_trend_end_date)
+            * (initial_signal_dates > load_signal_hyper_parameters.pole_secular_term_trend_start_date)
         ],
     )
 

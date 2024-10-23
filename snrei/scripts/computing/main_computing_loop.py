@@ -121,6 +121,10 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
     ] = {}
     for load_signal_hyper_parameters in load_signal_hyper_parameter_variations:
 
+        # Verifies compatibility.
+        if load_signal_hyper_parameters.pole_secular_term_trend_end_date - load_signal_hyper_parameters.pole_secular_term_trend_start_date < 10:
+            continue
+
         t_0 = time()
 
         load_signal_hyper_parameters.mean_signal_threshold = float(load_signal_hyper_parameters.mean_signal_threshold)
@@ -564,6 +568,7 @@ def compute_load_signal_trends_for_anelastic_Earth_models(
                         "ocean_mean_step_4": ocean_mean_step_4,  # (L).
                         "ocean_mean_step_5": ocean_mean_step_5,
                         "invert_for_J2": load_signal_hyper_parameters.invert_for_J2,
+                        "remove_mean_pole": load_signal_hyper_parameters.remove_mean_pole,
                         "pole_secular_term_trend_start_date": load_signal_hyper_parameters.pole_secular_term_trend_start_date,
                         "pole_secular_term_trend_end_date": load_signal_hyper_parameters.pole_secular_term_trend_end_date,
                         "leakage_correction_iterations": load_signal_hyper_parameters.leakage_correction_iterations,

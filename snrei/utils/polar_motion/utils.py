@@ -119,7 +119,7 @@ def polar_motion_correction(
 
     # Gets element in position 1 for degree 2.
     Phi_SE_PT_complex: ndarray[complex] = (
-        -(PHI_CONSTANT if load_signal_hyper_parameters.phi_constant else 1.0)
+        (PHI_CONSTANT if load_signal_hyper_parameters.phi_constant else 1.0)
         * (anelastic_Love_numbers.values[Direction.potential][BoundaryCondition.potential][1] - 1)
         * (frequencial_m1 - 1.0j * frequencial_m2)  # Because 'Love_numbers' saves 1 + k.
     )
@@ -128,11 +128,10 @@ def polar_motion_correction(
     Stokes_to_EWH_factor = STOKES_TO_EWH_CONSTANT / (
         anelastic_Love_numbers.values[Direction.potential][BoundaryCondition.load][1]
     )  # Divides by 1 + k'.
-    correction: ndarray[complex] = Stokes_to_EWH_factor * Phi_SE_PT_complex
 
     return (
-        fft(ifft(correction).real),
-        -fft(ifft(correction).imag),
+        Stokes_to_EWH_factor * fft(ifft(Phi_SE_PT_complex).real),
+        -Stokes_to_EWH_factor * fft(ifft(Phi_SE_PT_complex).imag),
     )
 
 
